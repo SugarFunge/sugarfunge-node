@@ -1,13 +1,11 @@
-# Substrate Node Template
-
-[![Try on playground](https://img.shields.io/badge/Playground-Node_Template-brightgreen?logo=Parity%20Substrate)](https://playground.substrate.dev/?deploy=node-template)
+![SugarFunge](/docs/sf-name.png)
+# Substrate SugarFunge Node
 
 A fresh FRAME-based [Substrate](https://www.substrate.io/) node, ready for hacking :rocket:
 
 ## Getting Started
 
-Follow the steps below to get started with the Node Template, or get it up and running right from your browser 
-in just a few clicks using [Playground](https://playground.substrate.dev/) :hammer_and_wrench:
+Follow the steps below to get started with the SugarFunge Node:
 
 ### Rust Setup
 
@@ -36,7 +34,7 @@ Once the project has been built, the following command can be used to explore al
 subcommands:
 
 ```sh
-./target/release/node-template -h
+./target/release/sf-node -h
 ```
 
 ## Run
@@ -50,19 +48,19 @@ node.
 This command will start the single-node development chain with persistent state:
 
 ```bash
-./target/release/node-template --dev
+./target/release/sf-node --dev
 ```
 
 Purge the development chain's state:
 
 ```bash
-./target/release/node-template purge-chain --dev
+./target/release/sf-node purge-chain --dev
 ```
 
 Start the development chain with detailed logging:
 
 ```bash
-RUST_LOG=debug RUST_BACKTRACE=1 ./target/release/node-template -lruntime=debug --dev
+RUST_LOG=debug RUST_BACKTRACE=1 ./target/release/sf-node -lruntime=debug --dev
 ```
 
 ### Multi-Node Local Testnet
@@ -113,7 +111,7 @@ After the node has been [built](#build), refer to the embedded documentation to 
 capabilities and configuration parameters that it exposes:
 
 ```shell
-./target/release/node-template --help
+./target/release/sf-node --help
 ```
 
 ### Runtime
@@ -173,15 +171,15 @@ Then run the following command to start a single node development chain.
 ```
 
 This command will firstly compile your code, and then start a local development network. You can
-also replace the default command (`cargo build --release && ./target/release/node-template --dev --ws-external`)
+also replace the default command (`cargo build --release && ./target/release/sf-node --dev --ws-external`)
 by appending your own. A few useful ones are as follow.
 
 ```bash
 # Run Substrate node without re-compiling
-./scripts/docker_run.sh ./target/release/node-template --dev --ws-external
+./scripts/docker_run.sh ./target/release/sf-node --dev --ws-external
 
 # Purge the local dev chain
-./scripts/docker_run.sh ./target/release/node-template purge-chain --dev
+./scripts/docker_run.sh ./target/release/sf-node purge-chain --dev
 
 # Check whether the code is compilable
 ./scripts/docker_run.sh cargo check
