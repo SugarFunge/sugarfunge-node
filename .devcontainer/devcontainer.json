@@ -1,5 +1,5 @@
 {
-  "name": "Substrate Node template",
+  "name": "SugarFunge Node",
   "context": "..",
   "settings": {
     "terminal.integrated.shell.linux": "/bin/bash",
