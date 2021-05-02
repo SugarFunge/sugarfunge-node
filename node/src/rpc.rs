@@ -7,7 +7,7 @@
 
 use std::sync::Arc;
 
-use sf_node_runtime::{opaque::Block, AccountId, Balance, Index};
+use sf_runtime::{opaque::Block, AccountId, Balance, Index};
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::{Error as BlockChainError, HeaderMetadata, HeaderBackend};
 use sp_block_builder::BlockBuilder;
