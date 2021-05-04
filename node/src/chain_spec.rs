@@ -43,7 +43,7 @@ pub fn development_config() -> Result<ChainSpec, String> {
     use serde_json::json;
 
     let mut props: Properties = Properties::new();
-    let value = json!("UGAR");
+    let value = json!("SUGAR");
     props.insert("tokenSymbol".to_string(), value);
 
     let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;

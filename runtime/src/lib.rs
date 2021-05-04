@@ -6,11 +6,6 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-// #[cfg(feature = "std")]
-// use serde::{Deserialize, Serialize};
-
-// use sp_core::crypto::UncheckedFrom;
-
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_std::prelude::*;
 
@@ -326,7 +321,7 @@ impl orml_tokens::Config for Runtime {
 }
 
 parameter_types! {
-    pub const GetNativeCurrencyId: AssetId = AssetId::SUGAR;
+    pub const GetNativeCurrencyId: AssetId = AssetId::Native;
 }
 
 impl orml_currencies::Config for Runtime {
