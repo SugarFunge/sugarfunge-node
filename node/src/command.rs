@@ -23,7 +23,7 @@ use sf_runtime::Block;
 
 impl SubstrateCli for Cli {
 	fn impl_name() -> String {
-		"SugarFunge Node".into()
+		"SugarFunge".into()
 	}
 
 	fn impl_version() -> String {

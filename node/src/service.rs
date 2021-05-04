@@ -1,7 +1,6 @@
 //! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
-use std::sync::Arc;
-use std::time::Duration;
+use std::{sync::Arc, time::Duration};
 use sc_client_api::{ExecutorProvider, RemoteBackend};
 use sf_runtime::{self, opaque::Block, RuntimeApi};
 use sc_service::{error::Error as ServiceError, Configuration, TaskManager};
@@ -16,10 +15,10 @@ use sp_consensus::SlotData;
 
 // Our native executor instance.
 native_executor_instance!(
-    pub Executor,
-    sf_runtime::api::dispatch,
-    sf_runtime::native_version,
-    frame_benchmarking::benchmarking::HostFunctions,
+	pub Executor,
+	sf_runtime::api::dispatch,
+	sf_runtime::native_version,
+	frame_benchmarking::benchmarking::HostFunctions,
 );
 
 type FullClient = sc_service::TFullClient<Block, RuntimeApi, Executor>;
@@ -228,10 +227,10 @@ pub fn new_full(mut config: Configuration) -> Result<TaskManager, ServiceError> 
 		let can_author_with =
 			sp_consensus::CanAuthorWithNativeVersion::new(client.executor().clone());
 
-			let slot_duration = sc_consensus_aura::slot_duration(&*client)?;
-			let raw_slot_duration = slot_duration.slot_duration();
-	
-			let aura = sc_consensus_aura::start_aura::<AuraPair, _, _, _, _, _, _, _, _, _, _>(
+		let slot_duration = sc_consensus_aura::slot_duration(&*client)?;
+		let raw_slot_duration = slot_duration.slot_duration();
+
+		let aura = sc_consensus_aura::start_aura::<AuraPair, _, _, _, _, _, _, _, _, _, _>(
 			StartAuraParams {
 				slot_duration,
 				client: client.clone(),
