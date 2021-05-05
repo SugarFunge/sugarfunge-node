@@ -81,15 +81,6 @@ pub type Hash = sp_core::H256;
 /// Digest item type.
 pub type DigestItem = generic::DigestItem<Hash>;
 
-// #[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord)]
-// #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-// pub enum CurrencyId {
-//     Native,
-//     DOT,
-//     KSM,
-//     BTC,
-// }
-
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
 /// of data like extrinsics, allowing for them to continue syncing the network through upgrades
@@ -321,7 +312,7 @@ impl orml_tokens::Config for Runtime {
 }
 
 parameter_types! {
-    pub const GetNativeCurrencyId: AssetId = AssetId::Native;
+    pub const GetNativeCurrencyId: AssetId = AssetId::NATIVE;
 }
 
 impl orml_currencies::Config for Runtime {

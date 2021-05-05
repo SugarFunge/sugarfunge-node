@@ -6204,6 +6204,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "sf-fungible-assets"
+version = "0.1.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "orml-currencies",
+ "orml-tokens",
+ "orml-traits",
+ "pallet-balances",
+ "parity-scale-codec",
+ "rustc-hex",
+ "serde",
+ "sf-primitives",
+ "sp-core",
+ "sp-io",
+ "sp-keyring",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "sf-node"
 version = "0.1.0"
 dependencies = [

@@ -6,7 +6,7 @@ use sp_core::{RuntimeDebug, H160};
 #[derive(Encode, Decode, Copy, Clone, PartialEq, Eq, Ord, PartialOrd, RuntimeDebug)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum AssetId {
-    Native,
+    NATIVE,
     TOKEN(H160),
     ETH,
     BTC,
