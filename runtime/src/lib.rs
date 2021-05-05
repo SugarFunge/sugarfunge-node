@@ -33,7 +33,7 @@ use sp_version::RuntimeVersion;
 
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
-    construct_runtime, parameter_types, ord_parameter_types,
+    construct_runtime, ord_parameter_types, parameter_types,
     traits::{EnsureOrigin, KeyOwnerProofSystem, Randomness},
     weights::{
         constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -288,8 +288,11 @@ parameter_types! {
     pub TreasuryAccountId: AccountId = SugarFungeTreasuryModuleId::get().into_account();
 }
 
-ord_parameter_types! {
-    pub const Six: u64 = 6;
+impl sf_nft::Config for Runtime {
+    type CollectionId = u64;
+    type TokenId = u64;
+    type CollectionData = ();
+    type TokenData = ();
 }
 
 pub struct EnsureGovernance;
@@ -310,10 +313,10 @@ impl EnsureOrigin<Origin> for EnsureGovernance {
 }
 
 impl sf_fungible_assets::Config for Runtime {
-	type Event = Event;
-	type TreasuryAccountId = TreasuryAccountId;
+    type Event = Event;
+    type TreasuryAccountId = TreasuryAccountId;
     type GovernanceOrigin = EnsureGovernance;
-	type NativeCurrency = BasicCurrencyAdapter<Runtime, Balances, Amount, BlockNumber>;
+    type NativeCurrency = BasicCurrencyAdapter<Runtime, Balances, Amount, BlockNumber>;
 }
 
 parameter_type_with_key! {
@@ -378,6 +381,7 @@ construct_runtime!(
         Currencies: orml_currencies::{Pallet, Call, Event<T>},
         Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>},
         FungibleAsset: sf_fungible_assets::{Pallet, Call, Storage, Event<T>},
+        NFT: sf_nft::{Pallet, Call, Storage},
 
         // Include the custom logic from the pallet-template in the runtime.
         TemplateModule: pallet_template::{Pallet, Call, Storage, Event<T>},

@@ -6226,6 +6226,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "sf-nft"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "sf-node"
 version = "0.1.0"
 dependencies = [
@@ -6300,6 +6314,7 @@ dependencies = [
  "pallet-transaction-payment-rpc-runtime-api",
  "parity-scale-codec",
  "sf-fungible-assets",
+ "sf-nft",
  "sf-primitives",
  "sp-api",
  "sp-block-builder",
