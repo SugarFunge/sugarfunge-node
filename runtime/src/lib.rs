@@ -9,6 +9,7 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_std::prelude::*;
 
+use frame_system::RawOrigin;
 use orml_currencies::BasicCurrencyAdapter;
 use orml_traits::parameter_type_with_key;
 use pallet_grandpa::fg_primitives;
@@ -32,7 +33,7 @@ use sp_version::RuntimeVersion;
 
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
-    construct_runtime, parameter_types,
+    construct_runtime, parameter_types, ord_parameter_types,
     traits::{EnsureOrigin, KeyOwnerProofSystem, Randomness},
     weights::{
         constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -80,6 +81,8 @@ pub type Hash = sp_core::H256;
 
 /// Digest item type.
 pub type DigestItem = generic::DigestItem<Hash>;
+
+const MODULE_ID: PalletId = PalletId(*b"cb/gover");
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -281,15 +284,37 @@ impl pallet_sudo::Config for Runtime {
     type Call = Call;
 }
 
-// parameter_type_with_key! {
-//     pub ExistentialDeposits: |currency_id: CurrencyId| -> Balance {
-//         match currency_id {
-//             &BTC => 1,
-//             &DOT => 2,
-//             _ => 0,
-//         }
-//     };
-// }
+parameter_types! {
+    pub TreasuryAccountId: AccountId = SugarFungeTreasuryModuleId::get().into_account();
+}
+
+ord_parameter_types! {
+    pub const Six: u64 = 6;
+}
+
+pub struct EnsureGovernance;
+impl EnsureOrigin<Origin> for EnsureGovernance {
+    type Success = AccountId;
+    fn try_origin(o: Origin) -> Result<Self::Success, Origin> {
+        let bridge_id = MODULE_ID.into_account();
+        Into::<Result<RawOrigin<AccountId>, Origin>>::into(o).and_then(|o| match o {
+            RawOrigin::Signed(who) if who == bridge_id => Ok(bridge_id),
+            r => Err(Origin::from(r)),
+        })
+    }
+
+    #[cfg(feature = "runtime-benchmarks")]
+    fn successful_origin() -> Origin {
+        Origin::from(RawOrigin::Signed(Default::default()))
+    }
+}
+
+impl sf_fungible_assets::Config for Runtime {
+	type Event = Event;
+	type TreasuryAccountId = TreasuryAccountId;
+    type GovernanceOrigin = EnsureGovernance;
+	type NativeCurrency = BasicCurrencyAdapter<Runtime, Balances, Amount, BlockNumber>;
+}
 
 parameter_type_with_key! {
     pub ExistentialDeposits: |_currency_id: AssetId| -> Balance {
@@ -352,6 +377,7 @@ construct_runtime!(
         // Exchange pallets
         Currencies: orml_currencies::{Pallet, Call, Event<T>},
         Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>},
+        FungibleAsset: sf_fungible_assets::{Pallet, Call, Storage, Event<T>},
 
         // Include the custom logic from the pallet-template in the runtime.
         TemplateModule: pallet_template::{Pallet, Call, Storage, Event<T>},

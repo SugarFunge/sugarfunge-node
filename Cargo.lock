@@ -6299,6 +6299,7 @@ dependencies = [
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
  "parity-scale-codec",
+ "sf-fungible-assets",
  "sf-primitives",
  "sp-api",
  "sp-block-builder",

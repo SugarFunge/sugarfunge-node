@@ -167,6 +167,7 @@ decl_module! {
                         mint_account: Option<T::AccountId>,
                         burn_account: Option<T::AccountId>,
                         existenial_deposit: T::Balance) -> DispatchResult {
+            let _existenial_deposit = existenial_deposit;
             let who: T::AccountId = ensure_signed(origin)?;
             ensure!(!orml_tokens::TotalIssuance::<T>::contains_key(asset_id), Error::<T>::AssetIdAlreadyExists);
             ensure!(!<InfoAsset<T>>::contains_key(&asset_id), Error::<T>::AssetIdAlreadyExists);
