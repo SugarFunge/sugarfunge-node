@@ -1,4 +1,4 @@
-use crate as sugarfunge_nft;
+use crate as sugarfunge_tokens;
 use frame_support::parameter_types;
 use frame_system as system;
 use sp_core::H256;
@@ -18,7 +18,7 @@ frame_support::construct_runtime!(
         UncheckedExtrinsic = UncheckedExtrinsic,
     {
         System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-
+        Tokens: sugarfunge_tokens::{Pallet, Call, Storage, Event<T>},
     }
 );
 
@@ -50,6 +50,13 @@ impl system::Config for Test {
     type OnKilledAccount = ();
     type SystemWeightInfo = ();
     type SS58Prefix = SS58Prefix;
+}
+
+impl sugarfunge_tokens::Config for Test {
+    type Event = Event;
+    // type TokenBalance = u128;
+    type TokenId = u64;
+    type InstanceId = u64;
 }
 
 // Build genesis storage according to the mock runtime.

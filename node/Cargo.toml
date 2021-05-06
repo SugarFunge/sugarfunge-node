@@ -1,66 +1,80 @@
 [package]
-authors = ['Alex Rozgo <alex.rozgo@gmail.com>']
-build = 'build.rs'
-description = 'SugarFunge blockchain node'
-edition = '2018'
-homepage = 'https://sugarfunge.io'
-license = 'Unlicense'
-name = 'sf-node'
-repository = 'https://github.com/SugarFunge/sf-node'
-version = '0.1.0'
-
-[[bin]]
-name = 'sf-node'
+name = "sugarfunge-node"
+version = "0.0.1"
+authors = ["SugarFunge Developers"]
+edition = "2018"
+license = 'GPL-3.0'
+build = "build.rs"
 
 [package.metadata.docs.rs]
-targets = ['x86_64-unknown-linux-gnu']
+targets = ["x86_64-unknown-linux-gnu"]
+
+[[bin]]
+name = "sugarfunge-node"
 
 [dependencies]
+futures = "0.3.4"
+serde = { version = "1.0.124", features = ["derive"] }
+serde_json = "1.0.64"
 structopt = "0.3.8"
-serde_json = "1.0"
+jsonrpc-core = "15.0.0"
+jsonrpc-pubsub = "15.0.0"
+hex-literal = "0.3.1"
 
-# Substrate dependencies
-sc-cli = { features = ["wasmtime"], git = "https://github.com/SugarFunge/substrate.git", version = "0.9.0" }
-sp-core = { git = "https://github.com/SugarFunge/substrate.git", version = "3.0.0" }
-sc-executor = { features = ["wasmtime"], git = "https://github.com/SugarFunge/substrate.git", version = "0.9.0" }
-sc-service = { features = ["wasmtime"], git = "https://github.com/SugarFunge/substrate.git", version = "0.9.0" }
-sc-telemetry = { git = "https://github.com/SugarFunge/substrate.git", version = "3.0.0" }
-sc-keystore = { git = "https://github.com/SugarFunge/substrate.git", version = "3.0.0" }
-sp-inherents = { git = "https://github.com/SugarFunge/substrate.git", version = "3.0.0" }
-sc-transaction-pool = { git = "https://github.com/SugarFunge/substrate.git", version = "3.0.0" }
-sp-transaction-pool = { git = "https://github.com/SugarFunge/substrate.git", version = "3.0.0" }
-sc-consensus-aura = { git = "https://github.com/SugarFunge/substrate.git", version = "0.9.0" }
-sp-consensus-aura = { git = "https://github.com/SugarFunge/substrate.git", version = "0.9.0" }
-sp-consensus = { git = "https://github.com/SugarFunge/substrate.git", version = "0.9.0" }
-sc-consensus = { git = "https://github.com/SugarFunge/substrate.git", version = "0.9.0" }
-sc-finality-grandpa = { git = "https://github.com/SugarFunge/substrate.git", version = "0.9.0" }
-sp-finality-grandpa = { git = "https://github.com/SugarFunge/substrate.git", version = "3.0.0" }
-sc-client-api = { git = "https://github.com/SugarFunge/substrate.git", version = "3.0.0" }
-sp-runtime = { git = "https://github.com/SugarFunge/substrate.git", version = "3.0.0" }
-sp-timestamp = { git = "https://github.com/SugarFunge/substrate.git", version = "3.0.0" }
+sc-cli = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1", features = ["wasmtime"] }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
+sc-executor = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1", features = ["wasmtime"] }
+sc-service = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1", features = ["wasmtime"] }
+sc-telemetry = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
+sc-keystore = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
+sp-inherents = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
+sc-transaction-pool = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
+sp-transaction-pool = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
+sc-consensus-aura = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
+sp-consensus-aura = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
+sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
+sc-consensus = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
+sc-network = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
+sc-transaction-graph = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
+sc-finality-grandpa = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
+sp-finality-grandpa = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
+sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
 
-# These dependencies are used for the SugarFunge Node's RPCs
-jsonrpc-core = "15.1.0"
-sc-rpc = { git = "https://github.com/SugarFunge/substrate.git", version = "3.0.0" }
-sp-api = { git = "https://github.com/SugarFunge/substrate.git", version = "3.0.0" }
-sc-rpc-api = { git = "https://github.com/SugarFunge/substrate.git", version = "0.9.0" }
-sp-blockchain = { git = "https://github.com/SugarFunge/substrate.git", version = "3.0.0" }
-sp-block-builder = { git = "https://github.com/SugarFunge/substrate.git", version = "3.0.0" }
-sc-basic-authorship = { git = "https://github.com/SugarFunge/substrate.git", version = "0.9.0" }
-substrate-frame-rpc-system = { git = "https://github.com/SugarFunge/substrate.git", version = "3.0.0" }
-pallet-transaction-payment-rpc = { git = "https://github.com/SugarFunge/substrate.git", version = "3.0.0" }
+# These dependencies are used for the node template's RPCs
+sc-rpc = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
+sc-rpc-api = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
+sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
+sp-block-builder = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
+sc-basic-authorship = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
+substrate-frame-rpc-system = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
+pallet-transaction-payment-rpc = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
+
+pallet-contracts = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
+pallet-contracts-rpc = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
+
+pallet-evm = { git = "https://github.com/web3gamesofficial/frontier", branch = "web3games-v0.1" }
+pallet-ethereum = { git = "https://github.com/web3gamesofficial/frontier", branch = "web3games-v0.1" }
+
+fc-consensus = { git = "https://github.com/web3gamesofficial/frontier", branch = "web3games-v0.1" }
+fp-consensus = { git = "https://github.com/web3gamesofficial/frontier", branch = "web3games-v0.1" }
+fc-rpc = { git = "https://github.com/web3gamesofficial/frontier", branch = "web3games-v0.1" }
+fp-rpc = { git = "https://github.com/web3gamesofficial/frontier", branch = "web3games-v0.1" }
+fc-db = { git = "https://github.com/web3gamesofficial/frontier", branch = "web3games-v0.1" }
+fc-rpc-core = { git = "https://github.com/web3gamesofficial/frontier", branch = "web3games-v0.1" }
 
 # These dependencies are used for runtime benchmarking
-frame-benchmarking = { git = "https://github.com/SugarFunge/substrate.git", version = "3.1.0" }
-frame-benchmarking-cli = { git = "https://github.com/SugarFunge/substrate.git", version = "3.0.0" }
+# frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
+# frame-benchmarking-cli = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
 
-# SugarFunge deps
-sf-primitives = { path = "../primitives", default-features = false }
-sf-runtime = { path = '../runtime' }
+sugarfunge-runtime = { version = "0.0.1", path = "../runtime" }
 
 [build-dependencies]
-substrate-build-script-utils = { git = "https://github.com/SugarFunge/substrate.git", version = "3.0.0" }
+substrate-build-script-utils = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
 
-[features]
-default = []
-runtime-benchmarks = ['sf-runtime/runtime-benchmarks']
+# [features]
+# default = []
+# runtime-benchmarks = [
+# 	"sugarfunge-runtime/runtime-benchmarks",
+# ]

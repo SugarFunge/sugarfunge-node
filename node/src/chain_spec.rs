@@ -1,18 +1,22 @@
-use sc_service::{ChainType, Properties};
-use sf_runtime::{
-    AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig, Signature, SudoConfig,
-    SystemConfig, WASM_BINARY,
+use hex_literal::hex;
+use sc_service::ChainType;
+use sc_telemetry::TelemetryEndpoints;
+use serde_json::json;
+use sugarfunge_runtime::{
+    AccountId, AuraConfig, Balance, BalancesConfig, ContractsConfig, CurrencyId, EVMConfig,
+    EthereumConfig, GenesisConfig, GrandpaConfig, Signature, SudoConfig, SystemConfig, TokenSymbol,
+    OrmlTokensConfig, CurrencyTokenConfig, DOLLARS, WASM_BINARY,
 };
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use sp_core::{sr25519, Pair, Public};
+use sp_core::crypto::UncheckedInto;
+use sp_core::{sr25519, Pair, Public, H160, U256};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{IdentifyAccount, Verify};
-
-use sf_runtime::TokensConfig;
-use sf_primitives::assets::AssetId;
+use std::collections::BTreeMap;
+use std::str::FromStr;
 
 // The URL for the telemetry server.
-// const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
+const TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
 pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig>;
@@ -40,12 +44,6 @@ pub fn authority_keys_from_seed(s: &str) -> (AuraId, GrandpaId) {
 }
 
 pub fn development_config() -> Result<ChainSpec, String> {
-    use serde_json::json;
-
-    let mut props: Properties = Properties::new();
-    let value = json!("SUGAR");
-    props.insert("tokenSymbol".to_string(), value);
-
     let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
 
     Ok(ChainSpec::from_genesis(
@@ -78,7 +76,15 @@ pub fn development_config() -> Result<ChainSpec, String> {
         // Protocol ID
         None,
         // Properties
-        Some(props),
+        Some(
+            json!({
+              "tokenDecimals": 18,
+              "tokenSymbol": "SUGAR"
+            })
+            .as_object()
+            .expect("Provided valid json map")
+            .clone(),
+        ),
         // Extensions
         None,
     ))
@@ -128,7 +134,81 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
         // Protocol ID
         None,
         // Properties
+        Some(
+            json!({
+              "tokenDecimals": 18,
+              "tokenSymbol": "SUGAR"
+            })
+            .as_object()
+            .expect("Provided valid json map")
+            .clone(),
+        ),
+        // Extensions
         None,
+    ))
+}
+
+pub fn cane_staging_testnet_config() -> Result<ChainSpec, String> {
+    let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
+
+    Ok(ChainSpec::from_genesis(
+        // Name
+        "SugarFunge Cane",
+        // ID
+        "sugarfunge_cane",
+        ChainType::Live,
+        move || {
+            testnet_genesis(
+                wasm_binary,
+                // Initial PoA authorities
+                vec![
+                    (
+                        // 5CAGc2P2g6jUVSmdcpHbGD1MWvTe7jAAmoD6riLnXUjc5PV4
+                        hex!["043e7709226be05310d0632dc1f7cb1b0016b74c0c051835e1093428a472d230"]
+                            .unchecked_into(),
+                        // 5G8WWBAq4gpFLEnQjsxPkfYRdXNs3UkaeR8QG39HVjub8agw
+                        hex!["b3d7b25de30f345bfb40e0fb78f86acc36a7edc045615d5dee2cb9539faa8219"]
+                            .unchecked_into(),
+                    ),
+                    (
+                        // 5EL1RhP3yJNVF7k1nB9U8Dm5AbcFUEbD7ZQ4f3TUeHVYV6Vj
+                        hex!["64244ac1fb0854c2f101beafa5d8032d0e381705514f74cf58c8f8361d65c769"]
+                            .unchecked_into(),
+                        // 5EaM6zor3sPnqfYLM1CRu1RFPsyMkNa1B1r3J4itBSLs8mx8
+                        hex!["6f13f7e727ef6b4094b346e351e66242b51fbbb6a2eac532b55389f1314d2d11"]
+                            .unchecked_into(),
+                    ),
+                ],
+                // Sudo account
+                hex![
+                    // 5EUp2vXWQEmbT6ceUA5t3XCaHzvAbBgtXPYenE4ui6mhwX89
+                    "6adb264c6a79923eb1b3d47feab4db75b0fd140ba31a1f0bfee91ba3070f3541"
+                ]
+                .into(),
+                // Pre-funded accounts
+                vec![
+                    // 5EUp2vXWQEmbT6ceUA5t3XCaHzvAbBgtXPYenE4ui6mhwX89
+                    hex!["6adb264c6a79923eb1b3d47feab4db75b0fd140ba31a1f0bfee91ba3070f3541"].into(),
+                ],
+                true,
+            )
+        },
+        // Bootnodes
+        vec![],
+        // Telemetry
+        TelemetryEndpoints::new(vec![(TELEMETRY_URL.into(), 0)]).ok(),
+        // Protocol ID
+        Some("cane"),
+        // Properties
+        Some(
+            json!({
+              "tokenDecimals": 18,
+              "tokenSymbol": "SUGAR"
+            })
+            .as_object()
+            .expect("Provided valid json map")
+            .clone(),
+        ),
         // Extensions
         None,
     ))
@@ -140,8 +220,22 @@ fn testnet_genesis(
     initial_authorities: Vec<(AuraId, GrandpaId)>,
     root_key: AccountId,
     endowed_accounts: Vec<AccountId>,
-    _enable_println: bool,
+    enable_println: bool,
 ) -> GenesisConfig {
+    let built_in_evm_account = H160::from_str("6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b").unwrap();
+    let mut evm_accounts = BTreeMap::new();
+    evm_accounts.insert(
+        built_in_evm_account,
+        pallet_evm::GenesisAccount {
+            nonce: U256::from(0),
+            balance: U256::from(100_000_000 * DOLLARS),
+            storage: Default::default(),
+            code: wasm_binary.to_vec(),
+        },
+    );
+
+    const ENDOWMENT: Balance = 100_000_000 * DOLLARS;
+
     GenesisConfig {
         frame_system: SystemConfig {
             // Add Wasm runtime to storage.
@@ -153,7 +247,7 @@ fn testnet_genesis(
             balances: endowed_accounts
                 .iter()
                 .cloned()
-                .map(|k| (k, 1 << 60))
+                .map(|k| (k, ENDOWMENT))
                 .collect(),
         },
         pallet_aura: AuraConfig {
@@ -165,23 +259,47 @@ fn testnet_genesis(
                 .map(|x| (x.1.clone(), 1))
                 .collect(),
         },
+        pallet_contracts: ContractsConfig {
+            // println should only be enabled on development chains
+            current_schedule: pallet_contracts::Schedule::default()
+                .enable_println(enable_println),
+        },
         pallet_sudo: SudoConfig {
-            // Assign network admin rights.
             key: root_key,
         },
-        orml_tokens: TokensConfig {
-            endowed_accounts: vec![
-                (
-                    endowed_accounts[0].to_owned(),
-                    AssetId::DOT,
-                    1000000000000000000u128,
-                ),
-                (
-                    endowed_accounts[1].to_owned(),
-                    AssetId::DOT,
-                    1000000000000000000u128,
-                ),
-            ],
+        pallet_evm: EVMConfig {
+            accounts: evm_accounts,
+        },
+        pallet_ethereum: EthereumConfig {},
+        orml_tokens: OrmlTokensConfig {
+            endowed_accounts: endowed_accounts
+                .iter()
+                .flat_map(|x| {
+                    vec![
+                        (
+                            x.clone(),
+                            CurrencyId::Token(TokenSymbol::DOT),
+                            1000000 * DOLLARS,
+                        ),
+                        (
+                            x.clone(),
+                            CurrencyId::Token(TokenSymbol::ACA),
+                            1000000 * DOLLARS,
+                        ),
+                        (
+                            x.clone(),
+                            CurrencyId::Token(TokenSymbol::AUSD),
+                            1000000 * DOLLARS,
+                        ),
+                    ]
+                })
+                .collect(),
+        },
+        sugarfunge_currency_token: CurrencyTokenConfig {
+            instance: (
+                get_account_id_from_seed::<sr25519::Public>("Alice"),
+                "currency token instance".as_bytes().to_vec(),
+            )
         },
     }
 }
