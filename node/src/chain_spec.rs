@@ -283,12 +283,12 @@ fn testnet_genesis(
                         ),
                         (
                             x.clone(),
-                            CurrencyId::Token(TokenSymbol::ACA),
+                            CurrencyId::Token(TokenSymbol::ETH),
                             1000000 * DOLLARS,
                         ),
                         (
                             x.clone(),
-                            CurrencyId::Token(TokenSymbol::AUSD),
+                            CurrencyId::Token(TokenSymbol::BTC),
                             1000000 * DOLLARS,
                         ),
                     ]

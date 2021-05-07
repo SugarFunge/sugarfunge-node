@@ -1,13 +1,18 @@
 {
   "TokenId": "u64",
   "InstanceId": "u64",
+  "TokenInfo": {
+    "instance_id": "InstanceId",
+    "token_id": "TokenId",
+    "total_supply": "Balance"
+  },
   "ExchangeId": "u32",
   "TokenSymbol": {
     "_enum": {
       "SUGAR": 0,
       "DOT": 1,
-      "ACA": 2,
-      "AUSD": 3
+      "ETH": 2,
+      "BTC": 3
     }
   },
   "CurrencyId": {
@@ -17,5 +22,13 @@
   },
   "CurrencyIdOf": "CurrencyId",
   "CollectionId": "u64",
-  "AssetId": "u64"
+  "CollectionInfo": {
+    "owner": "AccountId",
+    "totalSupply": "u128",
+    "deposit": "Balance",
+    "properties": "Vec<u8>"
+  },
+  "AssetId": "u64",
+  "Amount": "i128",
+  "AmountOf": "Amount"
 }

@@ -64,8 +64,8 @@ pub type Amount = i128;
 pub enum TokenSymbol {
     SUGAR = 0,
     DOT = 1,
-    ACA = 2,
-    AUSD = 3,
+    ETH = 2,
+    BTC = 3,
 }
 
 impl TryFrom<u8> for TokenSymbol {
@@ -75,8 +75,8 @@ impl TryFrom<u8> for TokenSymbol {
         match v {
             0 => Ok(TokenSymbol::SUGAR),
             1 => Ok(TokenSymbol::DOT),
-            2 => Ok(TokenSymbol::ACA),
-            3 => Ok(TokenSymbol::AUSD),
+            2 => Ok(TokenSymbol::ETH),
+            3 => Ok(TokenSymbol::BTC),
             _ => Err(()),
         }
     }
@@ -100,8 +100,8 @@ impl TryFrom<Vec<u8>> for CurrencyId {
         match v.as_slice() {
             b"SUGAR" => Ok(CurrencyId::Token(TokenSymbol::SUGAR)),
             b"DOT" => Ok(CurrencyId::Token(TokenSymbol::DOT)),
-            b"ACA" => Ok(CurrencyId::Token(TokenSymbol::ACA)),
-            b"AUSD" => Ok(CurrencyId::Token(TokenSymbol::AUSD)),
+            b"ETH" => Ok(CurrencyId::Token(TokenSymbol::ETH)),
+            b"BTC" => Ok(CurrencyId::Token(TokenSymbol::BTC)),
             _ => Err(()),
         }
     }

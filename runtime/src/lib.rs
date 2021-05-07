@@ -428,8 +428,8 @@ impl sugarfunge_tokens::Config for Runtime {
 }
 
 parameter_types! {
-    pub const CurrencyTokenModuleId: PalletId = PalletId(*b"w3g/curr");
-    pub const DexModuleId: PalletId = PalletId(*b"w3g/dexm");
+    pub const CurrencyTokenModuleId: PalletId = PalletId(*b"sug/curr");
+    pub const DexModuleId: PalletId = PalletId(*b"sug/dexm");
 }
 
 impl sugarfunge_currency_token::Config for Runtime {
