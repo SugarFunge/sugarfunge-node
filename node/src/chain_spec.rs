@@ -2,21 +2,19 @@ use hex_literal::hex;
 use sc_service::ChainType;
 use sc_telemetry::TelemetryEndpoints;
 use serde_json::json;
-use sugarfunge_runtime::{
-    AccountId, AuraConfig, Balance, BalancesConfig, ContractsConfig, CurrencyId, EVMConfig,
-    EthereumConfig, GenesisConfig, GrandpaConfig, Signature, SudoConfig, SystemConfig, TokenSymbol,
-    OrmlTokensConfig, CurrencyTokenConfig, DOLLARS, WASM_BINARY,
-};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::crypto::UncheckedInto;
-use sp_core::{sr25519, Pair, Public, H160, U256};
+use sp_core::{sr25519, Pair, Public};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{IdentifyAccount, Verify};
-use std::collections::BTreeMap;
-use std::str::FromStr;
+use sugarfunge_runtime::{
+    AccountId, AuraConfig, Balance, BalancesConfig, CurrencyId, CurrencyTokenConfig, GenesisConfig,
+    GrandpaConfig, OrmlTokensConfig, Signature, SudoConfig, SystemConfig, TokenSymbol, DOLLARS,
+    WASM_BINARY,
+};
 
 // The URL for the telemetry server.
-const TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
+const _TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
 pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig>;
@@ -152,7 +150,7 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
     ))
 }
 
-pub fn cane_staging_testnet_config() -> Result<ChainSpec, String> {
+pub fn _cane_staging_testnet_config() -> Result<ChainSpec, String> {
     let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
 
     Ok(ChainSpec::from_genesis(
@@ -200,7 +198,7 @@ pub fn cane_staging_testnet_config() -> Result<ChainSpec, String> {
         // Bootnodes
         vec![],
         // Telemetry
-        TelemetryEndpoints::new(vec![(TELEMETRY_URL.into(), 0)]).ok(),
+        TelemetryEndpoints::new(vec![(_TELEMETRY_URL.into(), 0)]).ok(),
         // Protocol ID
         Some("cane"),
         // Properties
@@ -224,20 +222,8 @@ fn testnet_genesis(
     initial_authorities: Vec<(AuraId, GrandpaId)>,
     root_key: AccountId,
     endowed_accounts: Vec<AccountId>,
-    enable_println: bool,
+    _enable_println: bool,
 ) -> GenesisConfig {
-    let built_in_evm_account = H160::from_str("6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b").unwrap();
-    let mut evm_accounts = BTreeMap::new();
-    evm_accounts.insert(
-        built_in_evm_account,
-        pallet_evm::GenesisAccount {
-            nonce: U256::from(0),
-            balance: U256::from(100_000_000 * DOLLARS),
-            storage: Default::default(),
-            code: wasm_binary.to_vec(),
-        },
-    );
-
     const ENDOWMENT: Balance = 100_000_000 * DOLLARS;
 
     GenesisConfig {
@@ -263,18 +249,7 @@ fn testnet_genesis(
                 .map(|x| (x.1.clone(), 1))
                 .collect(),
         },
-        pallet_contracts: ContractsConfig {
-            // println should only be enabled on development chains
-            current_schedule: pallet_contracts::Schedule::default()
-                .enable_println(enable_println),
-        },
-        pallet_sudo: SudoConfig {
-            key: root_key,
-        },
-        pallet_evm: EVMConfig {
-            accounts: evm_accounts,
-        },
-        pallet_ethereum: EthereumConfig {},
+        pallet_sudo: SudoConfig { key: root_key },
         orml_tokens: OrmlTokensConfig {
             endowed_accounts: endowed_accounts
                 .iter()
@@ -303,7 +278,7 @@ fn testnet_genesis(
             instance: (
                 get_account_id_from_seed::<sr25519::Public>("Alice"),
                 "currency token instance".as_bytes().to_vec(),
-            )
+            ),
         },
     }
 }
