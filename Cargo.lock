@@ -7729,7 +7729,7 @@ dependencies = [
 
 [[package]]
 name = "sugarfunge-node"
-version = "0.0.1"
+version = "0.1.0"
 dependencies = [
  "fc-consensus",
  "fc-db",
@@ -7810,7 +7810,7 @@ dependencies = [
 
 [[package]]
 name = "sugarfunge-runtime"
-version = "0.0.1"
+version = "0.1.0"
 dependencies = [
  "fp-rpc",
  "frame-executive",

@@ -1,6 +1,6 @@
 [package]
 name = "sugarfunge-node"
-version = "0.0.1"
+version = "0.1.0"
 authors = ["SugarFunge Developers"]
 edition = "2018"
 license = 'GPL-3.0'
@@ -68,7 +68,7 @@ fc-rpc-core = { git = "https://github.com/web3gamesofficial/frontier", branch = 
 # frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
 # frame-benchmarking-cli = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
 
-sugarfunge-runtime = { version = "0.0.1", path = "../runtime" }
+sugarfunge-runtime = { version = "0.1.0", path = "../runtime" }
 
 [build-dependencies]
 substrate-build-script-utils = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
