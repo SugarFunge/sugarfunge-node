@@ -47,6 +47,7 @@ use pallet_transaction_payment::CurrencyAdapter;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
+pub use sugarfunge_nft::Call as NftCall;
 
 /// Constant values used within the runtime.
 mod constants;
@@ -321,7 +322,7 @@ impl pallet_scheduler::Config for Runtime {
 }
 
 parameter_type_with_key! {
-    pub ExistentialDeposits: |currency_id: CurrencyId| -> Balance {
+    pub ExistentialDeposits: |_currency_id: CurrencyId| -> Balance {
         Zero::zero()
     };
 }
