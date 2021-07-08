@@ -86,6 +86,7 @@ impl TryFrom<u8> for TokenSymbol {
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum CurrencyId {
     Token(TokenSymbol),
+    Id(u64),
 }
 
 impl CurrencyId {
@@ -128,22 +129,23 @@ impl TryFrom<[u8; 32]> for CurrencyId {
 
 /// Note the pre-deployed ERC20 contracts depend on `CurrencyId` implementation,
 /// and need to be updated if any change.
-impl Into<[u8; 32]> for CurrencyId {
-    fn into(self) -> [u8; 32] {
-        let mut bytes = [0u8; 32];
-        match self {
-            CurrencyId::Token(token) => {
-                bytes[30] = token as u8;
-            }
-        }
-        bytes
-    }
-}
+// impl Into<[u8; 32]> for CurrencyId {
+//     fn into(self) -> [u8; 32] {
+//         let mut bytes = [0u8; 32];
+//         match self {
+//             CurrencyId::Token(token) => {
+//                 bytes[30] = token as u8;
+//             }
+//         }
+//         bytes
+//     }
+// }
 
 impl Into<u64> for CurrencyId {
     fn into(self) -> u64 {
         match self {
             CurrencyId::Token(token) => token as u64,
+            CurrencyId::Id(id) => id,
         }
     }
 }

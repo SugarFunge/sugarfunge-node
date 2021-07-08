@@ -48,6 +48,7 @@ use pallet_transaction_payment::CurrencyAdapter;
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 pub use sugarfunge_nft::Call as NFTCall;
+pub use sugarfunge_currency_token::Call as CurrencyCall;
 
 /// Constant values used within the runtime.
 mod constants;
