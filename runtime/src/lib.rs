@@ -48,7 +48,7 @@ use pallet_transaction_payment::CurrencyAdapter;
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 pub use sugarfunge_nft::Call as NFTCall;
-pub use sugarfunge_currency_token::Call as CurrencyCall;
+pub use sugarfunge_currency::Call as CurrencyCall;
 
 /// Constant values used within the runtime.
 mod constants;
@@ -362,7 +362,7 @@ parameter_types! {
     pub const CreateCurrencyInstanceDeposit: Balance = 500 * MILLICENTS;
 }
 
-impl sugarfunge_tokens::Config for Runtime {
+impl sugarfunge_token::Config for Runtime {
     type Event = Event;
     type CreateInstanceDeposit = CreateInstanceDeposit;
     type Currency = Balances;
@@ -375,7 +375,7 @@ parameter_types! {
     pub const DexModuleId: PalletId = PalletId(*b"sug/dexm");
 }
 
-impl sugarfunge_currency_token::Config for Runtime {
+impl sugarfunge_currency::Config for Runtime {
     type Event = Event;
     type PalletId = CurrencyTokenModuleId;
     type Currency = OrmlCurrencies;
@@ -416,8 +416,8 @@ construct_runtime!(
         OrmlCurrencies: orml_currencies::{Pallet, Storage, Call, Event<T>},
 
         // SugarFunge pallets
-        Tokens: sugarfunge_tokens::{Pallet, Call, Storage, Event<T>},
-        CurrencyToken: sugarfunge_currency_token::{Pallet, Call, Storage, Event<T>, Config<T>},
+        Token: sugarfunge_token::{Pallet, Call, Storage, Event<T>},
+        Currency: sugarfunge_currency::{Pallet, Call, Storage, Event<T>, Config<T>},
         Dex: sugarfunge_dex::{Pallet, Call, Storage, Event<T>},
         NFT: sugarfunge_nft::{Pallet, Call, Storage, Event<T>},
     }

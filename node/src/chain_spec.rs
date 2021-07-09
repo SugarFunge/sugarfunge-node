@@ -8,7 +8,7 @@ use sp_core::{sr25519, Pair, Public};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{IdentifyAccount, Verify};
 use sugarfunge_runtime::{
-    AccountId, AuraConfig, Balance, BalancesConfig, CurrencyId, CurrencyTokenConfig, GenesisConfig,
+    AccountId, AuraConfig, Balance, BalancesConfig, CurrencyId, CurrencyConfig, GenesisConfig,
     GrandpaConfig, OrmlTokensConfig, Signature, SudoConfig, SystemConfig, TokenSymbol, DOLLARS,
     WASM_BINARY,
 };
@@ -274,7 +274,7 @@ fn testnet_genesis(
                 })
                 .collect(),
         },
-        sugarfunge_currency_token: CurrencyTokenConfig {
+        sugarfunge_currency: CurrencyConfig {
             instance: (
                 get_account_id_from_seed::<sr25519::Public>("Alice"),
                 "currency token instance".as_bytes().to_vec(),

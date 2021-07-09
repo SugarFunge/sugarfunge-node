@@ -56,8 +56,7 @@ pub type BlockId = generic::BlockId<Block>;
 /// Signed version of Balance
 pub type Amount = i128;
 
-///Currency ID
-// pub type CurrencyId = u64;
+pub type TokenId = u64;
 
 #[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
@@ -68,64 +67,64 @@ pub enum TokenSymbol {
     BTC = 3,
 }
 
-impl TryFrom<u8> for TokenSymbol {
-    type Error = ();
+// impl TryFrom<u8> for TokenSymbol {
+//     type Error = ();
 
-    fn try_from(v: u8) -> Result<Self, Self::Error> {
-        match v {
-            0 => Ok(TokenSymbol::SUGAR),
-            1 => Ok(TokenSymbol::DOT),
-            2 => Ok(TokenSymbol::ETH),
-            3 => Ok(TokenSymbol::BTC),
-            _ => Err(()),
-        }
-    }
-}
+//     fn try_from(v: u8) -> Result<Self, Self::Error> {
+//         match v {
+//             0 => Ok(TokenSymbol::SUGAR),
+//             1 => Ok(TokenSymbol::DOT),
+//             2 => Ok(TokenSymbol::ETH),
+//             3 => Ok(TokenSymbol::BTC),
+//             _ => Err(()),
+//         }
+//     }
+// }
 
 #[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum CurrencyId {
     Token(TokenSymbol),
-    Id(u64),
+    Id(TokenId),
 }
 
-impl CurrencyId {
-    pub fn is_token_currency_id(&self) -> bool {
-        matches!(self, CurrencyId::Token(_))
-    }
-}
+// impl CurrencyId {
+//     pub fn is_token_currency_id(&self) -> bool {
+//         matches!(self, CurrencyId::Token(_))
+//     }
+// }
 
-impl TryFrom<Vec<u8>> for CurrencyId {
-    type Error = ();
-    fn try_from(v: Vec<u8>) -> Result<CurrencyId, ()> {
-        match v.as_slice() {
-            b"SUGAR" => Ok(CurrencyId::Token(TokenSymbol::SUGAR)),
-            b"DOT" => Ok(CurrencyId::Token(TokenSymbol::DOT)),
-            b"ETH" => Ok(CurrencyId::Token(TokenSymbol::ETH)),
-            b"BTC" => Ok(CurrencyId::Token(TokenSymbol::BTC)),
-            _ => Err(()),
-        }
-    }
-}
+// impl TryFrom<Vec<u8>> for CurrencyId {
+//     type Error = ();
+//     fn try_from(v: Vec<u8>) -> Result<CurrencyId, ()> {
+//         match v.as_slice() {
+//             b"SUGAR" => Ok(CurrencyId::Token(TokenSymbol::SUGAR)),
+//             b"DOT" => Ok(CurrencyId::Token(TokenSymbol::DOT)),
+//             b"ETH" => Ok(CurrencyId::Token(TokenSymbol::ETH)),
+//             b"BTC" => Ok(CurrencyId::Token(TokenSymbol::BTC)),
+//             _ => Err(()),
+//         }
+//     }
+// }
 
 /// Note the pre-deployed ERC20 contracts depend on `CurrencyId` implementation,
 /// and need to be updated if any change.
-impl TryFrom<[u8; 32]> for CurrencyId {
-    type Error = ();
+// impl TryFrom<[u8; 32]> for CurrencyId {
+//     type Error = ();
 
-    fn try_from(v: [u8; 32]) -> Result<Self, Self::Error> {
-        if !v.starts_with(&[0u8; 29][..]) {
-            return Err(());
-        }
+//     fn try_from(v: [u8; 32]) -> Result<Self, Self::Error> {
+//         if !v.starts_with(&[0u8; 29][..]) {
+//             return Err(());
+//         }
 
-        // token
-        if v[29] == 0 && v[31] == 0 {
-            return v[30].try_into().map(CurrencyId::Token);
-        }
+//         // token
+//         if v[29] == 0 && v[31] == 0 {
+//             return v[30].try_into().map(CurrencyId::Token);
+//         }
 
-        Err(())
-    }
-}
+//         Err(())
+//     }
+// }
 
 /// Note the pre-deployed ERC20 contracts depend on `CurrencyId` implementation,
 /// and need to be updated if any change.

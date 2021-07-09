@@ -1,5 +1,5 @@
 [package]
-name = "sugarfunge-currency-token"
+name = "sugarfunge-currency"
 version = "0.1.0"
 authors = ["SugarFunge Developers"]
 edition = "2018"
@@ -18,7 +18,7 @@ sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-
 orml-traits = { version = "0.4.1-dev", default-features = false, git = "https://github.com/open-web3-stack/open-runtime-module-library.git", branch = "master" }
 
 primitives = { package = "sugarfunge-primitives", path = "../../primitives", default-features = false }
-token = { package = "sugarfunge-tokens", path = "../tokens", default-features = false }
+token = { package = "sugarfunge-token", path = "../token", default-features = false }
 
 [features]
 default = ["std"]

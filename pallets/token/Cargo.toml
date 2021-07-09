@@ -1,5 +1,5 @@
 [package]
-name = 'sugarfunge-tokens'
+name = 'sugarfunge-token'
 version = '0.1.0'
 authors = ["SugarFunge Developers"]
 edition = "2018"

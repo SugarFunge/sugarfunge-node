@@ -7391,7 +7391,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1e81da0851ada1f3e9d4312c704aa4f8806f0f9d69faaf8df2f3464b4a9437c2"
 
 [[package]]
-name = "sugarfunge-currency-token"
+name = "sugarfunge-currency"
 version = "0.1.0"
 dependencies = [
  "frame-support",
@@ -7404,7 +7404,7 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "sugarfunge-primitives",
- "sugarfunge-tokens",
+ "sugarfunge-token",
 ]
 
 [[package]]
@@ -7424,9 +7424,9 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "sugarfunge-currency-token",
+ "sugarfunge-currency",
  "sugarfunge-primitives",
- "sugarfunge-tokens",
+ "sugarfunge-token",
 ]
 
 [[package]]
@@ -7441,7 +7441,7 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "sugarfunge-primitives",
- "sugarfunge-tokens",
+ "sugarfunge-token",
 ]
 
 [[package]]
@@ -7558,16 +7558,16 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder",
- "sugarfunge-currency-token",
+ "sugarfunge-currency",
  "sugarfunge-dex",
  "sugarfunge-extensions-ce",
  "sugarfunge-nft",
  "sugarfunge-primitives",
- "sugarfunge-tokens",
+ "sugarfunge-token",
 ]
 
 [[package]]
-name = "sugarfunge-tokens"
+name = "sugarfunge-token"
 version = "0.1.0"
 dependencies = [
  "frame-support",

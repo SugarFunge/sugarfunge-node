@@ -58,8 +58,8 @@ primitives = { package = "sugarfunge-primitives", path = "../primitives", defaul
 chain-extension = { package = "sugarfunge-extensions-ce", path = "./extensions/ce", default-features = false }
 
 # local pallet
-sugarfunge-tokens = { default-features = false, path = "../pallets/tokens" }
-sugarfunge-currency-token = { default-features = false, path = "../pallets/currency-token" }
+sugarfunge-token = { default-features = false, path = "../pallets/token" }
+sugarfunge-currency = { default-features = false, path = "../pallets/currency" }
 sugarfunge-dex = { default-features = false, path = "../pallets/dex" }
 sugarfunge-nft = { default-features = false, path = "../pallets/nft" }
 
@@ -103,8 +103,8 @@ std = [
 	"orml-tokens/std",
 
 	"chain-extension/std",
-	"sugarfunge-tokens/std",
-	"sugarfunge-currency-token/std",
+	"sugarfunge-token/std",
+	"sugarfunge-currency/std",
 	"sugarfunge-dex/std",
 	"sugarfunge-nft/std",
 ]

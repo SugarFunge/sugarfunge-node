@@ -1,5 +1,5 @@
-use crate as sugarfunge_tokens;
-use frame_support::parameter_types;
+use crate as sugarfunge_currencies;
+use frame_support::{parameter_types, PalletId};
 use frame_system as system;
 use sp_core::H256;
 use sp_runtime::{
@@ -18,7 +18,7 @@ frame_support::construct_runtime!(
         UncheckedExtrinsic = UncheckedExtrinsic,
     {
         System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-        Tokens: sugarfunge_tokens::{Pallet, Call, Storage, Event<T>},
+        CurrencyToken: sugarfunge_currencies::{Pallet, Call, Storage, Event<T>},
     }
 );
 
@@ -52,11 +52,15 @@ impl system::Config for Test {
     type SS58Prefix = SS58Prefix;
 }
 
-impl sugarfunge_tokens::Config for Test {
+parameter_types! {
+    pub const CurrencyTokenModuleId: PalletId = PalletId(*b"w3g/curr");
+    pub const DexModuleId: PalletId = PalletId(*b"w3g/dexm");
+}
+
+impl sugarfunge_currency_token::Config for Test {
     type Event = Event;
-    // type TokenBalance = u128;
-    type TokenId = u64;
-    type InstanceId = u64;
+    type PalletId = CurrencyTokenModuleId;
+    type Currency = Currencies;
 }
 
 // Build genesis storage according to the mock runtime.
