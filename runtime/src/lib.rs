@@ -49,6 +49,7 @@ pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 pub use sugarfunge_nft::Call as NFTCall;
 pub use sugarfunge_currency::Call as CurrencyCall;
+pub use orml_currencies::Call as OrmlCurrenyCall;
 
 /// Constant values used within the runtime.
 mod constants;
