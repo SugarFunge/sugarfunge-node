@@ -2,17 +2,18 @@
 
 use codec::{Decode, Encode};
 use frame_support::{
-    ensure, PalletId,
     dispatch::{DispatchError, DispatchResult},
-    traits::{Currency, Get, ReservableCurrency, ExistenceRequirement::AllowDeath},
+    ensure,
+    traits::{Currency, ExistenceRequirement::AllowDeath, Get, ReservableCurrency},
+    PalletId,
 };
-use primitives::{Balance, CurrencyId};
 use sp_core::U256;
 use sp_runtime::{
     traits::{AccountIdConversion, One, Zero},
     RuntimeDebug,
 };
 use sp_std::{convert::TryInto, fmt::Debug, prelude::*};
+use sugarfunge_primitives::{Balance, CurrencyId};
 
 pub use pallet::*;
 
@@ -34,7 +35,7 @@ pub mod pallet {
     use frame_system::pallet_prelude::*;
 
     #[pallet::config]
-    pub trait Config: frame_system::Config + currency::Config {
+    pub trait Config: frame_system::Config + sugarfunge_currency::Config {
         type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
         type PalletId: Get<PalletId>;
@@ -67,7 +68,7 @@ pub mod pallet {
         Blake2_128Concat,
         T::TokenId,
         Balance,
-        ValueQuery
+        ValueQuery,
     >;
 
     #[pallet::storage]
@@ -79,7 +80,7 @@ pub mod pallet {
         Blake2_128Concat,
         T::TokenId,
         Balance,
-        ValueQuery
+        ValueQuery,
     >;
 
     #[pallet::event]
@@ -163,10 +164,11 @@ pub mod pallet {
             let deposit = T::CreateExchangeDeposit::get();
             <T as Config>::Currency::transfer(&who, &fund_account, deposit, AllowDeath)?;
 
-            let lp_instance = token::Pallet::<T>::do_create_instance(&fund_account, [].to_vec())?;
+            let lp_instance =
+                sugarfunge_token::Pallet::<T>::do_create_instance(&fund_account, [].to_vec())?;
 
             let (currency_instance, currency_token) =
-                currency::Pallet::<T>::get_currency_token(currency_id)?;
+                sugarfunge_currency::Pallet::<T>::get_currency_token(currency_id)?;
 
             let new_exchange = Exchange {
                 creator: who.clone(),
@@ -330,20 +332,27 @@ impl<T: Config> Pallet<T> {
             let currency_amount = Self::get_buy_price(amount_out, currency_reserve, token_reserve)?;
 
             total_currency = total_currency.saturating_add(currency_amount);
-            ensure!(total_currency <= max_currency, Error::<T>::MaxCurrencyAmountExceeded);
+            ensure!(
+                total_currency <= max_currency,
+                Error::<T>::MaxCurrencyAmountExceeded
+            );
 
             amounts_in[i] = currency_amount;
 
-            CurrencyReserves::<T>::try_mutate(exchange_id, token_id, |currency_reserve| -> DispatchResult {
-                *currency_reserve = currency_reserve
-                    .checked_add(currency_amount)
-                    .ok_or(Error::<T>::Overflow)?;
-                Ok(())
-            })?;
+            CurrencyReserves::<T>::try_mutate(
+                exchange_id,
+                token_id,
+                |currency_reserve| -> DispatchResult {
+                    *currency_reserve = currency_reserve
+                        .checked_add(currency_amount)
+                        .ok_or(Error::<T>::Overflow)?;
+                    Ok(())
+                },
+            )?;
         }
 
         // Transfer currency token to exchange vault
-        token::Pallet::<T>::do_transfer_from(
+        sugarfunge_token::Pallet::<T>::do_transfer_from(
             who,
             who,
             &exchange.vault,
@@ -353,7 +362,7 @@ impl<T: Config> Pallet<T> {
         )?;
 
         // Send Tokens all tokens purchased
-        token::Pallet::<T>::do_batch_transfer_from(
+        sugarfunge_token::Pallet::<T>::do_batch_transfer_from(
             &exchange.vault,
             &exchange.vault,
             &to,
@@ -409,18 +418,25 @@ impl<T: Config> Pallet<T> {
             total_currency = total_currency.saturating_add(currency_amount);
             amounts_out[i] = currency_amount;
 
-            CurrencyReserves::<T>::try_mutate(exchange_id, token_id, |currency_reserve| -> DispatchResult {
-                *currency_reserve = currency_reserve
-                    .checked_sub(currency_amount)
-                    .ok_or(Error::<T>::Overflow)?;
-                Ok(())
-            })?;
+            CurrencyReserves::<T>::try_mutate(
+                exchange_id,
+                token_id,
+                |currency_reserve| -> DispatchResult {
+                    *currency_reserve = currency_reserve
+                        .checked_sub(currency_amount)
+                        .ok_or(Error::<T>::Overflow)?;
+                    Ok(())
+                },
+            )?;
         }
 
-        ensure!(total_currency >= min_currency, Error::<T>::InsufficientCurrencyAmount);
+        ensure!(
+            total_currency >= min_currency,
+            Error::<T>::InsufficientCurrencyAmount
+        );
 
         // Transfer the tokens to sell to exchange vault
-        token::Pallet::<T>::do_batch_transfer_from(
+        sugarfunge_token::Pallet::<T>::do_batch_transfer_from(
             who,
             who,
             &exchange.vault,
@@ -430,7 +446,7 @@ impl<T: Config> Pallet<T> {
         )?;
 
         // Transfer currency here
-        token::Pallet::<T>::do_transfer_from(
+        sugarfunge_token::Pallet::<T>::do_transfer_from(
             &exchange.vault,
             &exchange.vault,
             &to,
@@ -513,19 +529,27 @@ impl<T: Config> Pallet<T> {
                     (fixed_currency_amount.saturating_mul(total_liquidity)) / currency_reserve;
                 currency_amounts[i] = currency_amount;
 
-                CurrencyReserves::<T>::try_mutate(exchange_id, token_id, |currency_reserve| -> DispatchResult {
-                    *currency_reserve = currency_reserve
-                        .checked_add(currency_amount)
-                        .ok_or(Error::<T>::Overflow)?;
-                    Ok(())
-                })?;
+                CurrencyReserves::<T>::try_mutate(
+                    exchange_id,
+                    token_id,
+                    |currency_reserve| -> DispatchResult {
+                        *currency_reserve = currency_reserve
+                            .checked_add(currency_amount)
+                            .ok_or(Error::<T>::Overflow)?;
+                        Ok(())
+                    },
+                )?;
 
-                TotalSupplies::<T>::try_mutate(exchange_id, token_id, |total_supply| -> DispatchResult {
-                    *total_supply = total_liquidity
-                        .checked_add(liquidities_to_mint[i])
-                        .ok_or(Error::<T>::Overflow)?;
-                    Ok(())
-                })?;
+                TotalSupplies::<T>::try_mutate(
+                    exchange_id,
+                    token_id,
+                    |total_supply| -> DispatchResult {
+                        *total_supply = total_liquidity
+                            .checked_add(liquidities_to_mint[i])
+                            .ok_or(Error::<T>::Overflow)?;
+                        Ok(())
+                    },
+                )?;
             } else {
                 let max_currency = max_currencies[i];
 
@@ -542,12 +566,14 @@ impl<T: Config> Pallet<T> {
                 CurrencyReserves::<T>::mutate(exchange_id, token_id, |currency_reserve| {
                     *currency_reserve = max_currency
                 });
-                TotalSupplies::<T>::mutate(exchange_id, token_id, |total_supply| *total_supply = max_currency);
+                TotalSupplies::<T>::mutate(exchange_id, token_id, |total_supply| {
+                    *total_supply = max_currency
+                });
             }
         }
 
         // Transfer the tokens to add to the exchange liquidity pools
-        token::Pallet::<T>::do_batch_transfer_from(
+        sugarfunge_token::Pallet::<T>::do_batch_transfer_from(
             who,
             who,
             &exchange.vault,
@@ -557,7 +583,7 @@ impl<T: Config> Pallet<T> {
         )?;
 
         // Mint liquidity pool tokens
-        token::Pallet::<T>::do_batch_mint(
+        sugarfunge_token::Pallet::<T>::do_batch_mint(
             &exchange.vault,
             &to,
             exchange.lp_instance,
@@ -566,7 +592,7 @@ impl<T: Config> Pallet<T> {
         )?;
 
         // Transfer all currency to this contract
-        token::Pallet::<T>::do_transfer_from(
+        sugarfunge_token::Pallet::<T>::do_transfer_from(
             &who,
             &who,
             &exchange.vault,
@@ -644,23 +670,31 @@ impl<T: Config> Pallet<T> {
             token_amounts[i] = token_amount;
             currency_amounts[i] = currency_amount;
 
-            CurrencyReserves::<T>::try_mutate(exchange_id, token_id, |currency_reserve| -> DispatchResult {
-                *currency_reserve = currency_reserve
-                    .checked_sub(currency_amount)
-                    .ok_or(Error::<T>::Overflow)?;
-                Ok(())
-            })?;
+            CurrencyReserves::<T>::try_mutate(
+                exchange_id,
+                token_id,
+                |currency_reserve| -> DispatchResult {
+                    *currency_reserve = currency_reserve
+                        .checked_sub(currency_amount)
+                        .ok_or(Error::<T>::Overflow)?;
+                    Ok(())
+                },
+            )?;
 
-            TotalSupplies::<T>::try_mutate(exchange_id, token_id, |total_supply| -> DispatchResult {
-                *total_supply = total_liquidity
-                    .checked_sub(liquidity)
-                    .ok_or(Error::<T>::Overflow)?;
-                Ok(())
-            })?;
+            TotalSupplies::<T>::try_mutate(
+                exchange_id,
+                token_id,
+                |total_supply| -> DispatchResult {
+                    *total_supply = total_liquidity
+                        .checked_sub(liquidity)
+                        .ok_or(Error::<T>::Overflow)?;
+                    Ok(())
+                },
+            )?;
         }
 
         // Transfer the liquidity pool tokens to burn to exchange vault
-        token::Pallet::<T>::do_batch_transfer_from(
+        sugarfunge_token::Pallet::<T>::do_batch_transfer_from(
             who,
             who,
             &exchange.vault,
@@ -670,7 +704,7 @@ impl<T: Config> Pallet<T> {
         )?;
 
         // Burn liquidity pool tokens for offchain supplies
-        token::Pallet::<T>::do_batch_burn(
+        sugarfunge_token::Pallet::<T>::do_batch_burn(
             &exchange.vault,
             &exchange.vault,
             exchange.lp_instance,
@@ -679,7 +713,7 @@ impl<T: Config> Pallet<T> {
         )?;
 
         // Transfer total currency
-        token::Pallet::<T>::do_transfer_from(
+        sugarfunge_token::Pallet::<T>::do_transfer_from(
             &exchange.vault,
             &exchange.vault,
             &to,
@@ -689,7 +723,7 @@ impl<T: Config> Pallet<T> {
         )?;
 
         // Transfer all Tokens ids
-        token::Pallet::<T>::do_batch_transfer_from(
+        sugarfunge_token::Pallet::<T>::do_batch_transfer_from(
             &exchange.vault,
             &exchange.vault,
             &to,
@@ -774,12 +808,14 @@ impl<T: Config> Pallet<T> {
 
         if n == 1 {
             let mut token_reserves = vec![Balance::from(0u128); n];
-            token_reserves[0] = token::Pallet::<T>::balance_of(vault, instance_id, token_ids[0]);
+            token_reserves[0] =
+                sugarfunge_token::Pallet::<T>::balance_of(vault, instance_id, token_ids[0]);
             token_reserves
         } else {
             let vaults = vec![vault.clone(); n];
             let token_reserves =
-                token::Pallet::<T>::balance_of_batch(&vaults, instance_id, token_ids).unwrap();
+                sugarfunge_token::Pallet::<T>::balance_of_batch(&vaults, instance_id, token_ids)
+                    .unwrap();
             token_reserves
         }
     }

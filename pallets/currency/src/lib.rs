@@ -7,9 +7,9 @@ use frame_support::{
     PalletId,
 };
 use orml_traits::{MultiCurrency, MultiCurrencyExtended};
-use primitives::{Balance, CurrencyId};
 use sp_runtime::{traits::AccountIdConversion, RuntimeDebug};
 use sp_std::{fmt::Debug, prelude::*};
+use sugarfunge_primitives::{Balance, CurrencyId};
 
 pub use pallet::*;
 
@@ -26,7 +26,7 @@ pub mod pallet {
     use frame_system::pallet_prelude::*;
 
     #[pallet::config]
-    pub trait Config: frame_system::Config + token::Config {
+    pub trait Config: frame_system::Config + sugarfunge_token::Config {
         type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
         #[pallet::constant]
@@ -120,7 +120,7 @@ pub mod pallet {
 
             if !CurrencyTokens::<T>::contains_key(currency_id) {
                 let token_id = Self::convert_to_token_id(currency_id);
-                token::Pallet::<T>::do_create_token(
+                sugarfunge_token::Pallet::<T>::do_create_token(
                     &module_account,
                     instance_id,
                     token_id,
@@ -140,7 +140,7 @@ pub mod pallet {
             CurrencyTokens::<T>::try_mutate(currency_id, |token_info| -> DispatchResult {
                 let info = token_info.as_mut().ok_or(Error::<T>::Unknown)?;
 
-                token::Pallet::<T>::do_mint(
+                sugarfunge_token::Pallet::<T>::do_mint(
                     &module_account,
                     &who,
                     instance_id,
@@ -179,7 +179,7 @@ pub mod pallet {
                 let module_account = Self::account_id();
                 <T as Config>::Currency::transfer(currency_id, &module_account, &who, amount)?;
 
-                token::Pallet::<T>::do_burn(
+                sugarfunge_token::Pallet::<T>::do_burn(
                     &module_account,
                     &who,
                     instance_id,
@@ -224,7 +224,7 @@ impl<T: Config> Pallet<T> {
 
         <T as Config>::Currency::transfer(native_currency_id, &who, &module_account, amount)?;
 
-        let instance_id = token::Pallet::<T>::do_create_instance(&module_account, data)?;
+        let instance_id = sugarfunge_token::Pallet::<T>::do_create_instance(&module_account, data)?;
         CurrencyInstance::<T>::put(instance_id);
 
         Ok(())

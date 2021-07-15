@@ -6,18 +6,31 @@ use sp_runtime::{
     testing::Header,
     traits::{BlakeTwo256, IdentityLookup},
 };
+use sugarfunge_primitives::Balance;
 
-type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
-type Block = frame_system::mocking::MockBlock<Test>;
+parameter_types! {
+    pub const ExistentialDeposit: Balance = 1;
+}
+
+impl pallet_balances::Config for Test {
+    type Balance = Balance;
+    type Event = Event;
+    type DustRemoval = ();
+    type ExistentialDeposit = ExistentialDeposit;
+    type AccountStore = System;
+    type WeightInfo = ();
+    type MaxLocks = ();
+}
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
     pub enum Test where
-        Block = Block,
-        NodeBlock = Block,
-        UncheckedExtrinsic = UncheckedExtrinsic,
+    Block = Block,
+    NodeBlock = Block,
+    UncheckedExtrinsic = UncheckedExtrinsic,
     {
         System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
+        Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
         Token: sugarfunge_token::{Pallet, Call, Storage, Event<T>},
     }
 );
@@ -26,6 +39,9 @@ parameter_types! {
     pub const BlockHashCount: u64 = 250;
     pub const SS58Prefix: u8 = 42;
 }
+
+type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
+type Block = frame_system::mocking::MockBlock<Test>;
 
 impl system::Config for Test {
     type BaseCallFilter = ();
@@ -45,16 +61,22 @@ impl system::Config for Test {
     type BlockHashCount = BlockHashCount;
     type Version = ();
     type PalletInfo = PalletInfo;
-    type AccountData = ();
+    type AccountData = pallet_balances::AccountData<Balance>;
     type OnNewAccount = ();
     type OnKilledAccount = ();
     type SystemWeightInfo = ();
     type SS58Prefix = SS58Prefix;
+    type OnSetCode = ();
+}
+
+parameter_types! {
+    pub const CreateInstanceDeposit: Balance = 0;
 }
 
 impl sugarfunge_token::Config for Test {
     type Event = Event;
-    // type TokenBalance = u128;
+    type CreateInstanceDeposit = CreateInstanceDeposit;
+    type Currency = Balances;
     type TokenId = u64;
     type InstanceId = u64;
 }
