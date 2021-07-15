@@ -1,5 +1,5 @@
 use crate as sugarfunge_currency;
-use frame_support::{parameter_types, PalletId};
+use frame_support::{parameter_types, traits::GenesisBuild, PalletId};
 use frame_system as system;
 use orml_traits::parameter_type_with_key;
 use sp_core::H256;
@@ -7,12 +7,13 @@ use sp_runtime::{
     testing::Header,
     traits::{BlakeTwo256, IdentityLookup, Zero},
 };
-use sugarfunge_primitives::{
-    AccountId, AccountIndex, Amount, Balance, BlockNumber, CurrencyId, Hash, Index, Moment,
-    Signature, TokenSymbol,
-};
+use sugarfunge_primitives::{Amount, Balance, BlockNumber, CurrencyId, TokenSymbol};
 
-const MILLICENTS: Balance = 10_000_000_000_000;
+pub const MILLICENTS: Balance = 10_000_000_000_000;
+pub const CENTS: Balance = 1_000 * MILLICENTS; // assume this is worth about a cent.
+pub const DOLLARS: Balance = 100 * CENTS;
+
+pub const SUGAR: CurrencyId = CurrencyId::Token(TokenSymbol::SUGAR);
 
 parameter_types! {
     pub const CreateInstanceDeposit: Balance = 500 * MILLICENTS;
@@ -23,11 +24,10 @@ parameter_types! {
 
 parameter_types! {
     pub const ExistentialDeposit: u128 = 500;
-    pub const MaxLocks: u32 = 50;
 }
 
 impl pallet_balances::Config for Test {
-    type MaxLocks = MaxLocks;
+    type MaxLocks = ();
     /// The type for recording an account's balance.
     type Balance = Balance;
     /// The ubiquitous event type.
@@ -52,7 +52,7 @@ impl orml_tokens::Config for Test {
     type WeightInfo = ();
     type ExistentialDeposits = ExistentialDeposits;
     type OnDust = ();
-    type MaxLocks = MaxLocks;
+    type MaxLocks = ();
 }
 
 parameter_types! {
@@ -140,9 +140,26 @@ impl sugarfunge_currency::Config for Test {
 }
 
 // Build genesis storage according to the mock runtime.
+// pub fn new_test_ext() -> sp_io::TestExternalities {
+//     system::GenesisConfig::default()
+//         .build_storage::<Test>()
+//         .unwrap()
+//         .into()
+// }
+
 pub fn new_test_ext() -> sp_io::TestExternalities {
-    system::GenesisConfig::default()
+    let mut t = frame_system::GenesisConfig::default()
         .build_storage::<Test>()
-        .unwrap()
-        .into()
+        .unwrap();
+    pallet_balances::GenesisConfig::<Test> {
+        balances: vec![(1, 100 * DOLLARS), (2, 100 * DOLLARS)],
+    }
+    .assimilate_storage(&mut t)
+    .unwrap();
+    sugarfunge_currency::GenesisConfig::<Test> {
+        instance: (1, [].to_vec()),
+    }
+    .assimilate_storage(&mut t)
+    .unwrap();
+    t.into()
 }

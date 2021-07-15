@@ -1,16 +1,25 @@
 use super::*;
 use crate::mock::*;
-use frame_support::{assert_noop, assert_ok};
+use frame_support::assert_ok;
 
 fn last_event() -> mock::Event {
-    frame_system::Pallet::<Test>::events().pop().expect("Event expected").event
+    frame_system::Pallet::<Test>::events()
+        .pop()
+        .expect("Event expected")
+        .event
 }
 
 pub fn before_exchange() {
     assert_ok!(CurrencyToken::mint(Origin::signed(1), SUGAR, 500 * CENTS));
 
     assert_ok!(Token::create_instance(Origin::signed(1), [0].to_vec()));
-    assert_ok!(Token::create_token(Origin::signed(1), 1, 1, false, [0].to_vec()));
+    assert_ok!(Token::create_token(
+        Origin::signed(1),
+        1,
+        1,
+        false,
+        [0].to_vec()
+    ));
     assert_ok!(Token::mint(Origin::signed(1), 1, 1, 1, 50000 * CENTS));
 }
 

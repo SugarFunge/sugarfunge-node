@@ -1,4 +1,4 @@
-use crate as sugarfunge_nft;
+// use crate as sugarfunge_nft;
 use frame_support::parameter_types;
 use frame_system as system;
 use sp_core::H256;
@@ -54,9 +54,9 @@ impl system::Config for Test {
 }
 
 // Build genesis storage according to the mock runtime.
-pub fn new_test_ext() -> sp_io::TestExternalities {
-    system::GenesisConfig::default()
-        .build_storage::<Test>()
-        .unwrap()
-        .into()
-}
+// pub fn new_test_ext() -> sp_io::TestExternalities {
+//     system::GenesisConfig::default()
+//         .build_storage::<Test>()
+//         .unwrap()
+//         .into()
+// }

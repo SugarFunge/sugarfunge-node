@@ -1,14 +1,14 @@
-use super::*;
 use crate as sugarfunge_dex;
 use frame_support::{
     construct_runtime, parameter_types,
     traits::{GenesisBuild, OnFinalize, OnInitialize},
+    PalletId,
 };
 use orml_traits::parameter_type_with_key;
 use sp_core::H256;
 use sp_runtime::{
     testing::Header,
-    traits::{BlakeTwo256, IdentityLookup},
+    traits::{BlakeTwo256, IdentityLookup, Zero},
 };
 use sugarfunge_primitives::{Amount, Balance, BlockNumber, CurrencyId, TokenSymbol};
 
@@ -92,7 +92,7 @@ pub type AdaptedBasicCurrency =
 
 impl orml_currencies::Config for Test {
     type Event = Event;
-    type MultiCurrency = Tokens;
+    type MultiCurrency = OrmlTokens;
     type NativeCurrency = AdaptedBasicCurrency;
     type GetNativeCurrencyId = GetNativeCurrencyId;
     type WeightInfo = ();
@@ -121,12 +121,12 @@ parameter_types! {
 impl sugarfunge_currency::Config for Test {
     type Event = Event;
     type PalletId = CurrencyTokenModuleId;
-    type Currency = Currencies;
+    type Currency = OrmlCurrencies;
     type CreateCurrencyInstanceDeposit = CreateCurrencyInstanceDeposit;
     type GetNativeCurrencyId = GetNativeCurrencyId;
 }
 
-impl Config for Test {
+impl sugarfunge_dex::Config for Test {
     type Event = Event;
     type PalletId = DexModuleId;
     type CreateExchangeDeposit = CreateExchangeDeposit;
@@ -142,8 +142,8 @@ construct_runtime!(
     {
         System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
         Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-        Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>},
-        Currencies: orml_currencies::{Pallet, Call, Event<T>},
+        OrmlTokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>},
+        OrmlCurrencies: orml_currencies::{Pallet, Call, Event<T>},
         Dex: sugarfunge_dex::{Pallet, Call, Storage, Event<T>},
         Token: sugarfunge_token::{Pallet, Call, Storage, Event<T>},
         CurrencyToken: sugarfunge_currency::{Pallet, Call, Storage, Event<T>},
