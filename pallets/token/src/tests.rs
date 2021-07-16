@@ -6,7 +6,9 @@ fn test_create_token_works() {
     new_test_ext().execute_with(|| {
         let data = vec![0, 1];
         assert_ok!(Token::do_create_instance(&1, data));
-        println!("token: {:?}", Tokens::<Test>::get(1, 2));
+        let uri = vec![0, 1];
+        assert_ok!(Token::do_create_token(&1, 0, 2, true, uri));
+        println!("token: {:?}", Tokens::<Test>::get(0, 2));
     })
 }
 

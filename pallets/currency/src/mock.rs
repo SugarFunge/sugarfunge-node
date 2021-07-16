@@ -1,5 +1,9 @@
 use crate as sugarfunge_currency;
-use frame_support::{parameter_types, traits::GenesisBuild, PalletId};
+use frame_support::{
+    parameter_types,
+    traits::{GenesisBuild, OnFinalize, OnInitialize},
+    PalletId,
+};
 use frame_system as system;
 use orml_traits::parameter_type_with_key;
 use sp_core::H256;
@@ -10,7 +14,7 @@ use sp_runtime::{
 use sugarfunge_primitives::{Amount, Balance, BlockNumber, CurrencyId, TokenSymbol};
 
 pub const MILLICENTS: Balance = 10_000_000_000_000;
-pub const CENTS: Balance = 1_000 * MILLICENTS; // assume this is worth about a cent.
+pub const CENTS: Balance = 1_000 * MILLICENTS;
 pub const DOLLARS: Balance = 100 * CENTS;
 
 pub const SUGAR: CurrencyId = CurrencyId::Token(TokenSymbol::SUGAR);
@@ -27,15 +31,13 @@ parameter_types! {
 }
 
 impl pallet_balances::Config for Test {
-    type MaxLocks = ();
-    /// The type for recording an account's balance.
     type Balance = Balance;
-    /// The ubiquitous event type.
     type Event = Event;
     type DustRemoval = ();
     type ExistentialDeposit = ExistentialDeposit;
     type AccountStore = System;
     type WeightInfo = pallet_balances::weights::SubstrateWeight<Test>;
+    type MaxLocks = ();
 }
 
 parameter_type_with_key! {
@@ -139,14 +141,6 @@ impl sugarfunge_currency::Config for Test {
     type GetNativeCurrencyId = GetNativeCurrencyId;
 }
 
-// Build genesis storage according to the mock runtime.
-// pub fn new_test_ext() -> sp_io::TestExternalities {
-//     system::GenesisConfig::default()
-//         .build_storage::<Test>()
-//         .unwrap()
-//         .into()
-// }
-
 pub fn new_test_ext() -> sp_io::TestExternalities {
     let mut t = frame_system::GenesisConfig::default()
         .build_storage::<Test>()
@@ -162,4 +156,16 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     .assimilate_storage(&mut t)
     .unwrap();
     t.into()
+}
+
+pub fn run_to_block(n: u64) {
+    while System::block_number() < n {
+        Currency::on_finalize(System::block_number());
+        Balances::on_finalize(System::block_number());
+        System::on_finalize(System::block_number());
+        System::set_block_number(System::block_number() + 1);
+        System::on_initialize(System::block_number());
+        Balances::on_initialize(System::block_number());
+        Currency::on_initialize(System::block_number());
+    }
 }

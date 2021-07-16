@@ -11,7 +11,6 @@ fn last_event() -> mock::Event {
 
 pub fn before_exchange() {
     assert_ok!(CurrencyToken::mint(Origin::signed(1), SUGAR, 500 * CENTS));
-
     assert_ok!(Token::create_instance(Origin::signed(1), [0].to_vec()));
     assert_ok!(Token::create_token(
         Origin::signed(1),
@@ -29,7 +28,6 @@ fn create_exchange_works() {
         before_exchange();
         run_to_block(10);
         assert_ok!(Dex::create_exchange(Origin::signed(1), SUGAR, 1));
-
         assert_eq!(
             last_event(),
             mock::Event::sugarfunge_dex(crate::Event::ExchangeCreated(0, 1)),
@@ -42,9 +40,7 @@ fn add_liquidity_works() {
     new_test_ext().execute_with(|| {
         before_exchange();
         run_to_block(10);
-
         assert_ok!(Dex::create_exchange(Origin::signed(1), SUGAR, 1));
-
         assert_ok!(Dex::add_liquidity(
             Origin::signed(1),
             0,
