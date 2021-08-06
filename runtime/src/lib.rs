@@ -39,6 +39,7 @@ use frame_system::{
     EnsureRoot,
 };
 use orml_currencies::BasicCurrencyAdapter;
+pub use orml_currencies::Call as OrmlCurrencyCall;
 use orml_traits::parameter_type_with_key;
 pub use pallet_balances::Call as BalancesCall;
 use pallet_contracts::weights::WeightInfo;
@@ -47,9 +48,8 @@ use pallet_transaction_payment::CurrencyAdapter;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
-pub use sugarfunge_nft::Call as NFTCall;
 pub use sugarfunge_currency::Call as CurrencyCall;
-pub use orml_currencies::Call as OrmlCurrencyCall;
+pub use sugarfunge_nft::Call as NFTCall;
 
 /// Constant values used within the runtime.
 mod constants;
@@ -190,6 +190,8 @@ impl frame_system::Config for Runtime {
     type OnSetCode = ();
 }
 
+impl pallet_randomness_collective_flip::Config for Runtime {}
+
 impl pallet_aura::Config for Runtime {
     type AuthorityId = AuraId;
 }
@@ -230,10 +232,13 @@ parameter_types! {
     // For weight estimation, we assume that the most locks on an individual account will be 50.
     // This number may need to be adjusted in the future if this assumption no longer holds true.
     pub const MaxLocks: u32 = 50;
+    pub const MaxReserves: u32 = 50;
 }
 
 impl pallet_balances::Config for Runtime {
     type MaxLocks = MaxLocks;
+    type MaxReserves = MaxReserves;
+    type ReserveIdentifier = [u8; 8];
     /// The type for recording an account's balance.
     type Balance = Balance;
     /// The ubiquitous event type.
@@ -293,7 +298,7 @@ impl pallet_contracts::Config for Runtime {
     type RentFraction = RentFraction;
     type SurchargeReward = SurchargeReward;
     type CallStack = [pallet_contracts::Frame<Self>; 31];
-    type WeightPrice = pallet_transaction_payment::Module<Self>;
+    type WeightPrice = pallet_transaction_payment::Pallet<Self>;
     type WeightInfo = pallet_contracts::weights::SubstrateWeight<Self>;
     type ChainExtension = ();
     type DeletionQueueDepth = DeletionQueueDepth;
@@ -352,10 +357,6 @@ impl orml_currencies::Config for Runtime {
     type WeightInfo = ();
 }
 
-impl chain_extension::Config for Runtime {
-    type Randomness = RandomnessCollectiveFlip;
-}
-
 parameter_types! {
     pub const CreateInstanceDeposit: Balance = 500 * MILLICENTS;
     pub const CreateExchangeDeposit: Balance = 500 * MILLICENTS;
@@ -404,7 +405,7 @@ construct_runtime!(
         UncheckedExtrinsic = UncheckedExtrinsic
     {
         System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-        RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Call, Storage},
+        RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Storage},
         Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
         Aura: pallet_aura::{Pallet, Config<T>},
         Grandpa: pallet_grandpa::{Pallet, Call, Storage, Config, Event},
@@ -503,8 +504,9 @@ impl_runtime_apis! {
         fn validate_transaction(
             source: TransactionSource,
             tx: <Block as BlockT>::Extrinsic,
+            block_hash: <Block as BlockT>::Hash,
         ) -> TransactionValidity {
-            Executive::validate_transaction(source, tx)
+            Executive::validate_transaction(source, tx, block_hash)
         }
     }
 
