@@ -83,7 +83,7 @@ pub mod pallet {
     >;
 
     #[pallet::event]
-    #[pallet::metadata(T::AccountId = "AccountId")]
+    // #[pallet::metadata(T::AccountId = "AccountId")]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
         CollectionCreated(CollectionId, T::AccountId),
@@ -165,7 +165,7 @@ pub mod pallet {
 }
 
 /// Collection info
-#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug)]
+#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, scale_info::TypeInfo)]
 pub struct CollectionInfo<AccountId, Balance> {
     /// Class owner
     pub owner: AccountId,
@@ -178,7 +178,7 @@ pub struct CollectionInfo<AccountId, Balance> {
 }
 
 /// Token info
-#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug)]
+#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, scale_info::TypeInfo)]
 pub struct AssetInfo<AccountId> {
     /// Asset owner
     pub owner: AccountId,

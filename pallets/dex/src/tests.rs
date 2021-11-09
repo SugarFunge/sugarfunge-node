@@ -30,7 +30,7 @@ fn create_exchange_works() {
         assert_ok!(Dex::create_exchange(Origin::signed(1), SUGAR, 1));
         assert_eq!(
             last_event(),
-            mock::Event::sugarfunge_dex(crate::Event::ExchangeCreated(0, 1)),
+            mock::Event::Dex(crate::Event::ExchangeCreated(0, 1)),
         );
     })
 }

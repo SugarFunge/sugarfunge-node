@@ -82,7 +82,7 @@ pub mod pallet {
         StorageMap<_, Blake2_128Concat, CurrencyId, TokenInfo<T::InstanceId, T::TokenId, Balance>>;
 
     #[pallet::event]
-    #[pallet::metadata(T::AccountId = "AccountId")]
+    // #[pallet::metadata(T::AccountId = "AccountId")]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
         TokenCreated(CurrencyId, T::AccountId),
@@ -201,7 +201,7 @@ pub mod pallet {
     }
 }
 
-#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug)]
+#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, scale_info::TypeInfo)]
 pub struct TokenInfo<
     InstanceId: Encode + Decode + Clone + Debug + Eq + PartialEq,
     TokenId: Encode + Decode + Clone + Debug + Eq + PartialEq,

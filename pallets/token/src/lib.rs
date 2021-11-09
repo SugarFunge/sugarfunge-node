@@ -24,13 +24,13 @@ mod tests;
 type BalanceOf<T> =
     <<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
-#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug)]
+#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, scale_info::TypeInfo)]
 pub struct Instance<AccountId> {
     owner: AccountId,
     data: Vec<u8>,
 }
 
-#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug)]
+#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, scale_info::TypeInfo)]
 pub struct Token<InstanceId, AccountId> {
     instance_id: InstanceId,
     creator: AccountId,
@@ -38,7 +38,7 @@ pub struct Token<InstanceId, AccountId> {
     uri: Vec<u8>,
 }
 
-#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug)]
+#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, scale_info::TypeInfo)]
 pub struct ApprovalKey<AccountId> {
     owner: AccountId,
     operator: AccountId,
@@ -123,7 +123,7 @@ pub mod pallet {
     >;
 
     #[pallet::event]
-    #[pallet::metadata(T::AccountId = "AccountId")]
+    // #[pallet::metadata(T::AccountId = "AccountId")]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
         InstanceCreated(T::InstanceId, T::AccountId),

@@ -16,7 +16,7 @@ fn currency_mint_works() {
         assert_ok!(Currency::mint(Origin::signed(1), SUGAR, 500 * CENTS));
         assert_eq!(
             last_event(),
-            mock::Event::sugarfunge_currency(crate::Event::TokenMint(SUGAR, 500 * CENTS, 1)),
+            mock::Event::Currency(crate::Event::TokenMint(SUGAR, 500 * CENTS, 1)),
         );
         assert_eq!(Token::balance_of(&1, 0, SUGAR.into()), 500 * CENTS);
     })
@@ -30,7 +30,7 @@ fn currency_burn_works() {
         assert_ok!(Currency::burn(Origin::signed(1), SUGAR, 400 * CENTS));
         assert_eq!(
             last_event(),
-            mock::Event::sugarfunge_currency(crate::Event::TokenBurn(SUGAR, 400 * CENTS, 1)),
+            mock::Event::Currency(crate::Event::TokenBurn(SUGAR, 400 * CENTS, 1)),
         );
         assert_eq!(Token::balance_of(&1, 0, SUGAR.into()), 100 * CENTS);
     })

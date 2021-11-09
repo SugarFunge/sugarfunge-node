@@ -1,7 +1,7 @@
 use crate as sugarfunge_currency;
 use frame_support::{
     parameter_types,
-    traits::{GenesisBuild, OnFinalize, OnInitialize},
+    traits::{GenesisBuild, OnFinalize, OnInitialize, Nothing, Everything},
     PalletId,
 };
 use frame_system as system;
@@ -38,6 +38,8 @@ impl pallet_balances::Config for Test {
     type AccountStore = System;
     type WeightInfo = pallet_balances::weights::SubstrateWeight<Test>;
     type MaxLocks = ();
+    type MaxReserves = ();
+    type ReserveIdentifier = [u8; 8];
 }
 
 parameter_type_with_key! {
@@ -55,6 +57,7 @@ impl orml_tokens::Config for Test {
     type ExistentialDeposits = ExistentialDeposits;
     type OnDust = ();
     type MaxLocks = ();
+    type DustRemovalWhitelist = Nothing;
 }
 
 parameter_types! {
@@ -103,7 +106,7 @@ parameter_types! {
 }
 
 impl system::Config for Test {
-    type BaseCallFilter = ();
+    type BaseCallFilter = Everything;
     type BlockWeights = ();
     type BlockLength = ();
     type DbWeight = ();

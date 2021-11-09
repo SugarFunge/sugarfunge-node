@@ -1,7 +1,7 @@
 use crate as sugarfunge_dex;
 use frame_support::{
     construct_runtime, parameter_types,
-    traits::{GenesisBuild, OnFinalize, OnInitialize},
+    traits::{GenesisBuild, OnFinalize, OnInitialize, Nothing},
     PalletId,
 };
 use orml_traits::parameter_type_with_key;
@@ -27,7 +27,7 @@ parameter_types! {
 }
 
 impl frame_system::Config for Test {
-    type BaseCallFilter = ();
+    type BaseCallFilter = frame_support::traits::Everything;
     type BlockWeights = ();
     type BlockLength = ();
     type Origin = Origin;
@@ -64,6 +64,8 @@ impl pallet_balances::Config for Test {
     type AccountStore = System;
     type WeightInfo = ();
     type MaxLocks = ();
+    type MaxReserves = ();
+    type ReserveIdentifier = [u8; 8];
 }
 
 parameter_type_with_key! {
@@ -81,6 +83,7 @@ impl orml_tokens::Config for Test {
     type ExistentialDeposits = ExistentialDeposits;
     type OnDust = ();
     type MaxLocks = ();
+    type DustRemovalWhitelist = Nothing;
 }
 
 parameter_types! {
