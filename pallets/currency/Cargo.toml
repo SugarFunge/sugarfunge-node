@@ -3,6 +3,7 @@ name = "sugarfunge-currency"
 version = "0.1.0"
 authors = ["SugarFunge Developers"]
 edition = "2018"
+license = "Proprietary"
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false, features = ["derive"] }

@@ -3,7 +3,7 @@ name = "sugarfunge-nft"
 version = "0.1.0"
 authors = ["SugarFunge Developers"]
 edition = "2018"
-license = "Unlicense"
+license = "Proprietary"
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]

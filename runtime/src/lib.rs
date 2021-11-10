@@ -42,7 +42,6 @@ use orml_currencies::BasicCurrencyAdapter;
 pub use orml_currencies::Call as OrmlCurrencyCall;
 use orml_traits::parameter_type_with_key;
 pub use pallet_balances::Call as BalancesCall;
-// use pallet_contracts::weights::WeightInfo;
 pub use pallet_timestamp::Call as TimestampCall;
 use pallet_transaction_payment::CurrencyAdapter;
 #[cfg(any(feature = "std", test))]
@@ -376,7 +375,6 @@ construct_runtime!(
         Grandpa: pallet_grandpa::{Pallet, Call, Storage, Config, Event},
         Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
         TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
-        // Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>},
         Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
         Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>},
         OrmlTokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>},
@@ -538,45 +536,6 @@ impl_runtime_apis! {
             System::account_nonce(account)
         }
     }
-
-    // impl pallet_contracts_rpc_runtime_api::ContractsApi<Block, AccountId, Balance, BlockNumber, Hash>
-    //     for Runtime
-    // {
-    //     fn call(
-    //         origin: AccountId,
-    //         dest: AccountId,
-    //         value: Balance,
-    //         gas_limit: u64,
-    //         input_data: Vec<u8>,
-    //     ) -> pallet_contracts_primitives::ContractExecResult {
-    //         Contracts::bare_call(origin, dest, value, gas_limit, input_data, true)
-    //     }
-
-    //     fn instantiate(
-    //         origin: AccountId,
-    //         endowment: Balance,
-    //         gas_limit: u64,
-    //         code: pallet_contracts_primitives::Code<Hash>,
-    //         data: Vec<u8>,
-    //         salt: Vec<u8>,
-    //     ) -> pallet_contracts_primitives::ContractInstantiateResult<AccountId>
-    //     {
-    //         Contracts::bare_instantiate(origin, endowment, gas_limit, code, data, salt, true)
-    //     }
-
-    //     fn get_storage(
-    //         address: AccountId,
-    //         key: [u8; 32],
-    //     ) -> pallet_contracts_primitives::GetStorageResult {
-    //         Contracts::get_storage(address, key)
-    //     }
-
-    //     fn rent_projection(
-    //         address: AccountId,
-    //     ) -> pallet_contracts_primitives::RentProjectionResult<BlockNumber> {
-    //         Contracts::rent_projection(address)
-    //     }
-    // }
 
     impl pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance> for Runtime {
         fn query_info(

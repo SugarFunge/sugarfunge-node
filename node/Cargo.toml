@@ -3,7 +3,7 @@ name = "sugarfunge-node"
 version = "0.1.0"
 authors = ["SugarFunge Developers"]
 edition = "2018"
-license = 'GPL-3.0'
+license = "Proprietary"
 build = "build.rs"
 
 [package.metadata.docs.rs]
