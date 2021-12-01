@@ -7,6 +7,7 @@ use frame_support::{
     traits::{Currency, ExistenceRequirement::AllowDeath, Get, ReservableCurrency},
     PalletId,
 };
+use scale_info::TypeInfo;
 use sp_core::U256;
 use sp_runtime::{
     traits::{AccountIdConversion, One, Zero},
@@ -282,7 +283,7 @@ pub mod pallet {
     }
 }
 
-#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, scale_info::TypeInfo)]
+#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
 pub struct Exchange<
     InstanceId: Encode + Decode + Clone + Debug + Eq + PartialEq,
     TokenId: Encode + Decode + Clone + Debug + Eq + PartialEq,

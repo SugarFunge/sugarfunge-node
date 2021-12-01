@@ -7,6 +7,7 @@ use frame_support::{
     PalletId,
 };
 use orml_traits::{MultiCurrency, MultiCurrencyExtended};
+use scale_info::TypeInfo;
 use sp_runtime::{traits::AccountIdConversion, RuntimeDebug};
 use sp_std::{fmt::Debug, prelude::*};
 use sugarfunge_primitives::{Balance, CurrencyId};
@@ -82,7 +83,6 @@ pub mod pallet {
         StorageMap<_, Blake2_128Concat, CurrencyId, TokenInfo<T::InstanceId, T::TokenId, Balance>>;
 
     #[pallet::event]
-    // #[pallet::metadata(T::AccountId = "AccountId")]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
         TokenCreated(CurrencyId, T::AccountId),
@@ -201,7 +201,7 @@ pub mod pallet {
     }
 }
 
-#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, scale_info::TypeInfo)]
+#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
 pub struct TokenInfo<
     InstanceId: Encode + Decode + Clone + Debug + Eq + PartialEq,
     TokenId: Encode + Decode + Clone + Debug + Eq + PartialEq,

@@ -6,8 +6,9 @@ use frame_support::{
     ensure,
     traits::{Currency, Get, ReservableCurrency},
 };
+use scale_info::TypeInfo;
 use sp_runtime::{
-    traits::{One, Zero},
+    traits::{One, Zero, AtLeast32BitUnsigned, CheckedAdd, CheckedSub},
     RuntimeDebug,
 };
 use sp_std::prelude::*;
@@ -19,9 +20,6 @@ mod mock;
 
 #[cfg(test)]
 mod tests;
-
-pub type CollectionId = u64;
-pub type AssetId = u64;
 
 type BalanceOf<T> =
     <<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
@@ -41,6 +39,12 @@ pub mod pallet {
         type CreateCollectionDeposit: Get<BalanceOf<Self>>;
 
         type Currency: Currency<Self::AccountId> + ReservableCurrency<Self::AccountId>;
+
+        type CollectionId: Parameter + Member + AtLeast32BitUnsigned + Default + Copy + Into<u128>;
+
+        type TokenId: Parameter + Member + AtLeast32BitUnsigned + Default + Copy + Into<u128> + From<u128>;
+
+        type Balance: Parameter + Member + AtLeast32BitUnsigned + Default + Copy + One + Into<u128> + Into<Self::TokenId> + Into<BalanceOf<Self>>;
     }
 
     #[pallet::pallet]
@@ -49,48 +53,56 @@ pub mod pallet {
 
     #[pallet::storage]
     pub(super) type Collections<T: Config> =
-        StorageMap<_, Blake2_128Concat, CollectionId, CollectionInfo<T::AccountId, BalanceOf<T>>>;
+        StorageMap<_, Blake2_128Concat, T::CollectionId, CollectionInfo<T::AccountId, BalanceOf<T>>>;
 
     #[pallet::storage]
     #[pallet::getter(fn next_collection_id)]
-    pub(super) type NextCollectionId<T: Config> = StorageValue<_, CollectionId, ValueQuery>;
+    pub(super) type NextCollectionId<T: Config> = StorageValue<_, T::CollectionId, ValueQuery>;
 
     #[pallet::storage]
-    pub(super) type NftAssets<T: Config> = StorageDoubleMap<
+    #[pallet::getter(fn tokens)]
+    pub(super) type Tokens<T: Config> = StorageDoubleMap<
         _,
         Blake2_128Concat,
-        CollectionId,
+        T::CollectionId,
         Blake2_128Concat,
-        AssetId,
-        AssetInfo<T::AccountId>,
+        T::TokenId,
+        TokenInfo<T::AccountId>,
     >;
 
     #[pallet::storage]
-    #[pallet::getter(fn next_asset_id)]
-    pub(super) type NextAssetId<T: Config> =
-        StorageMap<_, Blake2_128Concat, CollectionId, AssetId, ValueQuery>;
+    #[pallet::getter(fn next_token_id)]
+    pub(super) type NextTokenId<T: Config> =
+        StorageMap<_, Blake2_128Concat, T::CollectionId, T::TokenId, ValueQuery>;
 
+    /// Token existence check by owner
     #[pallet::storage]
-    #[pallet::getter(fn nft_owner)]
-    pub(super) type NftOwner<T: Config> = StorageDoubleMap<
+    #[pallet::getter(fn token_owner_set)]
+    pub type TokenOwnerSet<T: Config> = StorageNMap<
         _,
-        Blake2_128Concat,
-        T::AccountId,
-        Blake2_128Concat,
-        (CollectionId, AssetId),
+        (
+            NMapKey<Blake2_128Concat, T::AccountId>, // owner
+            NMapKey<Blake2_128Concat, T::CollectionId>,
+            NMapKey<Blake2_128Concat, T::TokenId>,
+        ),
         (),
         ValueQuery,
     >;
 
+    /// Tokens by owner
+    // #[pallet::storage]
+    // #[pallet::getter(fn tokens_by_owner)]
+    // pub type TokensByOwner<T: Config> =
+    //     StorageMap<_, Blake2_128Concat, T::AccountId, (T::CollectionId, T::TokenId)>;
+
     #[pallet::event]
-    // #[pallet::metadata(T::AccountId = "AccountId")]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
-        CollectionCreated(CollectionId, T::AccountId),
-        TokenMint(CollectionId, Vec<AssetId>, T::AccountId),
-        TokenBurned(CollectionId, AssetId, T::AccountId),
-        TokenTransferred(CollectionId, AssetId, T::AccountId, T::AccountId),
-        CollectionDestroyed(CollectionId, T::AccountId),
+        CollectionCreated(T::CollectionId, T::AccountId),
+        TokenMint(T::CollectionId, Vec<T::TokenId>, T::AccountId),
+        TokenBurned(T::CollectionId, T::TokenId, T::AccountId),
+        TokenTransferred(T::CollectionId, T::TokenId, T::AccountId, T::AccountId),
+        CollectionDestroyed(T::CollectionId, T::AccountId),
     }
 
     // Errors inform users that something went wrong.
@@ -99,8 +111,8 @@ pub mod pallet {
         NumOverflow,
         NoAvailableCollectionId,
         CollectionNotFound,
-        NoAvailableAssetId,
-        AssetNotFound,
+        NoAvailableTokenId,
+        TokenNotFound,
         InvalidQuantity,
         NoPermission,
         CannotDestroyCollection,
@@ -126,9 +138,9 @@ pub mod pallet {
         #[pallet::weight(10_000)]
         pub fn mint(
             origin: OriginFor<T>,
-            collection_id: CollectionId,
+            collection_id: T::CollectionId,
             metadata: Vec<u8>,
-            quantity: u32,
+            quantity: T::Balance,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
 
@@ -138,14 +150,28 @@ pub mod pallet {
         }
 
         #[pallet::weight(10_000)]
-        pub fn burn(
+        pub fn transfer(
             origin: OriginFor<T>,
-            collection_id: CollectionId,
-            asset_id: AssetId,
+            to: T::AccountId,
+            collection_id: T::CollectionId,
+            token_id: T::TokenId,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
 
-            Self::do_burn(&who, collection_id, asset_id)?;
+            Self::do_transfer_from(&who, &to, collection_id, token_id)?;
+
+            Ok(().into())
+        }
+
+        #[pallet::weight(10_000)]
+        pub fn burn(
+            origin: OriginFor<T>,
+            collection_id: T::CollectionId,
+            token_id: T::TokenId,
+        ) -> DispatchResultWithPostInfo {
+            let who = ensure_signed(origin)?;
+
+            Self::do_burn(&who, collection_id, token_id)?;
 
             Ok(().into())
         }
@@ -153,7 +179,7 @@ pub mod pallet {
         #[pallet::weight(10_000)]
         pub fn destroy_collection(
             origin: OriginFor<T>,
-            collection_id: CollectionId,
+            collection_id: T::CollectionId,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
 
@@ -165,12 +191,12 @@ pub mod pallet {
 }
 
 /// Collection info
-#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, scale_info::TypeInfo)]
+#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
 pub struct CollectionInfo<AccountId, Balance> {
     /// Class owner
     pub owner: AccountId,
     /// Total issuance for the class
-    pub total_supply: u128,
+    pub total_supply: Balance,
     /// Minimum balance to create a collection
     pub deposit: Balance,
     /// Metadata from ipfs
@@ -178,9 +204,9 @@ pub struct CollectionInfo<AccountId, Balance> {
 }
 
 /// Token info
-#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, scale_info::TypeInfo)]
-pub struct AssetInfo<AccountId> {
-    /// Asset owner
+#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
+pub struct TokenInfo<AccountId> {
+    /// Token owner
     pub owner: AccountId,
     /// Metadata from ipfs
     pub metadata: Vec<u8>,
@@ -190,12 +216,12 @@ impl<T: Config> Pallet<T> {
     pub fn do_create_collection(
         who: &T::AccountId,
         properties: Vec<u8>,
-    ) -> Result<CollectionId, DispatchError> {
+    ) -> Result<T::CollectionId, DispatchError> {
         let collection_id =
-            NextCollectionId::<T>::try_mutate(|id| -> Result<CollectionId, DispatchError> {
+            NextCollectionId::<T>::try_mutate(|id| -> Result<T::CollectionId, DispatchError> {
                 let current_id = *id;
                 *id = id
-                    .checked_add(One::one())
+                    .checked_add(&One::one())
                     .ok_or(Error::<T>::NoAvailableCollectionId)?;
                 Ok(current_id)
             })?;
@@ -218,18 +244,18 @@ impl<T: Config> Pallet<T> {
 
     pub fn do_mint(
         to: &T::AccountId,
-        collection_id: CollectionId,
+        collection_id: T::CollectionId,
         metadata: Vec<u8>,
-        quantity: u32,
-    ) -> Result<Vec<AssetId>, DispatchError> {
-        NextAssetId::<T>::try_mutate(collection_id, |id| -> Result<Vec<AssetId>, DispatchError> {
-            ensure!(quantity >= 1u32, Error::<T>::InvalidQuantity);
+        quantity: T::Balance,
+    ) -> Result<Vec<T::TokenId>, DispatchError> {
+        NextTokenId::<T>::try_mutate(collection_id, |id| -> Result<Vec<T::TokenId>, DispatchError> {
+            ensure!(quantity >= One::one(), Error::<T>::InvalidQuantity);
             let next_id = *id;
             *id = id
-                .checked_add(quantity as u64)
-                .ok_or(Error::<T>::NoAvailableAssetId)?;
+                .checked_add(&quantity.into())
+                .ok_or(Error::<T>::NoAvailableTokenId)?;
 
-            let mut asset_ids: Vec<AssetId> = Vec::new();
+            let mut token_ids: Vec<T::TokenId> = Vec::new();
             Collections::<T>::try_mutate(collection_id, |collection_info| -> DispatchResult {
                 let info = collection_info
                     .as_mut()
@@ -237,42 +263,42 @@ impl<T: Config> Pallet<T> {
 
                 ensure!(*to == info.owner, Error::<T>::NoPermission);
 
-                let asset_info = AssetInfo {
+                let token_info = TokenInfo {
                     owner: to.clone(),
                     metadata,
                 };
 
-                for i in 0..quantity {
-                    let asset_id = next_id + i as u64;
-                    asset_ids.push(asset_id);
+                for i in 0..quantity.into() {
+                    let token_id = T::TokenId::from(next_id.into() + i);
+                    token_ids.push(token_id);
 
-                    NftAssets::<T>::insert(collection_id, asset_id, asset_info.clone());
-                    NftOwner::<T>::insert(to, (collection_id, asset_id), ());
+                    Tokens::<T>::insert(collection_id, token_id, token_info.clone());
+                    TokenOwnerSet::<T>::insert((to, collection_id, token_id), ());
                 }
 
                 info.total_supply = info
                     .total_supply
-                    .checked_add((quantity as u128).into())
+                    .checked_add(&quantity.into())
                     .ok_or(Error::<T>::NumOverflow)?;
                 Ok(())
             })?;
 
             Self::deposit_event(Event::TokenMint(
                 collection_id,
-                asset_ids.clone(),
+                token_ids.clone(),
                 to.clone(),
             ));
-            Ok(asset_ids)
+            Ok(token_ids)
         })
     }
 
     pub fn do_burn(
         who: &T::AccountId,
-        collection_id: CollectionId,
-        asset_id: AssetId,
+        collection_id: T::CollectionId,
+        token_id: T::TokenId,
     ) -> DispatchResult {
-        NftAssets::<T>::try_mutate_exists(collection_id, asset_id, |asset_info| -> DispatchResult {
-            let info = asset_info.take().ok_or(Error::<T>::AssetNotFound)?;
+        Tokens::<T>::try_mutate_exists(collection_id, token_id, |token_info| -> DispatchResult {
+            let info = token_info.take().ok_or(Error::<T>::TokenNotFound)?;
             ensure!(info.owner == *who, Error::<T>::NoPermission);
 
             Collections::<T>::try_mutate(collection_id, |collection_info| -> DispatchResult {
@@ -281,14 +307,14 @@ impl<T: Config> Pallet<T> {
                     .ok_or(Error::<T>::CollectionNotFound)?;
                 info.total_supply = info
                     .total_supply
-                    .checked_sub(One::one())
+                    .checked_sub(&One::one())
                     .ok_or(Error::<T>::NumOverflow)?;
                 Ok(())
             })?;
 
-            NftOwner::<T>::remove(who, (collection_id, asset_id));
+            TokenOwnerSet::<T>::remove((who, collection_id, token_id));
 
-            Self::deposit_event(Event::TokenBurned(collection_id, asset_id, who.clone()));
+            Self::deposit_event(Event::TokenBurned(collection_id, token_id, who.clone()));
             Ok(())
         })
     }
@@ -296,11 +322,11 @@ impl<T: Config> Pallet<T> {
     pub fn do_transfer_from(
         from: &T::AccountId,
         to: &T::AccountId,
-        collection_id: CollectionId,
-        asset_id: AssetId,
+        collection_id: T::CollectionId,
+        token_id: T::TokenId,
     ) -> DispatchResult {
-        NftAssets::<T>::try_mutate(collection_id, asset_id, |asset_info| -> DispatchResult {
-            let info = asset_info.as_mut().ok_or(Error::<T>::AssetNotFound)?;
+        Tokens::<T>::try_mutate(collection_id, token_id, |token_info| -> DispatchResult {
+            let info = token_info.as_mut().ok_or(Error::<T>::TokenNotFound)?;
             ensure!(info.owner == *from, Error::<T>::NoPermission);
             if from == to {
                 return Ok(());
@@ -308,12 +334,12 @@ impl<T: Config> Pallet<T> {
 
             info.owner = to.clone();
 
-            NftOwner::<T>::remove(from, (collection_id, asset_id));
-            NftOwner::<T>::insert(to, (collection_id, asset_id), ());
+            TokenOwnerSet::<T>::remove((from, collection_id, token_id));
+            TokenOwnerSet::<T>::insert((to, collection_id, token_id), ());
 
             Self::deposit_event(Event::TokenTransferred(
                 collection_id,
-                asset_id,
+                token_id,
                 from.clone(),
                 to.clone(),
             ));
@@ -324,7 +350,7 @@ impl<T: Config> Pallet<T> {
 
     pub fn do_destroy_collection(
         who: &T::AccountId,
-        collection_id: CollectionId,
+        collection_id: T::CollectionId,
     ) -> DispatchResult {
         Collections::<T>::try_mutate_exists(collection_id, |collection_info| -> DispatchResult {
             let info = collection_info
@@ -336,7 +362,7 @@ impl<T: Config> Pallet<T> {
                 Error::<T>::CannotDestroyCollection
             );
 
-            NextAssetId::<T>::remove(collection_id);
+            NextTokenId::<T>::remove(collection_id);
 
             T::Currency::unreserve(who, info.deposit);
 

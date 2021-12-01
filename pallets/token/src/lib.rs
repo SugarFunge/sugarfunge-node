@@ -6,6 +6,7 @@ use frame_support::{
     ensure,
     traits::{Currency, Get, ReservableCurrency},
 };
+use scale_info::TypeInfo;
 use sp_runtime::{
     traits::{AtLeast32BitUnsigned, CheckedAdd, One, Zero},
     RuntimeDebug,
@@ -24,13 +25,13 @@ mod tests;
 type BalanceOf<T> =
     <<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
-#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, scale_info::TypeInfo)]
+#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
 pub struct Instance<AccountId> {
     owner: AccountId,
     data: Vec<u8>,
 }
 
-#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, scale_info::TypeInfo)]
+#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
 pub struct Token<InstanceId, AccountId> {
     instance_id: InstanceId,
     creator: AccountId,
@@ -38,7 +39,7 @@ pub struct Token<InstanceId, AccountId> {
     uri: Vec<u8>,
 }
 
-#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, scale_info::TypeInfo)]
+#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo)]
 pub struct ApprovalKey<AccountId> {
     owner: AccountId,
     operator: AccountId,
@@ -123,7 +124,6 @@ pub mod pallet {
     >;
 
     #[pallet::event]
-    // #[pallet::metadata(T::AccountId = "AccountId")]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
         InstanceCreated(T::InstanceId, T::AccountId),

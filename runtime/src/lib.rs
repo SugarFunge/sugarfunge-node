@@ -360,6 +360,9 @@ impl sugarfunge_nft::Config for Runtime {
     type Event = Event;
     type CreateCollectionDeposit = CreateCollectionDeposit;
     type Currency = Balances;
+    type CollectionId = u128;
+    type TokenId = u128;
+    type Balance = Balance;
 }
 
 construct_runtime!(
