@@ -27,7 +27,7 @@ use sp_version::RuntimeVersion;
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
     construct_runtime, parameter_types,
-    traits::{FindAuthor, KeyOwnerProofSystem, Randomness, Contains, Nothing},
+    traits::{Contains, FindAuthor, KeyOwnerProofSystem, Nothing, Randomness},
     weights::{
         constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
         DispatchClass, IdentityFee, Weight,
@@ -48,6 +48,7 @@ use pallet_transaction_payment::CurrencyAdapter;
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 pub use sugarfunge_currency::Call as CurrencyCall;
+pub use sugarfunge_exgine::Call as ExgineCall;
 pub use sugarfunge_nft::Call as NFTCall;
 
 /// Constant values used within the runtime.
@@ -192,7 +193,7 @@ impl frame_system::Config for Runtime {
 impl pallet_randomness_collective_flip::Config for Runtime {}
 
 parameter_types! {
-	pub const MaxAuthorities: u32 = 32;
+    pub const MaxAuthorities: u32 = 32;
 }
 
 impl pallet_aura::Config for Runtime {
@@ -257,8 +258,8 @@ impl pallet_balances::Config for Runtime {
 }
 
 parameter_types! {
-	pub const TransactionByteFee: Balance = 1;
-	pub OperationalFeeMultiplier: u8 = 5;
+    pub const TransactionByteFee: Balance = 1;
+    pub OperationalFeeMultiplier: u8 = 5;
 }
 
 impl pallet_transaction_payment::Config for Runtime {
@@ -306,7 +307,7 @@ impl orml_tokens::Config for Runtime {
     type ExistentialDeposits = ExistentialDeposits;
     type OnDust = ();
     type MaxLocks = MaxLocks;
-    type DustRemovalWhitelist= Nothing;
+    type DustRemovalWhitelist = Nothing;
 }
 
 parameter_types! {
@@ -365,6 +366,10 @@ impl sugarfunge_nft::Config for Runtime {
     type Balance = Balance;
 }
 
+impl sugarfunge_exgine::Config for Runtime {
+    type Event = Event;
+}
+
 construct_runtime!(
     pub enum Runtime where
         Block = Block,
@@ -388,6 +393,7 @@ construct_runtime!(
         Currency: sugarfunge_currency::{Pallet, Call, Storage, Event<T>, Config<T>},
         Dex: sugarfunge_dex::{Pallet, Call, Storage, Event<T>},
         NFT: sugarfunge_nft::{Pallet, Call, Storage, Event<T>},
+        Exgine: sugarfunge_exgine::{Pallet, Call, Storage, Event<T>},
     }
 );
 
@@ -439,11 +445,11 @@ impl_runtime_apis! {
         }
     }
 
-	impl sp_api::Metadata<Block> for Runtime {
-		fn metadata() -> OpaqueMetadata {
-			OpaqueMetadata::new(Runtime::metadata().into())
-		}
-	}
+    impl sp_api::Metadata<Block> for Runtime {
+        fn metadata() -> OpaqueMetadata {
+            OpaqueMetadata::new(Runtime::metadata().into())
+        }
+    }
 
     impl sp_block_builder::BlockBuilder<Block> for Runtime {
         fn apply_extrinsic(extrinsic: <Block as BlockT>::Extrinsic) -> ApplyExtrinsicResult {
@@ -487,9 +493,9 @@ impl_runtime_apis! {
             sp_consensus_aura::SlotDuration::from_millis(Aura::slot_duration())
         }
 
-		fn authorities() -> Vec<AuraId> {
-			Aura::authorities().into_inner()
-		}
+        fn authorities() -> Vec<AuraId> {
+            Aura::authorities().into_inner()
+        }
     }
 
     impl sp_session::SessionKeys<Block> for Runtime {
@@ -510,8 +516,8 @@ impl_runtime_apis! {
         }
 
         fn current_set_id() -> fg_primitives::SetId {
-			Grandpa::current_set_id()
-		}
+            Grandpa::current_set_id()
+        }
 
         fn submit_report_equivocation_unsigned_extrinsic(
             _equivocation_proof: fg_primitives::EquivocationProof<

@@ -124,7 +124,6 @@ pub mod pallet {
                     &module_account,
                     instance_id,
                     token_id,
-                    false,
                     [].to_vec(),
                 )?;
 

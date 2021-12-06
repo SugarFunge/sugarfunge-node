@@ -7,7 +7,7 @@ fn test_create_token_works() {
         let data = vec![0, 1];
         assert_ok!(Token::do_create_instance(&1, data));
         let uri = vec![0, 1];
-        assert_ok!(Token::do_create_token(&1, 0, 2, true, uri));
+        assert_ok!(Token::do_create_token(&1, 0, 2, uri));
         println!("token: {:?}", Tokens::<Test>::get(0, 2));
     })
 }
@@ -17,7 +17,7 @@ fn test_create_token_not_works() {
     new_test_ext().execute_with(|| {
         let uri = vec![0, 1];
         assert_noop!(
-            Token::do_create_token(&1, 1, 2, true, uri),
+            Token::do_create_token(&1, 1, 2, uri),
             Error::<Test>::InvalidInstanceId
         );
         println!("token: {:?}", Tokens::<Test>::get(1, 2));

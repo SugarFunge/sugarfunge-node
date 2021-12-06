@@ -1,4 +1,4 @@
-//! Benchmarking setup for pallet-template
+//! Benchmarking setup for sugarfunge-exgine
 
 use super::*;
 

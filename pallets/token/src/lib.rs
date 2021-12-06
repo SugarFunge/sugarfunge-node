@@ -35,7 +35,6 @@ pub struct Instance<AccountId> {
 pub struct Token<InstanceId, AccountId> {
     instance_id: InstanceId,
     creator: AccountId,
-    is_nf: bool,
     uri: Vec<u8>,
 }
 
@@ -184,12 +183,11 @@ pub mod pallet {
             origin: OriginFor<T>,
             instance_id: T::InstanceId,
             token_id: T::TokenId,
-            is_nf: bool,
             uri: Vec<u8>,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
 
-            Self::do_create_token(&who, instance_id, token_id, is_nf, uri)?;
+            Self::do_create_token(&who, instance_id, token_id, uri)?;
             Ok(().into())
         }
 
@@ -334,7 +332,6 @@ impl<T: Config> Pallet<T> {
         who: &T::AccountId,
         instance_id: T::InstanceId,
         token_id: T::TokenId,
-        is_nf: bool,
         uri: Vec<u8>,
     ) -> DispatchResult {
         Self::maybe_check_owner(who, instance_id)?;
@@ -349,7 +346,6 @@ impl<T: Config> Pallet<T> {
             Token {
                 instance_id,
                 creator: who.clone(),
-                is_nf,
                 uri,
             },
         );
