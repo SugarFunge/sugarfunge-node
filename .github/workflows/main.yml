@@ -19,3 +19,5 @@ jobs:
         - run: |
             docker build -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/node:${{ github.sha }} -f docker/Dockerfile .
             docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/node:${{ github.sha }}
+            docker tag ${{ secrets.REGISTRY_LOGIN_SERVER }}/node:${{ github.sha }} ${{ secrets.REGISTRY_LOGIN_SERVER }}/node:latest
+            docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/node:latest
