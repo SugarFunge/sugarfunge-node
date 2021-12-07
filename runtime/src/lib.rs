@@ -49,7 +49,6 @@ pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 pub use sugarfunge_currency::Call as CurrencyCall;
 pub use sugarfunge_exgine::Call as ExgineCall;
-pub use sugarfunge_nft::Call as NFTCall;
 
 /// Constant values used within the runtime.
 mod constants;
@@ -323,18 +322,17 @@ impl orml_currencies::Config for Runtime {
 }
 
 parameter_types! {
-    pub const CreateInstanceDeposit: Balance = 500 * MILLICENTS;
+    pub const CreateTokenCollectionDeposit: Balance = 500 * MILLICENTS;
     pub const CreateExchangeDeposit: Balance = 500 * MILLICENTS;
-    pub const CreateCollectionDeposit: Balance = 500 * MILLICENTS;
-    pub const CreateCurrencyInstanceDeposit: Balance = 500 * MILLICENTS;
+    pub const CreateCurrencyCollectionDeposit: Balance = 500 * MILLICENTS;
 }
 
 impl sugarfunge_token::Config for Runtime {
     type Event = Event;
-    type CreateInstanceDeposit = CreateInstanceDeposit;
+    type CreateTokenCollectionDeposit = CreateTokenCollectionDeposit;
     type Currency = Balances;
     type TokenId = u64;
-    type InstanceId = u64;
+    type CollectionId = u64;
 }
 
 parameter_types! {
@@ -346,7 +344,7 @@ impl sugarfunge_currency::Config for Runtime {
     type Event = Event;
     type PalletId = CurrencyTokenModuleId;
     type Currency = OrmlCurrencies;
-    type CreateCurrencyInstanceDeposit = CreateCurrencyInstanceDeposit;
+    type CreateCurrencyCollectionDeposit = CreateCurrencyCollectionDeposit;
     type GetNativeCurrencyId = GetNativeCurrencyId;
 }
 
@@ -355,15 +353,6 @@ impl sugarfunge_dex::Config for Runtime {
     type PalletId = DexModuleId;
     type CreateExchangeDeposit = CreateExchangeDeposit;
     type Currency = Balances;
-}
-
-impl sugarfunge_nft::Config for Runtime {
-    type Event = Event;
-    type CreateCollectionDeposit = CreateCollectionDeposit;
-    type Currency = Balances;
-    type CollectionId = u128;
-    type TokenId = u128;
-    type Balance = Balance;
 }
 
 impl sugarfunge_exgine::Config for Runtime {
@@ -392,7 +381,6 @@ construct_runtime!(
         Token: sugarfunge_token::{Pallet, Call, Storage, Event<T>},
         Currency: sugarfunge_currency::{Pallet, Call, Storage, Event<T>, Config<T>},
         Dex: sugarfunge_dex::{Pallet, Call, Storage, Event<T>},
-        NFT: sugarfunge_nft::{Pallet, Call, Storage, Event<T>},
         Exgine: sugarfunge_exgine::{Pallet, Call, Storage, Event<T>},
     }
 );

@@ -1,7 +1,7 @@
 use crate as sugarfunge_currency;
 use frame_support::{
     parameter_types,
-    traits::{GenesisBuild, OnFinalize, OnInitialize, Nothing, Everything},
+    traits::{Everything, GenesisBuild, Nothing, OnFinalize, OnInitialize},
     PalletId,
 };
 use frame_system as system;
@@ -20,10 +20,8 @@ pub const DOLLARS: Balance = 100 * CENTS;
 pub const SUGAR: CurrencyId = CurrencyId::Token(TokenSymbol::SUGAR);
 
 parameter_types! {
-    pub const CreateInstanceDeposit: Balance = 500 * MILLICENTS;
-    pub const CreateExchangeDeposit: Balance = 500 * MILLICENTS;
-    pub const CreateCollectionDeposit: Balance = 500 * MILLICENTS;
-    pub const CreateCurrencyInstanceDeposit: Balance = 500 * MILLICENTS;
+    pub const CreateTokenCollectionDeposit: Balance = 500 * MILLICENTS;
+    pub const CreateCurrencyCollectionDeposit: Balance = 500 * MILLICENTS;
 }
 
 parameter_types! {
@@ -75,10 +73,10 @@ impl orml_currencies::Config for Test {
 
 impl sugarfunge_token::Config for Test {
     type Event = Event;
-    type CreateInstanceDeposit = CreateInstanceDeposit;
+    type CreateTokenCollectionDeposit = CreateTokenCollectionDeposit;
     type Currency = Balances;
     type TokenId = u64;
-    type InstanceId = u64;
+    type CollectionId = u64;
 }
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
@@ -140,7 +138,7 @@ impl sugarfunge_currency::Config for Test {
     type Event = Event;
     type PalletId = CurrencyTokenModuleId;
     type Currency = OrmlCurrencies;
-    type CreateCurrencyInstanceDeposit = CreateCurrencyInstanceDeposit;
+    type CreateCurrencyCollectionDeposit = CreateCurrencyCollectionDeposit;
     type GetNativeCurrencyId = GetNativeCurrencyId;
 }
 
@@ -154,7 +152,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     .assimilate_storage(&mut t)
     .unwrap();
     sugarfunge_currency::GenesisConfig::<Test> {
-        instance: (1, [].to_vec()),
+        collection: (1, [].to_vec()),
     }
     .assimilate_storage(&mut t)
     .unwrap();

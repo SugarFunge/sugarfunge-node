@@ -60,7 +60,6 @@ primitives = { package = "sugarfunge-primitives", path = "../primitives", defaul
 sugarfunge-token = { default-features = false, path = "../pallets/token" }
 sugarfunge-currency = { default-features = false, path = "../pallets/currency" }
 sugarfunge-dex = { default-features = false, path = "../pallets/dex" }
-sugarfunge-nft = { default-features = false, path = "../pallets/nft" }
 sugarfunge-exgine = { default-features = false, path = "../pallets/exgine" }
 
 [build-dependencies]
@@ -105,7 +104,6 @@ std = [
 	"sugarfunge-token/std",
 	"sugarfunge-currency/std",
 	"sugarfunge-dex/std",
-	"sugarfunge-nft/std",
 	"sugarfunge-exgine/std",
 ]
 

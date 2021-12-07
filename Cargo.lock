@@ -6948,21 +6948,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "sugarfunge-nft"
-version = "0.1.0"
-dependencies = [
- "frame-support",
- "frame-system",
- "pallet-timestamp",
- "parity-scale-codec",
- "scale-info",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "sugarfunge-node"
 version = "0.1.0"
 dependencies = [
@@ -7064,7 +7049,6 @@ dependencies = [
  "sugarfunge-currency",
  "sugarfunge-dex",
  "sugarfunge-exgine",
- "sugarfunge-nft",
  "sugarfunge-primitives",
  "sugarfunge-token",
 ]
