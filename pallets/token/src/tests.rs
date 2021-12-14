@@ -2,7 +2,7 @@ use crate::{mock::*, pallet::*, Error};
 use frame_support::{assert_noop, assert_ok};
 
 #[test]
-fn test_create_token_works() {
+fn create_token_works() {
     new_test_ext().execute_with(|| {
         let data = vec![0, 1];
         assert_ok!(Token::do_create_collection(&1, data));
@@ -13,7 +13,7 @@ fn test_create_token_works() {
 }
 
 #[test]
-fn test_create_token_not_works() {
+fn create_token_not_works() {
     new_test_ext().execute_with(|| {
         let uri = vec![0, 1];
         assert_noop!(
@@ -25,7 +25,7 @@ fn test_create_token_not_works() {
 }
 
 #[test]
-fn test_create_collection_works() {
+fn create_collection_works() {
     new_test_ext().execute_with(|| {
         let data = vec![0, 1];
         assert_ok!(Token::do_create_collection(&1, data));
@@ -33,7 +33,7 @@ fn test_create_collection_works() {
 }
 
 #[test]
-fn test_do_set_approval_for_all() {
+fn do_set_approval_for_all() {
     new_test_ext().execute_with(|| {
         assert_ok!(Token::do_create_collection(&1, [0].to_vec()));
         assert_ok!(Token::do_create_collection(&1, [0].to_vec()));
@@ -43,7 +43,7 @@ fn test_do_set_approval_for_all() {
 }
 
 #[test]
-fn test_do_mint() {
+fn do_mint() {
     new_test_ext().execute_with(|| {
         assert_ok!(Token::do_create_collection(&1, [0].to_vec()));
         assert_ok!(Token::do_create_collection(&1, [0].to_vec()));
@@ -52,7 +52,7 @@ fn test_do_mint() {
 }
 
 #[test]
-fn test_do_batch_mint() {
+fn do_batch_mint() {
     new_test_ext().execute_with(|| {
         assert_ok!(Token::do_create_collection(&1, [0].to_vec()));
         assert_ok!(Token::do_create_collection(&1, [0].to_vec()));
@@ -63,7 +63,7 @@ fn test_do_batch_mint() {
 }
 
 #[test]
-fn test_do_burn_works() {
+fn do_burn_works() {
     new_test_ext().execute_with(|| {
         assert_ok!(Token::do_create_collection(&1, [0].to_vec()));
         assert_ok!(Token::do_create_collection(&1, [0].to_vec()));
@@ -73,7 +73,7 @@ fn test_do_burn_works() {
 }
 
 #[test]
-fn test_do_batch_burn() {
+fn do_batch_burn() {
     new_test_ext().execute_with(|| {
         assert_ok!(Token::do_create_collection(&1, [0].to_vec()));
         assert_ok!(Token::do_create_collection(&1, [0].to_vec()));
@@ -91,7 +91,7 @@ fn test_do_batch_burn() {
 }
 
 #[test]
-fn test_do_transfer_from() {
+fn do_transfer_from() {
     new_test_ext().execute_with(|| {
         assert_ok!(Token::do_create_collection(&1, [0].to_vec()));
         assert_ok!(Token::do_create_collection(&1, [0].to_vec()));
@@ -101,7 +101,7 @@ fn test_do_transfer_from() {
 }
 
 #[test]
-fn test_do_batch_transfer_from() {
+fn do_batch_transfer_from() {
     new_test_ext().execute_with(|| {
         assert_ok!(Token::do_create_collection(&1, [0].to_vec()));
         assert_ok!(Token::do_create_collection(&1, [0].to_vec()));
@@ -121,21 +121,21 @@ fn test_do_batch_transfer_from() {
 }
 
 #[test]
-fn test_approved_or_owner() {
+fn approved_or_owner() {
     new_test_ext().execute_with(|| {
         assert_eq!(Token::approved_or_owner(&1, &2, 1), false);
     })
 }
 
 #[test]
-fn test_is_approved_for_all() {
+fn is_approved_for_all() {
     new_test_ext().execute_with(|| {
         assert_eq!(Token::is_approved_for_all(&1, &2, 1), false);
     })
 }
 
 #[test]
-fn test_balance_of() {
+fn balance_of() {
     new_test_ext().execute_with(|| {
         assert_ok!(Token::do_create_collection(&1, [0].to_vec()));
         assert_ok!(Token::do_create_collection(&1, [0].to_vec()));
@@ -145,7 +145,7 @@ fn test_balance_of() {
 }
 
 #[test]
-fn test_balance_of_batch_token_ids_sample() {
+fn balance_of_batch_token_ids_sample() {
     new_test_ext().execute_with(|| {
         assert_ok!(Token::do_create_collection(&1, [0].to_vec()));
         assert_ok!(Token::do_create_collection(&1, [0].to_vec()));
@@ -183,7 +183,7 @@ fn test_balance_of_batch_token_ids_sample() {
 }
 
 #[test]
-fn test_balance_of_batch_token_ids_not_sample() {
+fn balance_of_batch_token_ids_not_sample() {
     new_test_ext().execute_with(|| {
         assert_ok!(Token::do_create_collection(&1, [0].to_vec()));
         assert_ok!(Token::do_create_collection(&1, [0].to_vec()));

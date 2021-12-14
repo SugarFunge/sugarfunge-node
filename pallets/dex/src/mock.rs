@@ -163,6 +163,15 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     }
     .assimilate_storage(&mut t)
     .unwrap();
+    orml_tokens::GenesisConfig::<Test> {
+        balances: vec![
+            (1, CurrencyId::Token(TokenSymbol::DOT), 1000000 * DOLLARS),
+            (1, CurrencyId::Token(TokenSymbol::ETH), 1000000 * DOLLARS),
+            (1, CurrencyId::Token(TokenSymbol::BTC), 1000000 * DOLLARS),
+        ],
+    }
+    .assimilate_storage(&mut t)
+    .unwrap();
     sugarfunge_currency::GenesisConfig::<Test> {
         collection: (1, [].to_vec()),
     }

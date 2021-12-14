@@ -56,6 +56,25 @@ fn before_exchange_works() {
 }
 
 #[test]
+fn many_currencies_works() {
+    new_test_ext().execute_with(|| {
+        run_to_block(10);
+        assert_ok!(CurrencyToken::mint(Origin::signed(1), ETH, 500 * CENTS));
+        assert_eq!(
+            last_event(),
+            mock::Event::CurrencyToken(sugarfunge_currency::Event::TokenMint(ETH, 500 * CENTS, 1)),
+        );
+        assert_eq!(Token::balance_of(&1, 0, ETH.into()), 500 * CENTS);
+        assert_ok!(CurrencyToken::mint(Origin::signed(1), BTC, 500 * CENTS));
+        assert_eq!(
+            last_event(),
+            mock::Event::CurrencyToken(sugarfunge_currency::Event::TokenMint(BTC, 500 * CENTS, 1)),
+        );
+        assert_eq!(Token::balance_of(&1, 0, BTC.into()), 500 * CENTS);
+    })
+}
+
+#[test]
 fn endow_user_2_works() {
     new_test_ext().execute_with(|| {
         before_exchange();

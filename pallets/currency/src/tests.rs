@@ -10,6 +10,32 @@ fn last_event() -> mock::Event {
 }
 
 #[test]
+fn currency_eth_works() {
+    new_test_ext().execute_with(|| {
+        run_to_block(10);
+        assert_ok!(Currency::mint(Origin::signed(1), ETH, 500 * CENTS));
+        assert_eq!(
+            last_event(),
+            mock::Event::Currency(crate::Event::TokenMint(ETH, 500 * CENTS, 1)),
+        );
+        assert_eq!(Token::balance_of(&1, 0, ETH.into()), 500 * CENTS);
+    })
+}
+
+#[test]
+fn currency_btc_works() {
+    new_test_ext().execute_with(|| {
+        run_to_block(10);
+        assert_ok!(Currency::mint(Origin::signed(1), BTC, 500 * CENTS));
+        assert_eq!(
+            last_event(),
+            mock::Event::Currency(crate::Event::TokenMint(BTC, 500 * CENTS, 1)),
+        );
+        assert_eq!(Token::balance_of(&1, 0, BTC.into()), 500 * CENTS);
+    })
+}
+
+#[test]
 fn currency_mint_works() {
     new_test_ext().execute_with(|| {
         run_to_block(10);

@@ -18,6 +18,8 @@ pub const CENTS: Balance = 1_000 * MILLICENTS;
 pub const DOLLARS: Balance = 100 * CENTS;
 
 pub const SUGAR: CurrencyId = CurrencyId::Token(TokenSymbol::SUGAR);
+pub const ETH: CurrencyId = CurrencyId::Token(TokenSymbol::ETH);
+pub const BTC: CurrencyId = CurrencyId::Token(TokenSymbol::BTC);
 
 parameter_types! {
     pub const CreateTokenCollectionDeposit: Balance = 500 * MILLICENTS;
@@ -148,6 +150,15 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
         .unwrap();
     pallet_balances::GenesisConfig::<Test> {
         balances: vec![(1, 100 * DOLLARS), (2, 100 * DOLLARS)],
+    }
+    .assimilate_storage(&mut t)
+    .unwrap();
+    orml_tokens::GenesisConfig::<Test> {
+        balances: vec![
+            (1, CurrencyId::Token(TokenSymbol::DOT), 1000000 * DOLLARS),
+            (1, CurrencyId::Token(TokenSymbol::ETH), 1000000 * DOLLARS),
+            (1, CurrencyId::Token(TokenSymbol::BTC), 1000000 * DOLLARS),
+        ],
     }
     .assimilate_storage(&mut t)
     .unwrap();
