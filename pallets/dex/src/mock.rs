@@ -20,6 +20,8 @@ pub const CENTS: Balance = 1_000 * MILLICENTS; // assume this is worth about a c
 pub const DOLLARS: Balance = 100 * CENTS;
 
 pub const SUGAR: CurrencyId = CurrencyId::Token(TokenSymbol::SUGAR);
+pub const ETH: CurrencyId = CurrencyId::Token(TokenSymbol::ETH);
+pub const BTC: CurrencyId = CurrencyId::Token(TokenSymbol::BTC);
 
 parameter_types! {
     pub const BlockHashCount: u64 = 250;

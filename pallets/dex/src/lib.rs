@@ -147,7 +147,7 @@ pub mod pallet {
         pub fn create_exchange(
             origin: OriginFor<T>,
             currency_id: CurrencyId,
-            token_collection: T::CollectionId,
+            token_collection_id: T::CollectionId,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
 
@@ -165,18 +165,18 @@ pub mod pallet {
             let deposit = T::CreateExchangeDeposit::get();
             <T as Config>::Currency::transfer(&who, &fund_account, deposit, AllowDeath)?;
 
-            let lp_collection =
+            let lp_collection_id =
                 sugarfunge_token::Pallet::<T>::do_create_collection(&fund_account, [].to_vec())?;
 
-            let (currency_collection, currency_token) =
+            let (currency_collection_id, currency_token_id) =
                 sugarfunge_currency::Pallet::<T>::get_currency_token(currency_id)?;
 
             let new_exchange = Exchange {
                 creator: who.clone(),
-                token_collection,
-                currency_collection,
-                currency_token,
-                lp_collection,
+                token_collection_id,
+                currency_collection_id,
+                currency_token_id,
+                lp_collection_id,
                 vault: fund_account,
             };
 
@@ -292,13 +292,13 @@ pub struct Exchange<
     /// The creator of Exchange
     pub creator: AccountId,
     /// The collection of the tokens
-    pub token_collection: CollectionId,
+    pub token_collection_id: CollectionId,
     /// The collection of the currency
-    pub currency_collection: CollectionId,
+    pub currency_collection_id: CollectionId,
     /// The token of the currency collection
-    pub currency_token: TokenId,
+    pub currency_token_id: TokenId,
     /// The collection of exchange liquidity pool
-    pub lp_collection: CollectionId,
+    pub lp_collection_id: CollectionId,
     /// The fund account of exchange
     pub vault: AccountId,
 }
@@ -320,7 +320,7 @@ impl<T: Config> Pallet<T> {
         let mut amounts_in = vec![Balance::from(0u128); n];
 
         let token_reserves =
-            Self::get_token_reserves(&exchange.vault, exchange.token_collection, token_ids.clone());
+            Self::get_token_reserves(&exchange.vault, exchange.token_collection_id, token_ids.clone());
 
         for i in 0..n {
             let token_id = token_ids[i];
@@ -357,8 +357,8 @@ impl<T: Config> Pallet<T> {
             who,
             who,
             &exchange.vault,
-            exchange.currency_collection,
-            exchange.currency_token,
+            exchange.currency_collection_id,
+            exchange.currency_token_id,
             total_currency,
         )?;
 
@@ -367,7 +367,7 @@ impl<T: Config> Pallet<T> {
             &exchange.vault,
             &exchange.vault,
             &to,
-            exchange.token_collection,
+            exchange.token_collection_id,
             token_ids.clone(),
             token_amounts_out.clone(),
         )?;
@@ -400,7 +400,7 @@ impl<T: Config> Pallet<T> {
         let mut amounts_out = vec![Balance::from(0u128); n];
 
         let token_reserves =
-            Self::get_token_reserves(&exchange.vault, exchange.token_collection, token_ids.clone());
+            Self::get_token_reserves(&exchange.vault, exchange.token_collection_id, token_ids.clone());
 
         for i in 0..n {
             let token_id = token_ids[i];
@@ -441,7 +441,7 @@ impl<T: Config> Pallet<T> {
             who,
             who,
             &exchange.vault,
-            exchange.token_collection,
+            exchange.token_collection_id,
             token_ids.clone(),
             token_amounts_in.clone(),
         )?;
@@ -451,8 +451,8 @@ impl<T: Config> Pallet<T> {
             &exchange.vault,
             &exchange.vault,
             &to,
-            exchange.currency_collection,
-            exchange.currency_token,
+            exchange.currency_collection_id,
+            exchange.currency_token_id,
             total_currency,
         )?;
 
@@ -485,7 +485,7 @@ impl<T: Config> Pallet<T> {
         let mut currency_amounts = vec![Balance::from(0u128); n];
 
         let token_reserves =
-            Self::get_token_reserves(&exchange.vault, exchange.token_collection, token_ids.clone());
+            Self::get_token_reserves(&exchange.vault, exchange.token_collection_id, token_ids.clone());
 
         for i in 0..n {
             let token_id = token_ids[i];
@@ -497,9 +497,9 @@ impl<T: Config> Pallet<T> {
             );
             ensure!(amount > Zero::zero(), Error::<T>::InsufficientTokenAmount);
 
-            if exchange.currency_collection == exchange.token_collection {
+            if exchange.currency_collection_id == exchange.token_collection_id {
                 ensure!(
-                    exchange.currency_token != token_id,
+                    exchange.currency_token_id != token_id,
                     Error::<T>::SameCurrencyAndToken
                 );
             }
@@ -578,7 +578,7 @@ impl<T: Config> Pallet<T> {
             who,
             who,
             &exchange.vault,
-            exchange.token_collection,
+            exchange.token_collection_id,
             token_ids.clone(),
             token_amounts.clone(),
         )?;
@@ -587,7 +587,7 @@ impl<T: Config> Pallet<T> {
         sugarfunge_token::Pallet::<T>::do_batch_mint(
             &exchange.vault,
             &to,
-            exchange.lp_collection,
+            exchange.lp_collection_id,
             token_ids.clone(),
             liquidities_to_mint,
         )?;
@@ -597,8 +597,8 @@ impl<T: Config> Pallet<T> {
             &who,
             &who,
             &exchange.vault,
-            exchange.currency_collection,
-            exchange.currency_token,
+            exchange.currency_collection_id,
+            exchange.currency_token_id,
             total_currency,
         )?;
 
@@ -631,7 +631,7 @@ impl<T: Config> Pallet<T> {
         let mut currency_amounts = vec![Balance::from(0u128); n];
 
         let token_reserves =
-            Self::get_token_reserves(&exchange.vault, exchange.token_collection, token_ids.clone());
+            Self::get_token_reserves(&exchange.vault, exchange.token_collection_id, token_ids.clone());
 
         for i in 0..n {
             let token_id = token_ids[i];
@@ -699,7 +699,7 @@ impl<T: Config> Pallet<T> {
             who,
             who,
             &exchange.vault,
-            exchange.lp_collection,
+            exchange.lp_collection_id,
             token_ids.clone(),
             liquidities.clone(),
         )?;
@@ -708,7 +708,7 @@ impl<T: Config> Pallet<T> {
         sugarfunge_token::Pallet::<T>::do_batch_burn(
             &exchange.vault,
             &exchange.vault,
-            exchange.lp_collection,
+            exchange.lp_collection_id,
             token_ids.clone(),
             liquidities,
         )?;
@@ -718,8 +718,8 @@ impl<T: Config> Pallet<T> {
             &exchange.vault,
             &exchange.vault,
             &to,
-            exchange.currency_collection,
-            exchange.currency_token,
+            exchange.currency_collection_id,
+            exchange.currency_token_id,
             total_currency,
         )?;
 
@@ -728,7 +728,7 @@ impl<T: Config> Pallet<T> {
             &exchange.vault,
             &exchange.vault,
             &to,
-            exchange.token_collection,
+            exchange.token_collection_id,
             token_ids.clone(),
             token_amounts.clone(),
         )?;
