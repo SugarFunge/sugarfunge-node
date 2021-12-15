@@ -1,7 +1,7 @@
 use crate as sugarfunge_dex;
 use frame_support::{
     construct_runtime, parameter_types,
-    traits::{GenesisBuild, OnFinalize, OnInitialize, Nothing},
+    traits::{GenesisBuild, Nothing, OnFinalize, OnInitialize},
     PalletId,
 };
 use orml_traits::parameter_type_with_key;
@@ -10,7 +10,7 @@ use sp_runtime::{
     testing::Header,
     traits::{BlakeTwo256, IdentityLookup, Zero},
 };
-use sugarfunge_primitives::{Amount, Balance, BlockNumber, CurrencyId, TokenSymbol};
+use sugarfunge_primitives::{Amount, AssetSymbol, Balance, BlockNumber, CurrencyId};
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -19,9 +19,9 @@ pub const MILLICENTS: Balance = 10_000_000_000_000;
 pub const CENTS: Balance = 1_000 * MILLICENTS; // assume this is worth about a cent.
 pub const DOLLARS: Balance = 100 * CENTS;
 
-pub const SUGAR: CurrencyId = CurrencyId::Token(TokenSymbol::SUGAR);
-pub const ETH: CurrencyId = CurrencyId::Token(TokenSymbol::ETH);
-pub const BTC: CurrencyId = CurrencyId::Token(TokenSymbol::BTC);
+pub const SUGAR: CurrencyId = CurrencyId::Asset(AssetSymbol::SUGAR);
+pub const ETH: CurrencyId = CurrencyId::Asset(AssetSymbol::ETH);
+pub const BTC: CurrencyId = CurrencyId::Asset(AssetSymbol::BTC);
 
 parameter_types! {
     pub const BlockHashCount: u64 = 250;
@@ -104,27 +104,27 @@ impl orml_currencies::Config for Test {
 }
 
 parameter_types! {
-    pub const CreateTokenClassDeposit: Balance = 1;
+    pub const CreateAssetClassDeposit: Balance = 1;
     pub const CreateExchangeDeposit: Balance = 1;
     pub const CreateCurrencyClassDeposit: Balance = 1;
 }
 
-impl sugarfunge_token::Config for Test {
+impl sugarfunge_asset::Config for Test {
     type Event = Event;
-    type CreateTokenClassDeposit = CreateTokenClassDeposit;
+    type CreateAssetClassDeposit = CreateAssetClassDeposit;
     type Currency = Balances;
-    type TokenId = u64;
+    type AssetId = u64;
     type ClassId = u64;
 }
 
 parameter_types! {
-    pub const CurrencyTokenModuleId: PalletId = PalletId(*b"sug/curr");
+    pub const CurrencyModuleId: PalletId = PalletId(*b"sug/curr");
     pub const DexModuleId: PalletId = PalletId(*b"sug/dexm");
 }
 
 impl sugarfunge_currency::Config for Test {
     type Event = Event;
-    type PalletId = CurrencyTokenModuleId;
+    type PalletId = CurrencyModuleId;
     type Currency = OrmlCurrencies;
     type CreateCurrencyClassDeposit = CreateCurrencyClassDeposit;
     type GetNativeCurrencyId = GetNativeCurrencyId;
@@ -149,8 +149,8 @@ construct_runtime!(
         OrmlTokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>},
         OrmlCurrencies: orml_currencies::{Pallet, Call, Event<T>},
         Dex: sugarfunge_dex::{Pallet, Call, Storage, Event<T>},
-        Token: sugarfunge_token::{Pallet, Call, Storage, Event<T>},
-        CurrencyToken: sugarfunge_currency::{Pallet, Call, Storage, Event<T>},
+        Asset: sugarfunge_asset::{Pallet, Call, Storage, Event<T>},
+        Currency: sugarfunge_currency::{Pallet, Call, Storage, Event<T>},
     }
 );
 
@@ -165,9 +165,21 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     .unwrap();
     orml_tokens::GenesisConfig::<Test> {
         balances: vec![
-            (1, CurrencyId::Token(TokenSymbol::DOT), 100_000_000 * DOLLARS),
-            (1, CurrencyId::Token(TokenSymbol::ETH), 100_000_000 * DOLLARS),
-            (1, CurrencyId::Token(TokenSymbol::BTC), 100_000_000 * DOLLARS),
+            (
+                1,
+                CurrencyId::Asset(AssetSymbol::DOT),
+                100_000_000 * DOLLARS,
+            ),
+            (
+                1,
+                CurrencyId::Asset(AssetSymbol::ETH),
+                100_000_000 * DOLLARS,
+            ),
+            (
+                1,
+                CurrencyId::Asset(AssetSymbol::BTC),
+                100_000_000 * DOLLARS,
+            ),
         ],
     }
     .assimilate_storage(&mut t)

@@ -54,8 +54,8 @@ pub use sugarfunge_exgine::Call as ExgineCall;
 mod constants;
 pub use constants::{currency::*, time::*};
 pub use primitives::{
-    AccountId, AccountIndex, Amount, Balance, BlockNumber, CurrencyId, Hash, Index, Moment,
-    Signature, TokenSymbol,
+    AccountId, AccountIndex, Amount, AssetSymbol, Balance, BlockNumber, CurrencyId, Hash, Index,
+    Moment, Signature,
 };
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
@@ -310,7 +310,7 @@ impl orml_tokens::Config for Runtime {
 }
 
 parameter_types! {
-    pub const GetNativeCurrencyId: CurrencyId = CurrencyId::Token(TokenSymbol::SUGAR);
+    pub const GetNativeCurrencyId: CurrencyId = CurrencyId::Asset(AssetSymbol::SUGAR);
 }
 
 impl orml_currencies::Config for Runtime {
@@ -322,27 +322,27 @@ impl orml_currencies::Config for Runtime {
 }
 
 parameter_types! {
-    pub const CreateTokenClassDeposit: Balance = 500 * MILLICENTS;
+    pub const CreateAssetClassDeposit: Balance = 500 * MILLICENTS;
     pub const CreateExchangeDeposit: Balance = 500 * MILLICENTS;
     pub const CreateCurrencyClassDeposit: Balance = 500 * MILLICENTS;
 }
 
-impl sugarfunge_token::Config for Runtime {
+impl sugarfunge_asset::Config for Runtime {
     type Event = Event;
-    type CreateTokenClassDeposit = CreateTokenClassDeposit;
+    type CreateAssetClassDeposit = CreateAssetClassDeposit;
     type Currency = Balances;
-    type TokenId = u64;
+    type AssetId = u64;
     type ClassId = u64;
 }
 
 parameter_types! {
-    pub const CurrencyTokenModuleId: PalletId = PalletId(*b"sug/curr");
+    pub const CurrencyModuleId: PalletId = PalletId(*b"sug/curr");
     pub const DexModuleId: PalletId = PalletId(*b"sug/dexm");
 }
 
 impl sugarfunge_currency::Config for Runtime {
     type Event = Event;
-    type PalletId = CurrencyTokenModuleId;
+    type PalletId = CurrencyModuleId;
     type Currency = OrmlCurrencies;
     type CreateCurrencyClassDeposit = CreateCurrencyClassDeposit;
     type GetNativeCurrencyId = GetNativeCurrencyId;
@@ -378,7 +378,7 @@ construct_runtime!(
         OrmlCurrencies: orml_currencies::{Pallet, Storage, Call, Event<T>},
 
         // SugarFunge pallets
-        Token: sugarfunge_token::{Pallet, Call, Storage, Event<T>},
+        Asset: sugarfunge_asset::{Pallet, Call, Storage, Event<T>},
         Currency: sugarfunge_currency::{Pallet, Call, Storage, Event<T>, Config<T>},
         Dex: sugarfunge_dex::{Pallet, Call, Storage, Event<T>},
         Exgine: sugarfunge_exgine::{Pallet, Call, Storage, Event<T>},

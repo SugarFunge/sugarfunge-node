@@ -54,7 +54,7 @@ pub mod pallet {
 
     #[pallet::storage]
     pub(super) type Exchanges<T: Config> =
-        StorageMap<_, Blake2_128, ExchangeId, Exchange<T::ClassId, T::TokenId, T::AccountId>>;
+        StorageMap<_, Blake2_128, ExchangeId, Exchange<T::ClassId, T::AssetId, T::AccountId>>;
 
     #[pallet::storage]
     #[pallet::getter(fn next_exchange_id)]
@@ -67,7 +67,7 @@ pub mod pallet {
         Blake2_128Concat,
         ExchangeId,
         Blake2_128Concat,
-        T::TokenId,
+        T::AssetId,
         Balance,
         ValueQuery,
     >;
@@ -79,7 +79,7 @@ pub mod pallet {
         Blake2_128Concat,
         ExchangeId,
         Blake2_128Concat,
-        T::TokenId,
+        T::AssetId,
         Balance,
         ValueQuery,
     >;
@@ -88,33 +88,33 @@ pub mod pallet {
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
         ExchangeCreated(ExchangeId, T::AccountId),
-        CurrencyToToken(
+        CurrencyToAsset(
             ExchangeId,
             T::AccountId,
             T::AccountId,
-            Vec<T::TokenId>,
+            Vec<T::AssetId>,
             Vec<Balance>,
             Vec<Balance>,
         ),
-        TokenToCurrency(
+        AssetToCurrency(
             ExchangeId,
             T::AccountId,
             T::AccountId,
-            Vec<T::TokenId>,
+            Vec<T::AssetId>,
             Vec<Balance>,
             Vec<Balance>,
         ),
         LiquidityAdded(
             T::AccountId,
             T::AccountId,
-            Vec<T::TokenId>,
+            Vec<T::AssetId>,
             Vec<Balance>,
             Vec<Balance>,
         ),
         LiquidityRemoved(
             T::AccountId,
             T::AccountId,
-            Vec<T::TokenId>,
+            Vec<T::AssetId>,
             Vec<Balance>,
             Vec<Balance>,
         ),
@@ -127,13 +127,13 @@ pub mod pallet {
         NoAvailableExchangeId,
         InvalidMaxCurrency,
         InsufficientCurrencyAmount,
-        InsufficientTokenAmount,
-        SameCurrencyAndToken,
+        InsufficientAssetAmount,
+        SameCurrencyAndAsset,
         MaxCurrencyAmountExceeded,
         InvalidCurrencyAmount,
         InsufficientLiquidity,
-        NullTokensBought,
-        NullTokensSold,
+        NullAssetsBought,
+        NullAssetsSold,
         EmptyReserve,
     }
 
@@ -146,7 +146,7 @@ pub mod pallet {
         pub fn create_exchange(
             origin: OriginFor<T>,
             currency_id: CurrencyId,
-            token_class_id: T::ClassId,
+            asset_class_id: T::ClassId,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
 
@@ -165,16 +165,16 @@ pub mod pallet {
             <T as Config>::Currency::transfer(&who, &fund_account, deposit, AllowDeath)?;
 
             let lp_class_id =
-                sugarfunge_token::Pallet::<T>::do_create_class(&fund_account, [].to_vec())?;
+                sugarfunge_asset::Pallet::<T>::do_create_class(&fund_account, [].to_vec())?;
 
-            let (currency_class_id, currency_token_id) =
-                sugarfunge_currency::Pallet::<T>::get_currency_token(currency_id)?;
+            let (currency_class_id, currency_asset_id) =
+                sugarfunge_currency::Pallet::<T>::get_currency_asset(currency_id)?;
 
             let new_exchange = Exchange {
                 creator: who.clone(),
-                token_class_id,
+                asset_class_id,
                 currency_class_id,
-                currency_token_id,
+                currency_asset_id,
                 lp_class_id,
                 vault: fund_account,
             };
@@ -187,21 +187,21 @@ pub mod pallet {
         }
 
         #[pallet::weight(10_000)]
-        pub fn buy_tokens(
+        pub fn buy_assets(
             origin: OriginFor<T>,
             exchange_id: ExchangeId,
-            token_ids: Vec<T::TokenId>,
-            token_amounts_out: Vec<Balance>,
+            asset_ids: Vec<T::AssetId>,
+            asset_amounts_out: Vec<Balance>,
             max_currency: Balance,
             to: T::AccountId,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
 
-            Self::do_buy_tokens(
+            Self::do_buy_assets(
                 &who,
                 exchange_id,
-                token_ids,
-                token_amounts_out,
+                asset_ids,
+                asset_amounts_out,
                 max_currency,
                 &to,
             )?;
@@ -210,21 +210,21 @@ pub mod pallet {
         }
 
         #[pallet::weight(10_000)]
-        pub fn sell_tokens(
+        pub fn sell_assets(
             origin: OriginFor<T>,
             exchange_id: ExchangeId,
-            token_ids: Vec<T::TokenId>,
-            token_amounts_in: Vec<Balance>,
+            asset_ids: Vec<T::AssetId>,
+            asset_amounts_in: Vec<Balance>,
             min_currency: Balance,
             to: T::AccountId,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
 
-            Self::do_sell_tokens(
+            Self::do_sell_assets(
                 &who,
                 exchange_id,
-                token_ids,
-                token_amounts_in,
+                asset_ids,
+                asset_amounts_in,
                 min_currency,
                 &to,
             )?;
@@ -237,8 +237,8 @@ pub mod pallet {
             origin: OriginFor<T>,
             exchange_id: ExchangeId,
             to: T::AccountId,
-            token_ids: Vec<T::TokenId>,
-            token_amounts: Vec<Balance>,
+            asset_ids: Vec<T::AssetId>,
+            asset_amounts: Vec<Balance>,
             max_currencies: Vec<Balance>,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
@@ -247,8 +247,8 @@ pub mod pallet {
                 &who,
                 exchange_id,
                 &to,
-                token_ids,
-                token_amounts,
+                asset_ids,
+                asset_amounts,
                 max_currencies,
             )?;
 
@@ -260,10 +260,10 @@ pub mod pallet {
             origin: OriginFor<T>,
             exchange_id: ExchangeId,
             to: T::AccountId,
-            token_ids: Vec<T::TokenId>,
+            asset_ids: Vec<T::AssetId>,
             liquidities: Vec<Balance>,
             min_currencies: Vec<Balance>,
-            min_tokens: Vec<Balance>,
+            min_assets: Vec<Balance>,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
 
@@ -271,10 +271,10 @@ pub mod pallet {
                 &who,
                 exchange_id,
                 &to,
-                token_ids,
+                asset_ids,
                 liquidities,
                 min_currencies,
-                min_tokens,
+                min_assets,
             )?;
 
             Ok(().into())
@@ -285,17 +285,17 @@ pub mod pallet {
 #[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
 pub struct Exchange<
     ClassId: Encode + Decode + Clone + Debug + Eq + PartialEq,
-    TokenId: Encode + Decode + Clone + Debug + Eq + PartialEq,
+    AssetId: Encode + Decode + Clone + Debug + Eq + PartialEq,
     AccountId: Encode + Decode + Clone + Debug + Eq + PartialEq,
 > {
     /// The creator of Exchange
     pub creator: AccountId,
-    /// The class of the tokens
-    pub token_class_id: ClassId,
+    /// The class of the assets
+    pub asset_class_id: ClassId,
     /// The class of the currency
     pub currency_class_id: ClassId,
-    /// The token of the currency class
-    pub currency_token_id: TokenId,
+    /// The asset of the currency class
+    pub currency_asset_id: AssetId,
     /// The class of exchange liquidity pool
     pub lp_class_id: ClassId,
     /// The fund account of exchange
@@ -303,36 +303,33 @@ pub struct Exchange<
 }
 
 impl<T: Config> Pallet<T> {
-    // currency to token
-    pub fn do_buy_tokens(
+    // currency to asset
+    pub fn do_buy_assets(
         who: &T::AccountId,
         exchange_id: ExchangeId,
-        token_ids: Vec<T::TokenId>,
-        token_amounts_out: Vec<Balance>,
+        asset_ids: Vec<T::AssetId>,
+        asset_amounts_out: Vec<Balance>,
         max_currency: Balance,
         to: &T::AccountId,
     ) -> DispatchResult {
         let exchange = Exchanges::<T>::get(exchange_id).ok_or(Error::<T>::InvalidExchangeId)?;
 
-        let n = token_ids.len();
+        let n = asset_ids.len();
         let mut total_currency = Balance::from(0u128);
         let mut amounts_in = vec![Balance::from(0u128); n];
 
-        let token_reserves = Self::get_token_reserves(
-            &exchange.vault,
-            exchange.token_class_id,
-            token_ids.clone(),
-        );
+        let asset_reserves =
+            Self::get_asset_reserves(&exchange.vault, exchange.asset_class_id, asset_ids.clone());
 
         for i in 0..n {
-            let token_id = token_ids[i];
-            let amount_out = token_amounts_out[i];
-            let token_reserve = token_reserves[i];
+            let asset_id = asset_ids[i];
+            let amount_out = asset_amounts_out[i];
+            let asset_reserve = asset_reserves[i];
 
-            ensure!(amount_out > Zero::zero(), Error::<T>::NullTokensBought);
+            ensure!(amount_out > Zero::zero(), Error::<T>::NullAssetsBought);
 
-            let currency_reserve = Self::currency_reserves(exchange_id, token_id);
-            let currency_amount = Self::get_buy_price(amount_out, currency_reserve, token_reserve)?;
+            let currency_reserve = Self::currency_reserves(exchange_id, asset_id);
+            let currency_amount = Self::get_buy_price(amount_out, currency_reserve, asset_reserve)?;
 
             total_currency = total_currency.saturating_add(currency_amount);
             ensure!(
@@ -344,7 +341,7 @@ impl<T: Config> Pallet<T> {
 
             CurrencyReserves::<T>::try_mutate(
                 exchange_id,
-                token_id,
+                asset_id,
                 |currency_reserve| -> DispatchResult {
                     *currency_reserve = currency_reserve
                         .checked_add(currency_amount)
@@ -354,70 +351,67 @@ impl<T: Config> Pallet<T> {
             )?;
         }
 
-        // Transfer currency token to exchange vault
-        sugarfunge_token::Pallet::<T>::do_transfer_from(
+        // Transfer currency asset to exchange vault
+        sugarfunge_asset::Pallet::<T>::do_transfer_from(
             who,
             who,
             &exchange.vault,
             exchange.currency_class_id,
-            exchange.currency_token_id,
+            exchange.currency_asset_id,
             total_currency,
         )?;
 
-        // Send tokens all tokens purchased
-        sugarfunge_token::Pallet::<T>::do_batch_transfer_from(
+        // Send assets all assets purchased
+        sugarfunge_asset::Pallet::<T>::do_batch_transfer_from(
             &exchange.vault,
             &exchange.vault,
             &to,
-            exchange.token_class_id,
-            token_ids.clone(),
-            token_amounts_out.clone(),
+            exchange.asset_class_id,
+            asset_ids.clone(),
+            asset_amounts_out.clone(),
         )?;
 
-        Self::deposit_event(Event::CurrencyToToken(
+        Self::deposit_event(Event::CurrencyToAsset(
             exchange_id,
             who.clone(),
             to.clone(),
-            token_ids,
-            token_amounts_out,
+            asset_ids,
+            asset_amounts_out,
             amounts_in,
         ));
 
         Ok(())
     }
 
-    // token to currency
-    pub fn do_sell_tokens(
+    // asset to currency
+    pub fn do_sell_assets(
         who: &T::AccountId,
         exchange_id: ExchangeId,
-        token_ids: Vec<T::TokenId>,
-        token_amounts_in: Vec<Balance>,
+        asset_ids: Vec<T::AssetId>,
+        asset_amounts_in: Vec<Balance>,
         min_currency: Balance,
         to: &T::AccountId,
     ) -> DispatchResult {
         let exchange = Exchanges::<T>::get(exchange_id).ok_or(Error::<T>::InvalidExchangeId)?;
 
-        let n = token_ids.len();
+        let n = asset_ids.len();
         let mut total_currency = Balance::from(0u128);
         let mut amounts_out = vec![Balance::from(0u128); n];
 
-        let token_reserves = Self::get_token_reserves(
-            &exchange.vault,
-            exchange.token_class_id,
-            token_ids.clone(),
-        );
+        let asset_reserves =
+            Self::get_asset_reserves(&exchange.vault, exchange.asset_class_id, asset_ids.clone());
 
         for i in 0..n {
-            let token_id = token_ids[i];
-            let amount_in = token_amounts_in[i];
-            let token_reserve = token_reserves[i];
+            let asset_id = asset_ids[i];
+            let amount_in = asset_amounts_in[i];
+            let asset_reserve = asset_reserves[i];
 
-            ensure!(amount_in > Zero::zero(), Error::<T>::NullTokensSold);
+            ensure!(amount_in > Zero::zero(), Error::<T>::NullAssetsSold);
 
-            let currency_reserve = Self::currency_reserves(exchange_id, token_id);
+            let currency_reserve = Self::currency_reserves(exchange_id, asset_id);
             let currency_amount = Self::get_sell_price(
                 amount_in,
-                token_reserve.saturating_sub(amount_in),
+                asset_reserve.saturating_sub(amount_in),
                 currency_reserve,
             )?;
 
@@ -426,7 +420,7 @@ impl<T: Config> Pallet<T> {
 
             CurrencyReserves::<T>::try_mutate(
                 exchange_id,
-                token_id,
+                asset_id,
                 |currency_reserve| -> DispatchResult {
                     *currency_reserve = currency_reserve
                         .checked_sub(currency_amount)
@@ -441,32 +435,32 @@ impl<T: Config> Pallet<T> {
             Error::<T>::InsufficientCurrencyAmount
         );
 
-        // Transfer the tokens to sell to exchange vault
-        sugarfunge_token::Pallet::<T>::do_batch_transfer_from(
+        // Transfer the assets to sell to exchange vault
+        sugarfunge_asset::Pallet::<T>::do_batch_transfer_from(
             who,
             who,
             &exchange.vault,
-            exchange.token_class_id,
-            token_ids.clone(),
-            token_amounts_in.clone(),
+            exchange.asset_class_id,
+            asset_ids.clone(),
+            asset_amounts_in.clone(),
         )?;
 
         // Transfer currency here
-        sugarfunge_token::Pallet::<T>::do_transfer_from(
+        sugarfunge_asset::Pallet::<T>::do_transfer_from(
             &exchange.vault,
             &exchange.vault,
             &to,
             exchange.currency_class_id,
-            exchange.currency_token_id,
+            exchange.currency_asset_id,
             total_currency,
         )?;
 
-        Self::deposit_event(Event::TokenToCurrency(
+        Self::deposit_event(Event::AssetToCurrency(
             exchange_id,
             who.clone(),
             to.clone(),
-            token_ids,
-            token_amounts_in,
+            asset_ids,
+            asset_amounts_in,
             amounts_out,
         ));
 
@@ -478,49 +472,46 @@ impl<T: Config> Pallet<T> {
         who: &T::AccountId,
         exchange_id: ExchangeId,
         to: &T::AccountId,
-        token_ids: Vec<T::TokenId>,
-        token_amounts: Vec<Balance>,
+        asset_ids: Vec<T::AssetId>,
+        asset_amounts: Vec<Balance>,
         max_currencies: Vec<Balance>,
     ) -> DispatchResult {
         let exchange = Exchanges::<T>::get(exchange_id).ok_or(Error::<T>::InvalidExchangeId)?;
 
-        let n = token_ids.len();
+        let n = asset_ids.len();
         let mut total_currency = Balance::from(0u128);
         let mut liquidities_to_mint = vec![Balance::from(0u128); n];
         let mut currency_amounts = vec![Balance::from(0u128); n];
 
-        let token_reserves = Self::get_token_reserves(
-            &exchange.vault,
-            exchange.token_class_id,
-            token_ids.clone(),
-        );
+        let asset_reserves =
+            Self::get_asset_reserves(&exchange.vault, exchange.asset_class_id, asset_ids.clone());
 
         for i in 0..n {
-            let token_id = token_ids[i];
-            let amount = token_amounts[i];
+            let asset_id = asset_ids[i];
+            let amount = asset_amounts[i];
 
             ensure!(
                 max_currencies[i] > Zero::zero(),
                 Error::<T>::InvalidMaxCurrency
             );
-            ensure!(amount > Zero::zero(), Error::<T>::InsufficientTokenAmount);
+            ensure!(amount > Zero::zero(), Error::<T>::InsufficientAssetAmount);
 
-            if exchange.currency_class_id == exchange.token_class_id {
+            if exchange.currency_class_id == exchange.asset_class_id {
                 ensure!(
-                    exchange.currency_token_id != token_id,
-                    Error::<T>::SameCurrencyAndToken
+                    exchange.currency_asset_id != asset_id,
+                    Error::<T>::SameCurrencyAndAsset
                 );
             }
 
-            let total_liquidity = Self::total_supplies(exchange_id, token_id);
+            let total_liquidity = Self::total_supplies(exchange_id, asset_id);
 
             if total_liquidity > Zero::zero() {
-                let currency_reserve = Self::currency_reserves(exchange_id, token_id);
-                let token_reserve = token_reserves[i];
+                let currency_reserve = Self::currency_reserves(exchange_id, asset_id);
+                let asset_reserve = asset_reserves[i];
 
                 let (currency_amount, rounded) = Self::div_round(
                     U256::from(amount).saturating_mul(U256::from(currency_reserve)),
-                    U256::from(token_reserve).saturating_sub(U256::from(amount)),
+                    U256::from(asset_reserve).saturating_sub(U256::from(amount)),
                 );
                 ensure!(
                     max_currencies[i] >= currency_amount,
@@ -540,7 +531,7 @@ impl<T: Config> Pallet<T> {
 
                 CurrencyReserves::<T>::try_mutate(
                     exchange_id,
-                    token_id,
+                    asset_id,
                     |currency_reserve| -> DispatchResult {
                         *currency_reserve = currency_reserve
                             .checked_add(currency_amount)
@@ -551,7 +542,7 @@ impl<T: Config> Pallet<T> {
 
                 TotalSupplies::<T>::try_mutate(
                     exchange_id,
-                    token_id,
+                    asset_id,
                     |total_supply| -> DispatchResult {
                         *total_supply = total_liquidity
                             .checked_add(liquidities_to_mint[i])
@@ -572,49 +563,49 @@ impl<T: Config> Pallet<T> {
                 liquidities_to_mint[i] = max_currency;
                 currency_amounts[i] = max_currency;
 
-                CurrencyReserves::<T>::mutate(exchange_id, token_id, |currency_reserve| {
+                CurrencyReserves::<T>::mutate(exchange_id, asset_id, |currency_reserve| {
                     *currency_reserve = max_currency
                 });
-                TotalSupplies::<T>::mutate(exchange_id, token_id, |total_supply| {
+                TotalSupplies::<T>::mutate(exchange_id, asset_id, |total_supply| {
                     *total_supply = max_currency
                 });
             }
         }
 
-        // Transfer the tokens to add to the exchange liquidity pools
-        sugarfunge_token::Pallet::<T>::do_batch_transfer_from(
+        // Transfer the assets to add to the exchange liquidity pools
+        sugarfunge_asset::Pallet::<T>::do_batch_transfer_from(
             who,
             who,
             &exchange.vault,
-            exchange.token_class_id,
-            token_ids.clone(),
-            token_amounts.clone(),
+            exchange.asset_class_id,
+            asset_ids.clone(),
+            asset_amounts.clone(),
         )?;
 
-        // Mint liquidity pool tokens
-        sugarfunge_token::Pallet::<T>::do_batch_mint(
+        // Mint liquidity pool assets
+        sugarfunge_asset::Pallet::<T>::do_batch_mint(
             &exchange.vault,
             &to,
             exchange.lp_class_id,
-            token_ids.clone(),
+            asset_ids.clone(),
             liquidities_to_mint,
         )?;
 
         // Transfer all currency to this contract
-        sugarfunge_token::Pallet::<T>::do_transfer_from(
+        sugarfunge_asset::Pallet::<T>::do_transfer_from(
             &who,
             &who,
             &exchange.vault,
             exchange.currency_class_id,
-            exchange.currency_token_id,
+            exchange.currency_asset_id,
             total_currency,
         )?;
 
         Self::deposit_event(Event::LiquidityAdded(
             who.clone(),
             to.clone(),
-            token_ids,
-            token_amounts,
+            asset_ids,
+            asset_amounts,
             currency_amounts,
         ));
 
@@ -626,36 +617,33 @@ impl<T: Config> Pallet<T> {
         who: &T::AccountId,
         exchange_id: ExchangeId,
         to: &T::AccountId,
-        token_ids: Vec<T::TokenId>,
+        asset_ids: Vec<T::AssetId>,
         liquidities: Vec<Balance>,
         min_currencies: Vec<Balance>,
-        min_tokens: Vec<Balance>,
+        min_assets: Vec<Balance>,
     ) -> DispatchResult {
         let exchange = Exchanges::<T>::get(exchange_id).ok_or(Error::<T>::InvalidExchangeId)?;
 
-        let n = token_ids.len();
+        let n = asset_ids.len();
         let mut total_currency = Balance::from(0u128);
-        let mut token_amounts = vec![Balance::from(0u128); n];
+        let mut asset_amounts = vec![Balance::from(0u128); n];
         let mut currency_amounts = vec![Balance::from(0u128); n];
 
-        let token_reserves = Self::get_token_reserves(
-            &exchange.vault,
-            exchange.token_class_id,
-            token_ids.clone(),
-        );
+        let asset_reserves =
+            Self::get_asset_reserves(&exchange.vault, exchange.asset_class_id, asset_ids.clone());
 
         for i in 0..n {
-            let token_id = token_ids[i];
+            let asset_id = asset_ids[i];
             let liquidity = liquidities[i];
-            let token_reserve = token_reserves[i];
+            let asset_reserve = asset_reserves[i];
 
-            let total_liquidity = Self::total_supplies(exchange_id, token_id);
+            let total_liquidity = Self::total_supplies(exchange_id, asset_id);
             ensure!(
                 total_liquidity > Zero::zero(),
                 Error::<T>::InsufficientLiquidity
             );
 
-            let currency_reserve = Self::currency_reserves(exchange_id, token_id);
+            let currency_reserve = Self::currency_reserves(exchange_id, asset_id);
 
             let currency_amount = U256::from(liquidity)
                 .saturating_mul(U256::from(currency_reserve))
@@ -663,8 +651,8 @@ impl<T: Config> Pallet<T> {
                 .and_then(|n| TryInto::<Balance>::try_into(n).ok())
                 .unwrap_or_else(Zero::zero);
 
-            let token_amount = U256::from(liquidity)
-                .saturating_mul(U256::from(token_reserve))
+            let asset_amount = U256::from(liquidity)
+                .saturating_mul(U256::from(asset_reserve))
                 .checked_div(U256::from(total_liquidity))
                 .and_then(|n| TryInto::<Balance>::try_into(n).ok())
                 .unwrap_or_else(Zero::zero);
@@ -674,17 +662,17 @@ impl<T: Config> Pallet<T> {
                 Error::<T>::InsufficientCurrencyAmount
             );
             ensure!(
-                token_amount >= min_tokens[i],
-                Error::<T>::InsufficientTokenAmount
+                asset_amount >= min_assets[i],
+                Error::<T>::InsufficientAssetAmount
             );
 
             total_currency = total_currency.saturating_add(currency_amount);
-            token_amounts[i] = token_amount;
+            asset_amounts[i] = asset_amount;
             currency_amounts[i] = currency_amount;
 
             CurrencyReserves::<T>::try_mutate(
                 exchange_id,
-                token_id,
+                asset_id,
                 |currency_reserve| -> DispatchResult {
                     *currency_reserve = currency_reserve
                         .checked_sub(currency_amount)
@@ -695,7 +683,7 @@ impl<T: Config> Pallet<T> {
 
             TotalSupplies::<T>::try_mutate(
                 exchange_id,
-                token_id,
+                asset_id,
                 |total_supply| -> DispatchResult {
                     *total_supply = total_liquidity
                         .checked_sub(liquidity)
@@ -705,62 +693,62 @@ impl<T: Config> Pallet<T> {
             )?;
         }
 
-        // Transfer the liquidity pool tokens to burn to exchange vault
-        sugarfunge_token::Pallet::<T>::do_batch_transfer_from(
+        // Transfer the liquidity pool assets to burn to exchange vault
+        sugarfunge_asset::Pallet::<T>::do_batch_transfer_from(
             who,
             who,
             &exchange.vault,
             exchange.lp_class_id,
-            token_ids.clone(),
+            asset_ids.clone(),
             liquidities.clone(),
         )?;
 
-        // Burn liquidity pool tokens for offchain supplies
-        sugarfunge_token::Pallet::<T>::do_batch_burn(
+        // Burn liquidity pool assets for offchain supplies
+        sugarfunge_asset::Pallet::<T>::do_batch_burn(
             &exchange.vault,
             &exchange.vault,
             exchange.lp_class_id,
-            token_ids.clone(),
+            asset_ids.clone(),
             liquidities,
         )?;
 
         // Transfer total currency
-        sugarfunge_token::Pallet::<T>::do_transfer_from(
+        sugarfunge_asset::Pallet::<T>::do_transfer_from(
             &exchange.vault,
             &exchange.vault,
             &to,
             exchange.currency_class_id,
-            exchange.currency_token_id,
+            exchange.currency_asset_id,
             total_currency,
         )?;
 
-        // Transfer all tokens ids
-        sugarfunge_token::Pallet::<T>::do_batch_transfer_from(
+        // Transfer all assets ids
+        sugarfunge_asset::Pallet::<T>::do_batch_transfer_from(
             &exchange.vault,
             &exchange.vault,
             &to,
-            exchange.token_class_id,
-            token_ids.clone(),
-            token_amounts.clone(),
+            exchange.asset_class_id,
+            asset_ids.clone(),
+            asset_amounts.clone(),
         )?;
 
         Self::deposit_event(Event::LiquidityRemoved(
             who.clone(),
             to.clone(),
-            token_ids,
-            token_amounts,
+            asset_ids,
+            asset_amounts,
             currency_amounts,
         ));
 
         Ok(())
     }
 
-    /// Pricing function used for converting between currency token to tokens.
+    /// Pricing function used for converting between currency asset to assets.
     ///
-    /// - `amount_out`: Amount of tokens being bought.
-    /// - `reserve_in`: Amount of currency tokens in exchange reserves.
-    /// - `reserve_out`: Amount of tokens in exchange reserves.
-    /// Return the price Amount of currency tokens to send to dex.
+    /// - `amount_out`: Amount of assets being bought.
+    /// - `reserve_in`: Amount of currency assets in exchange reserves.
+    /// - `reserve_out`: Amount of assets in exchange reserves.
+    /// Return the price Amount of currency assets to send to dex.
     pub fn get_buy_price(
         amount_out: Balance,
         reserve_in: Balance,
@@ -787,12 +775,12 @@ impl<T: Config> Pallet<T> {
         Ok(amount_in)
     }
 
-    /// Pricing function used for converting tokens to currency token.
+    /// Pricing function used for converting assets to currency asset.
     ///
-    /// - `amount_in`: Amount of tokens being sold.
-    /// - `reserve_in`: Amount of tokens in exchange reserves.
-    /// - `reserve_out`: Amount of currency tokens in exchange reserves.
-    /// Return the price Amount of currency tokens to receive from dex.
+    /// - `amount_in`: Amount of assets being sold.
+    /// - `reserve_in`: Amount of assets in exchange reserves.
+    /// - `reserve_out`: Amount of currency assets in exchange reserves.
+    /// Return the price Amount of currency assets to receive from dex.
     pub fn get_sell_price(
         amount_in: Balance,
         reserve_in: Balance,
@@ -817,24 +805,24 @@ impl<T: Config> Pallet<T> {
         Ok(amount_out)
     }
 
-    fn get_token_reserves(
+    fn get_asset_reserves(
         vault: &T::AccountId,
         class_id: T::ClassId,
-        token_ids: Vec<T::TokenId>,
+        asset_ids: Vec<T::AssetId>,
     ) -> Vec<Balance> {
-        let n = token_ids.len();
+        let n = asset_ids.len();
 
         if n == 1 {
-            let mut token_reserves = vec![Balance::from(0u128); n];
-            token_reserves[0] =
-                sugarfunge_token::Pallet::<T>::balance_of(vault, class_id, token_ids[0]);
-            token_reserves
+            let mut asset_reserves = vec![Balance::from(0u128); n];
+            asset_reserves[0] =
+                sugarfunge_asset::Pallet::<T>::balance_of(vault, class_id, asset_ids[0]);
+            asset_reserves
         } else {
             let vaults = vec![vault.clone(); n];
-            let token_reserves =
-                sugarfunge_token::Pallet::<T>::balance_of_batch(&vaults, class_id, token_ids)
+            let asset_reserves =
+                sugarfunge_asset::Pallet::<T>::balance_of_batch(&vaults, class_id, asset_ids)
                     .unwrap();
-            token_reserves
+            asset_reserves
         }
     }
 

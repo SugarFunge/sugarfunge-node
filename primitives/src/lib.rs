@@ -54,11 +54,11 @@ pub type BlockId = generic::BlockId<Block>;
 /// Signed version of Balance
 pub type Amount = i128;
 
-pub type TokenId = u64;
+pub type AssetId = u64;
 
 #[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub enum TokenSymbol {
+pub enum AssetSymbol {
     SUGAR = 0,
     DOT = 1,
     ETH = 2,
@@ -68,14 +68,14 @@ pub enum TokenSymbol {
 #[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum CurrencyId {
-    Token(TokenSymbol),
-    Id(TokenId),
+    Asset(AssetSymbol),
+    Id(AssetId),
 }
 
 impl Into<u64> for CurrencyId {
     fn into(self) -> u64 {
         match self {
-            CurrencyId::Token(token) => token as u64,
+            CurrencyId::Asset(asset) => asset as u64,
             CurrencyId::Id(id) => id,
         }
     }

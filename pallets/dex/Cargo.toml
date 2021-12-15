@@ -18,7 +18,7 @@ pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", default-features = false }
 
 sugarfunge-primitives = { package = "sugarfunge-primitives", path = "../../primitives", default-features = false }
-sugarfunge-token = { package = "sugarfunge-token", path = "../token", default-features = false }
+sugarfunge-asset = { package = "sugarfunge-asset", path = "../token", default-features = false }
 sugarfunge-currency = { package = "sugarfunge-currency", path = "../currency", default-features = false }
 
 [dev-dependencies]
@@ -40,6 +40,6 @@ std = [
     "pallet-timestamp/std",
     "sp-core/std",
     "sugarfunge-primitives/std",
-    "sugarfunge-token/std",
+    "sugarfunge-asset/std",
     "sugarfunge-currency/std",
 ]

@@ -27,7 +27,7 @@ pub mod pallet {
     use frame_system::pallet_prelude::*;
 
     #[pallet::config]
-    pub trait Config: frame_system::Config + sugarfunge_token::Config {
+    pub trait Config: frame_system::Config + sugarfunge_asset::Config {
         type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
         #[pallet::constant]
@@ -79,19 +79,15 @@ pub mod pallet {
     pub(super) type CurrencyClass<T: Config> = StorageValue<_, T::ClassId, OptionQuery>;
 
     #[pallet::storage]
-    pub(super) type CurrencyTokens<T: Config> = StorageMap<
-        _,
-        Blake2_128Concat,
-        CurrencyId,
-        TokenInfo<T::ClassId, T::TokenId, Balance>,
-    >;
+    pub(super) type CurrencyAssets<T: Config> =
+        StorageMap<_, Blake2_128Concat, CurrencyId, AssetInfo<T::ClassId, T::AssetId, Balance>>;
 
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
-        TokenCreated(CurrencyId, T::AccountId),
-        TokenMint(CurrencyId, Balance, T::AccountId),
-        TokenBurn(CurrencyId, Balance, T::AccountId),
+        AssetCreated(CurrencyId, T::AccountId),
+        AssetMint(CurrencyId, Balance, T::AccountId),
+        AssetBurn(CurrencyId, Balance, T::AccountId),
     }
 
     // Errors inform users that something went wrong.
@@ -100,7 +96,7 @@ pub mod pallet {
         Unknown,
         NumOverflow,
         CurrencyClassNotCreated,
-        CurrencyTokenNotFound,
+        CurrencyAssetNotFound,
     }
 
     #[pallet::hooks]
@@ -116,38 +112,37 @@ pub mod pallet {
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
 
-            let class_id =
-                CurrencyClass::<T>::get().ok_or(Error::<T>::CurrencyClassNotCreated)?;
+            let class_id = CurrencyClass::<T>::get().ok_or(Error::<T>::CurrencyClassNotCreated)?;
 
             let module_account = Self::account_id();
             <T as Config>::Currency::transfer(currency_id, &who, &module_account, amount)?;
 
-            if !CurrencyTokens::<T>::contains_key(currency_id) {
-                let token_id = Self::convert_to_token_id(currency_id);
-                sugarfunge_token::Pallet::<T>::do_create_token(
+            if !CurrencyAssets::<T>::contains_key(currency_id) {
+                let asset_id = Self::convert_to_asset_id(currency_id);
+                sugarfunge_asset::Pallet::<T>::do_create_asset(
                     &module_account,
                     class_id,
-                    token_id,
+                    asset_id,
                     [].to_vec(),
                 )?;
 
-                let token_info = TokenInfo {
+                let asset_info = AssetInfo {
                     class_id,
-                    token_id: token_id.clone(),
+                    asset_id: asset_id.clone(),
                     total_supply: Default::default(),
                 };
 
-                CurrencyTokens::<T>::insert(currency_id, token_info);
+                CurrencyAssets::<T>::insert(currency_id, asset_info);
             }
 
-            CurrencyTokens::<T>::try_mutate(currency_id, |token_info| -> DispatchResult {
-                let info = token_info.as_mut().ok_or(Error::<T>::Unknown)?;
+            CurrencyAssets::<T>::try_mutate(currency_id, |asset_info| -> DispatchResult {
+                let info = asset_info.as_mut().ok_or(Error::<T>::Unknown)?;
 
-                sugarfunge_token::Pallet::<T>::do_mint(
+                sugarfunge_asset::Pallet::<T>::do_mint(
                     &module_account,
                     &who,
                     class_id,
-                    info.token_id,
+                    info.asset_id,
                     amount,
                 )?;
 
@@ -158,7 +153,7 @@ pub mod pallet {
                 Ok(())
             })?;
 
-            Self::deposit_event(Event::TokenMint(currency_id, amount, who));
+            Self::deposit_event(Event::AssetMint(currency_id, amount, who));
 
             Ok(().into())
         }
@@ -171,22 +166,22 @@ pub mod pallet {
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
 
-            CurrencyTokens::<T>::try_mutate(currency_id, |token_info| -> DispatchResult {
-                let info = token_info
+            CurrencyAssets::<T>::try_mutate(currency_id, |asset_info| -> DispatchResult {
+                let info = asset_info
                     .as_mut()
-                    .ok_or(Error::<T>::CurrencyTokenNotFound)?;
+                    .ok_or(Error::<T>::CurrencyAssetNotFound)?;
 
-                let class_id = CurrencyClass::<T>::get()
-                    .ok_or(Error::<T>::CurrencyClassNotCreated)?;
+                let class_id =
+                    CurrencyClass::<T>::get().ok_or(Error::<T>::CurrencyClassNotCreated)?;
 
                 let module_account = Self::account_id();
                 <T as Config>::Currency::transfer(currency_id, &module_account, &who, amount)?;
 
-                sugarfunge_token::Pallet::<T>::do_burn(
+                sugarfunge_asset::Pallet::<T>::do_burn(
                     &module_account,
                     &who,
                     class_id,
-                    info.token_id,
+                    info.asset_id,
                     amount,
                 )?;
 
@@ -197,7 +192,7 @@ pub mod pallet {
                 Ok(())
             })?;
 
-            Self::deposit_event(Event::TokenBurn(currency_id, amount, who));
+            Self::deposit_event(Event::AssetBurn(currency_id, amount, who));
 
             Ok(().into())
         }
@@ -205,13 +200,13 @@ pub mod pallet {
 }
 
 #[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
-pub struct TokenInfo<
+pub struct AssetInfo<
     ClassId: Encode + Decode + Clone + Debug + Eq + PartialEq,
-    TokenId: Encode + Decode + Clone + Debug + Eq + PartialEq,
+    AssetId: Encode + Decode + Clone + Debug + Eq + PartialEq,
     Balance: Encode + Decode + Clone + Debug + Eq + PartialEq,
 > {
     class_id: ClassId,
-    token_id: TokenId,
+    asset_id: AssetId,
     total_supply: Balance,
 }
 
@@ -227,22 +222,21 @@ impl<T: Config> Pallet<T> {
 
         <T as Config>::Currency::transfer(native_currency_id, &who, &module_account, amount)?;
 
-        let class_id =
-            sugarfunge_token::Pallet::<T>::do_create_class(&module_account, data)?;
+        let class_id = sugarfunge_asset::Pallet::<T>::do_create_class(&module_account, data)?;
         CurrencyClass::<T>::put(class_id);
 
         Ok(())
     }
 
-    pub fn get_currency_token(
+    pub fn get_currency_asset(
         currency_id: CurrencyId,
-    ) -> Result<(T::ClassId, T::TokenId), DispatchError> {
-        let token_info =
-            CurrencyTokens::<T>::get(currency_id).ok_or(Error::<T>::CurrencyTokenNotFound)?;
-        Ok((token_info.class_id, token_info.token_id))
+    ) -> Result<(T::ClassId, T::AssetId), DispatchError> {
+        let asset_info =
+            CurrencyAssets::<T>::get(currency_id).ok_or(Error::<T>::CurrencyAssetNotFound)?;
+        Ok((asset_info.class_id, asset_info.asset_id))
     }
 
-    pub fn convert_to_token_id(id: CurrencyId) -> T::TokenId {
+    pub fn convert_to_asset_id(id: CurrencyId) -> T::AssetId {
         let n: u64 = id.into();
         n.into()
     }

@@ -1,4 +1,4 @@
-use crate as sugarfunge_token;
+use crate as sugarfunge_asset;
 use frame_support::parameter_types;
 use frame_system as system;
 use sp_core::H256;
@@ -33,7 +33,7 @@ frame_support::construct_runtime!(
     {
         System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
         Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-        Token: sugarfunge_token::{Pallet, Call, Storage, Event<T>},
+        Asset: sugarfunge_asset::{Pallet, Call, Storage, Event<T>},
     }
 );
 
@@ -72,14 +72,14 @@ impl system::Config for Test {
 }
 
 parameter_types! {
-    pub const CreateTokenClassDeposit: Balance = 0;
+    pub const CreateAssetClassDeposit: Balance = 0;
 }
 
-impl sugarfunge_token::Config for Test {
+impl sugarfunge_asset::Config for Test {
     type Event = Event;
-    type CreateTokenClassDeposit = CreateTokenClassDeposit;
+    type CreateAssetClassDeposit = CreateAssetClassDeposit;
     type Currency = Balances;
-    type TokenId = u64;
+    type AssetId = u64;
     type ClassId = u64;
 }
 
