@@ -85,7 +85,6 @@ pub mod pallet {
     >;
 
     #[pallet::event]
-    // #[pallet::metadata(T::AccountId = "AccountId")]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
         ExchangeCreated(ExchangeId, T::AccountId),
@@ -319,8 +318,11 @@ impl<T: Config> Pallet<T> {
         let mut total_currency = Balance::from(0u128);
         let mut amounts_in = vec![Balance::from(0u128); n];
 
-        let token_reserves =
-            Self::get_token_reserves(&exchange.vault, exchange.token_collection_id, token_ids.clone());
+        let token_reserves = Self::get_token_reserves(
+            &exchange.vault,
+            exchange.token_collection_id,
+            token_ids.clone(),
+        );
 
         for i in 0..n {
             let token_id = token_ids[i];
@@ -362,7 +364,7 @@ impl<T: Config> Pallet<T> {
             total_currency,
         )?;
 
-        // Send Tokens all tokens purchased
+        // Send tokens all tokens purchased
         sugarfunge_token::Pallet::<T>::do_batch_transfer_from(
             &exchange.vault,
             &exchange.vault,
@@ -399,8 +401,11 @@ impl<T: Config> Pallet<T> {
         let mut total_currency = Balance::from(0u128);
         let mut amounts_out = vec![Balance::from(0u128); n];
 
-        let token_reserves =
-            Self::get_token_reserves(&exchange.vault, exchange.token_collection_id, token_ids.clone());
+        let token_reserves = Self::get_token_reserves(
+            &exchange.vault,
+            exchange.token_collection_id,
+            token_ids.clone(),
+        );
 
         for i in 0..n {
             let token_id = token_ids[i];
@@ -484,8 +489,11 @@ impl<T: Config> Pallet<T> {
         let mut liquidities_to_mint = vec![Balance::from(0u128); n];
         let mut currency_amounts = vec![Balance::from(0u128); n];
 
-        let token_reserves =
-            Self::get_token_reserves(&exchange.vault, exchange.token_collection_id, token_ids.clone());
+        let token_reserves = Self::get_token_reserves(
+            &exchange.vault,
+            exchange.token_collection_id,
+            token_ids.clone(),
+        );
 
         for i in 0..n {
             let token_id = token_ids[i];
@@ -630,8 +638,11 @@ impl<T: Config> Pallet<T> {
         let mut token_amounts = vec![Balance::from(0u128); n];
         let mut currency_amounts = vec![Balance::from(0u128); n];
 
-        let token_reserves =
-            Self::get_token_reserves(&exchange.vault, exchange.token_collection_id, token_ids.clone());
+        let token_reserves = Self::get_token_reserves(
+            &exchange.vault,
+            exchange.token_collection_id,
+            token_ids.clone(),
+        );
 
         for i in 0..n {
             let token_id = token_ids[i];
@@ -723,7 +734,7 @@ impl<T: Config> Pallet<T> {
             total_currency,
         )?;
 
-        // Transfer all Tokens ids
+        // Transfer all tokens ids
         sugarfunge_token::Pallet::<T>::do_batch_transfer_from(
             &exchange.vault,
             &exchange.vault,
@@ -744,11 +755,11 @@ impl<T: Config> Pallet<T> {
         Ok(())
     }
 
-    /// Pricing function used for converting between currency token to Tokens.
+    /// Pricing function used for converting between currency token to tokens.
     ///
-    /// - `amount_out`: Amount of Tokens being bought.
+    /// - `amount_out`: Amount of tokens being bought.
     /// - `reserve_in`: Amount of currency tokens in exchange reserves.
-    /// - `reserve_out`: Amount of Tokens in exchange reserves.
+    /// - `reserve_out`: Amount of tokens in exchange reserves.
     /// Return the price Amount of currency tokens to send to dex.
     pub fn get_buy_price(
         amount_out: Balance,
@@ -765,15 +776,21 @@ impl<T: Config> Pallet<T> {
             .saturating_mul(U256::from(1000u128));
         let denominator: U256 = (U256::from(reserve_out).saturating_sub(U256::from(amount_out)))
             .saturating_mul(U256::from(995u128));
+
+        ensure!(
+            denominator > U256::from(0),
+            Error::<T>::InsufficientLiquidity
+        );
+
         let (amount_in, _) = Self::div_round(numerator, denominator);
 
         Ok(amount_in)
     }
 
-    /// Pricing function used for converting Tokens to currency token.
+    /// Pricing function used for converting tokens to currency token.
     ///
-    /// - `amount_in`: Amount of Tokens being sold.
-    /// - `reserve_in`: Amount of Tokens in exchange reserves.
+    /// - `amount_in`: Amount of tokens being sold.
+    /// - `reserve_in`: Amount of tokens in exchange reserves.
     /// - `reserve_out`: Amount of currency tokens in exchange reserves.
     /// Return the price Amount of currency tokens to receive from dex.
     pub fn get_sell_price(

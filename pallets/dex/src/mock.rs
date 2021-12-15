@@ -159,15 +159,15 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
         .build_storage::<Test>()
         .unwrap();
     pallet_balances::GenesisConfig::<Test> {
-        balances: vec![(1, 100 * DOLLARS), (2, 100 * DOLLARS)],
+        balances: vec![(1, 100_000_000 * DOLLARS), (2, 100_000_000 * DOLLARS)],
     }
     .assimilate_storage(&mut t)
     .unwrap();
     orml_tokens::GenesisConfig::<Test> {
         balances: vec![
-            (1, CurrencyId::Token(TokenSymbol::DOT), 1000000 * DOLLARS),
-            (1, CurrencyId::Token(TokenSymbol::ETH), 1000000 * DOLLARS),
-            (1, CurrencyId::Token(TokenSymbol::BTC), 1000000 * DOLLARS),
+            (1, CurrencyId::Token(TokenSymbol::DOT), 100_000_000 * DOLLARS),
+            (1, CurrencyId::Token(TokenSymbol::ETH), 100_000_000 * DOLLARS),
+            (1, CurrencyId::Token(TokenSymbol::BTC), 100_000_000 * DOLLARS),
         ],
     }
     .assimilate_storage(&mut t)
