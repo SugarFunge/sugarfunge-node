@@ -36,9 +36,41 @@ fn currency_btc_works() {
 }
 
 #[test]
+fn issue_and_mint_currency() {
+    new_test_ext().execute_with(|| {
+        run_to_block(10);
+        let new_currency_id = CurrencyId::Id(1000);
+        assert_eq!(Asset::balance_of(&1, 0, new_currency_id.into()), 0);
+        let call = Box::new(mock::Call::OrmlCurrencies(
+            orml_currencies::module::Call::update_balance {
+                who: 1,
+                currency_id: new_currency_id,
+                amount: 1000000 * DOLLARS as i128,
+            },
+        ));
+        assert_eq!(Sudo::key(), 1u64);
+        assert_ok!(Sudo::sudo(Origin::signed(1), call));
+        assert_ok!(Currency::mint(
+            Origin::signed(1),
+            new_currency_id,
+            500 * CENTS
+        ));
+        assert_eq!(
+            last_event(),
+            mock::Event::Currency(crate::Event::AssetMint(new_currency_id, 500 * CENTS, 1)),
+        );
+        assert_eq!(
+            Asset::balance_of(&1, 0, new_currency_id.into()),
+            500 * CENTS
+        );
+    })
+}
+
+#[test]
 fn currency_mint_works() {
     new_test_ext().execute_with(|| {
         run_to_block(10);
+        assert_eq!(Asset::balance_of(&1, 0, SUGAR.into()), 0 * CENTS);
         assert_ok!(Currency::mint(Origin::signed(1), SUGAR, 500 * CENTS));
         assert_eq!(
             last_event(),

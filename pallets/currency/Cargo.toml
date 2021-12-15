@@ -22,7 +22,8 @@ sugarfunge-primitives = { package = "sugarfunge-primitives", path = "../../primi
 sugarfunge-asset = { package = "sugarfunge-asset", path = "../asset", default-features = false }
 
 [dev-dependencies]
-pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
+pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", default-features = false }
+pallet-sudo = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", default-features = false }
 orml-currencies = { version = '0.4.1-dev', default-features = false, git = "https://github.com/open-web3-stack/open-runtime-module-library.git", branch = "master" }
 orml-tokens = { version = '0.4.1-dev', default-features = false, git = "https://github.com/open-web3-stack/open-runtime-module-library.git", branch = "master" }
 sugarfunge-asset = { package = "sugarfunge-asset", path = "../asset", default-features = false }
@@ -34,6 +35,7 @@ std = [
     "scale-info/std",
     "frame-support/std",
     "frame-system/std",
+    "pallet-sudo/std",
     "sp-runtime/std",
     "sp-io/std",
     "sp-std/std",

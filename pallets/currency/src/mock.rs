@@ -42,6 +42,11 @@ impl pallet_balances::Config for Test {
     type ReserveIdentifier = [u8; 8];
 }
 
+impl pallet_sudo::Config for Test {
+    type Event = Event;
+    type Call = Call;
+}
+
 parameter_type_with_key! {
     pub ExistentialDeposits: |_currency_id: CurrencyId| -> Balance {
         Zero::zero()
@@ -92,6 +97,7 @@ frame_support::construct_runtime!(
         UncheckedExtrinsic = UncheckedExtrinsic,
     {
         System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
+        Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
         Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
         OrmlTokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>},
         OrmlCurrencies: orml_currencies::{Pallet, Storage, Call, Event<T>},
@@ -149,10 +155,13 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
         .build_storage::<Test>()
         .unwrap();
     pallet_balances::GenesisConfig::<Test> {
-        balances: vec![(1, 100 * DOLLARS), (2, 100 * DOLLARS)],
+        balances: vec![(1, 1000000 * DOLLARS), (2, 1000000 * DOLLARS)],
     }
     .assimilate_storage(&mut t)
     .unwrap();
+    pallet_sudo::GenesisConfig::<Test> { key: 1 }
+        .assimilate_storage(&mut t)
+        .unwrap();
     orml_tokens::GenesisConfig::<Test> {
         balances: vec![
             (1, CurrencyId::Asset(AssetSymbol::DOT), 1000000 * DOLLARS),

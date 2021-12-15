@@ -6,8 +6,8 @@ fn create_asset_works() {
     new_test_ext().execute_with(|| {
         let data = vec![0, 1];
         assert_ok!(Asset::do_create_class(&1, data));
-        let uri = vec![0, 1];
-        assert_ok!(Asset::do_create_asset(&1, 0, 2, uri));
+        let metadata = vec![0, 1];
+        assert_ok!(Asset::do_create_asset(&1, 0, 2, metadata));
         println!("asset: {:?}", Assets::<Test>::get(0, 2));
     })
 }
@@ -15,9 +15,9 @@ fn create_asset_works() {
 #[test]
 fn create_asset_not_works() {
     new_test_ext().execute_with(|| {
-        let uri = vec![0, 1];
+        let metadata = vec![0, 1];
         assert_noop!(
-            Asset::do_create_asset(&1, 1, 2, uri),
+            Asset::do_create_asset(&1, 1, 2, metadata),
             Error::<Test>::InvalidClassId
         );
         println!("asset: {:?}", Assets::<Test>::get(1, 2));
