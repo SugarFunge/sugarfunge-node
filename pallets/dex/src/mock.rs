@@ -104,17 +104,17 @@ impl orml_currencies::Config for Test {
 }
 
 parameter_types! {
-    pub const CreateTokenCollectionDeposit: Balance = 1;
+    pub const CreateTokenClassDeposit: Balance = 1;
     pub const CreateExchangeDeposit: Balance = 1;
-    pub const CreateCurrencyCollectionDeposit: Balance = 1;
+    pub const CreateCurrencyClassDeposit: Balance = 1;
 }
 
 impl sugarfunge_token::Config for Test {
     type Event = Event;
-    type CreateTokenCollectionDeposit = CreateTokenCollectionDeposit;
+    type CreateTokenClassDeposit = CreateTokenClassDeposit;
     type Currency = Balances;
     type TokenId = u64;
-    type CollectionId = u64;
+    type ClassId = u64;
 }
 
 parameter_types! {
@@ -126,7 +126,7 @@ impl sugarfunge_currency::Config for Test {
     type Event = Event;
     type PalletId = CurrencyTokenModuleId;
     type Currency = OrmlCurrencies;
-    type CreateCurrencyCollectionDeposit = CreateCurrencyCollectionDeposit;
+    type CreateCurrencyClassDeposit = CreateCurrencyClassDeposit;
     type GetNativeCurrencyId = GetNativeCurrencyId;
 }
 
@@ -173,7 +173,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     .assimilate_storage(&mut t)
     .unwrap();
     sugarfunge_currency::GenesisConfig::<Test> {
-        collection: (1, [].to_vec()),
+        class: (1, [].to_vec()),
     }
     .assimilate_storage(&mut t)
     .unwrap();

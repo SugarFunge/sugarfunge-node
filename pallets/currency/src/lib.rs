@@ -40,7 +40,7 @@ pub mod pallet {
         >;
 
         #[pallet::constant]
-        type CreateCurrencyCollectionDeposit: Get<Balance>;
+        type CreateCurrencyClassDeposit: Get<Balance>;
 
         #[pallet::constant]
         type GetNativeCurrencyId: Get<CurrencyId>;
@@ -50,14 +50,14 @@ pub mod pallet {
 
     #[pallet::genesis_config]
     pub struct GenesisConfig<T: Config> {
-        pub collection: GenesisInstance<T>,
+        pub class: GenesisInstance<T>,
     }
 
     #[cfg(feature = "std")]
     impl<T: Config> Default for GenesisConfig<T> {
         fn default() -> Self {
             Self {
-                collection: Default::default(),
+                class: Default::default(),
             }
         }
     }
@@ -65,8 +65,8 @@ pub mod pallet {
     #[pallet::genesis_build]
     impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
         fn build(&self) {
-            Pallet::<T>::create_collection(&self.collection.0, self.collection.1.to_vec())
-                .expect("Create collection cannot fail while building genesis");
+            Pallet::<T>::create_class(&self.class.0, self.class.1.to_vec())
+                .expect("Create class cannot fail while building genesis");
         }
     }
 
@@ -75,15 +75,15 @@ pub mod pallet {
     pub struct Pallet<T>(_);
 
     #[pallet::storage]
-    #[pallet::getter(fn currency_collection)]
-    pub(super) type CurrencyCollection<T: Config> = StorageValue<_, T::CollectionId, OptionQuery>;
+    #[pallet::getter(fn currency_class)]
+    pub(super) type CurrencyClass<T: Config> = StorageValue<_, T::ClassId, OptionQuery>;
 
     #[pallet::storage]
     pub(super) type CurrencyTokens<T: Config> = StorageMap<
         _,
         Blake2_128Concat,
         CurrencyId,
-        TokenInfo<T::CollectionId, T::TokenId, Balance>,
+        TokenInfo<T::ClassId, T::TokenId, Balance>,
     >;
 
     #[pallet::event]
@@ -99,7 +99,7 @@ pub mod pallet {
     pub enum Error<T> {
         Unknown,
         NumOverflow,
-        CurrencyCollectionNotCreated,
+        CurrencyClassNotCreated,
         CurrencyTokenNotFound,
     }
 
@@ -116,8 +116,8 @@ pub mod pallet {
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
 
-            let collection_id =
-                CurrencyCollection::<T>::get().ok_or(Error::<T>::CurrencyCollectionNotCreated)?;
+            let class_id =
+                CurrencyClass::<T>::get().ok_or(Error::<T>::CurrencyClassNotCreated)?;
 
             let module_account = Self::account_id();
             <T as Config>::Currency::transfer(currency_id, &who, &module_account, amount)?;
@@ -126,13 +126,13 @@ pub mod pallet {
                 let token_id = Self::convert_to_token_id(currency_id);
                 sugarfunge_token::Pallet::<T>::do_create_token(
                     &module_account,
-                    collection_id,
+                    class_id,
                     token_id,
                     [].to_vec(),
                 )?;
 
                 let token_info = TokenInfo {
-                    collection_id,
+                    class_id,
                     token_id: token_id.clone(),
                     total_supply: Default::default(),
                 };
@@ -146,7 +146,7 @@ pub mod pallet {
                 sugarfunge_token::Pallet::<T>::do_mint(
                     &module_account,
                     &who,
-                    collection_id,
+                    class_id,
                     info.token_id,
                     amount,
                 )?;
@@ -176,8 +176,8 @@ pub mod pallet {
                     .as_mut()
                     .ok_or(Error::<T>::CurrencyTokenNotFound)?;
 
-                let collection_id = CurrencyCollection::<T>::get()
-                    .ok_or(Error::<T>::CurrencyCollectionNotCreated)?;
+                let class_id = CurrencyClass::<T>::get()
+                    .ok_or(Error::<T>::CurrencyClassNotCreated)?;
 
                 let module_account = Self::account_id();
                 <T as Config>::Currency::transfer(currency_id, &module_account, &who, amount)?;
@@ -185,7 +185,7 @@ pub mod pallet {
                 sugarfunge_token::Pallet::<T>::do_burn(
                     &module_account,
                     &who,
-                    collection_id,
+                    class_id,
                     info.token_id,
                     amount,
                 )?;
@@ -206,11 +206,11 @@ pub mod pallet {
 
 #[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
 pub struct TokenInfo<
-    CollectionId: Encode + Decode + Clone + Debug + Eq + PartialEq,
+    ClassId: Encode + Decode + Clone + Debug + Eq + PartialEq,
     TokenId: Encode + Decode + Clone + Debug + Eq + PartialEq,
     Balance: Encode + Decode + Clone + Debug + Eq + PartialEq,
 > {
-    collection_id: CollectionId,
+    class_id: ClassId,
     token_id: TokenId,
     total_supply: Balance,
 }
@@ -220,26 +220,26 @@ impl<T: Config> Pallet<T> {
         T::PalletId::get().into_account()
     }
 
-    pub fn create_collection(who: &T::AccountId, data: Vec<u8>) -> DispatchResult {
+    pub fn create_class(who: &T::AccountId, data: Vec<u8>) -> DispatchResult {
         let module_account = Self::account_id();
         let native_currency_id = T::GetNativeCurrencyId::get();
-        let amount = T::CreateCurrencyCollectionDeposit::get();
+        let amount = T::CreateCurrencyClassDeposit::get();
 
         <T as Config>::Currency::transfer(native_currency_id, &who, &module_account, amount)?;
 
-        let collection_id =
-            sugarfunge_token::Pallet::<T>::do_create_collection(&module_account, data)?;
-        CurrencyCollection::<T>::put(collection_id);
+        let class_id =
+            sugarfunge_token::Pallet::<T>::do_create_class(&module_account, data)?;
+        CurrencyClass::<T>::put(class_id);
 
         Ok(())
     }
 
     pub fn get_currency_token(
         currency_id: CurrencyId,
-    ) -> Result<(T::CollectionId, T::TokenId), DispatchError> {
+    ) -> Result<(T::ClassId, T::TokenId), DispatchError> {
         let token_info =
             CurrencyTokens::<T>::get(currency_id).ok_or(Error::<T>::CurrencyTokenNotFound)?;
-        Ok((token_info.collection_id, token_info.token_id))
+        Ok((token_info.class_id, token_info.token_id))
     }
 
     pub fn convert_to_token_id(id: CurrencyId) -> T::TokenId {

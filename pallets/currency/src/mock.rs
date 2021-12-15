@@ -22,8 +22,8 @@ pub const ETH: CurrencyId = CurrencyId::Token(TokenSymbol::ETH);
 pub const BTC: CurrencyId = CurrencyId::Token(TokenSymbol::BTC);
 
 parameter_types! {
-    pub const CreateTokenCollectionDeposit: Balance = 500 * MILLICENTS;
-    pub const CreateCurrencyCollectionDeposit: Balance = 500 * MILLICENTS;
+    pub const CreateTokenClassDeposit: Balance = 500 * MILLICENTS;
+    pub const CreateCurrencyClassDeposit: Balance = 500 * MILLICENTS;
 }
 
 parameter_types! {
@@ -75,10 +75,10 @@ impl orml_currencies::Config for Test {
 
 impl sugarfunge_token::Config for Test {
     type Event = Event;
-    type CreateTokenCollectionDeposit = CreateTokenCollectionDeposit;
+    type CreateTokenClassDeposit = CreateTokenClassDeposit;
     type Currency = Balances;
     type TokenId = u64;
-    type CollectionId = u64;
+    type ClassId = u64;
 }
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
@@ -140,7 +140,7 @@ impl sugarfunge_currency::Config for Test {
     type Event = Event;
     type PalletId = CurrencyTokenModuleId;
     type Currency = OrmlCurrencies;
-    type CreateCurrencyCollectionDeposit = CreateCurrencyCollectionDeposit;
+    type CreateCurrencyClassDeposit = CreateCurrencyClassDeposit;
     type GetNativeCurrencyId = GetNativeCurrencyId;
 }
 
@@ -163,7 +163,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     .assimilate_storage(&mut t)
     .unwrap();
     sugarfunge_currency::GenesisConfig::<Test> {
-        collection: (1, [].to_vec()),
+        class: (1, [].to_vec()),
     }
     .assimilate_storage(&mut t)
     .unwrap();

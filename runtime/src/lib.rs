@@ -322,17 +322,17 @@ impl orml_currencies::Config for Runtime {
 }
 
 parameter_types! {
-    pub const CreateTokenCollectionDeposit: Balance = 500 * MILLICENTS;
+    pub const CreateTokenClassDeposit: Balance = 500 * MILLICENTS;
     pub const CreateExchangeDeposit: Balance = 500 * MILLICENTS;
-    pub const CreateCurrencyCollectionDeposit: Balance = 500 * MILLICENTS;
+    pub const CreateCurrencyClassDeposit: Balance = 500 * MILLICENTS;
 }
 
 impl sugarfunge_token::Config for Runtime {
     type Event = Event;
-    type CreateTokenCollectionDeposit = CreateTokenCollectionDeposit;
+    type CreateTokenClassDeposit = CreateTokenClassDeposit;
     type Currency = Balances;
     type TokenId = u64;
-    type CollectionId = u64;
+    type ClassId = u64;
 }
 
 parameter_types! {
@@ -344,7 +344,7 @@ impl sugarfunge_currency::Config for Runtime {
     type Event = Event;
     type PalletId = CurrencyTokenModuleId;
     type Currency = OrmlCurrencies;
-    type CreateCurrencyCollectionDeposit = CreateCurrencyCollectionDeposit;
+    type CreateCurrencyClassDeposit = CreateCurrencyClassDeposit;
     type GetNativeCurrencyId = GetNativeCurrencyId;
 }
 

@@ -21,8 +21,8 @@
     }
   },
   "CurrencyIdOf": "CurrencyId",
-  "CollectionId": "u64",
-  "CollectionInfo": {
+  "ClassId": "u64",
+  "ClassInfo": {
     "owner": "AccountId",
     "totalSupply": "u128",
     "deposit": "Balance",

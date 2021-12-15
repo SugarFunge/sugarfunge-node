@@ -21,7 +21,7 @@ pub fn before_exchange() {
         )),
     );
     assert_eq!(Token::balance_of(&1, 0, SUGAR.into()), 500 * DOLLARS);
-    assert_ok!(Token::create_collection(Origin::signed(1), [0].to_vec()));
+    assert_ok!(Token::create_class(Origin::signed(1), [0].to_vec()));
     assert_ok!(Token::create_token(Origin::signed(1), 1, 1, [0].to_vec()));
     assert_ok!(Token::mint(Origin::signed(1), 1, 1, 1, 50000 * DOLLARS));
     assert_eq!(Token::balance_of(&1, 1, 1), 50000 * DOLLARS);
@@ -127,7 +127,7 @@ fn add_liquidity_works() {
         assert_eq!(balances, [49000 * DOLLARS].to_vec());
         let exchange = Exchanges::<Test>::get(0).unwrap();
         assert_eq!(
-            Token::balance_of(&2, exchange.lp_collection_id, 1),
+            Token::balance_of(&2, exchange.lp_class_id, 1),
             100 * DOLLARS
         );
     });

@@ -72,15 +72,15 @@ impl system::Config for Test {
 }
 
 parameter_types! {
-    pub const CreateTokenCollectionDeposit: Balance = 0;
+    pub const CreateTokenClassDeposit: Balance = 0;
 }
 
 impl sugarfunge_token::Config for Test {
     type Event = Event;
-    type CreateTokenCollectionDeposit = CreateTokenCollectionDeposit;
+    type CreateTokenClassDeposit = CreateTokenClassDeposit;
     type Currency = Balances;
     type TokenId = u64;
-    type CollectionId = u64;
+    type ClassId = u64;
 }
 
 // Build genesis storage according to the mock runtime.

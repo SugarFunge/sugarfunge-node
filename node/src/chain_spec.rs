@@ -205,9 +205,9 @@ fn testnet_genesis(
                 .collect(),
         },
         currency: CurrencyConfig {
-            collection: (
+            class: (
                 get_account_id_from_seed::<sr25519::Public>("Alice"),
-                "currency token collection".as_bytes().to_vec(),
+                "currency token class".as_bytes().to_vec(),
             ),
         },
     }
