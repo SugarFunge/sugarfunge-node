@@ -57,7 +57,7 @@ orml-tokens = { version = '0.4.1-dev', default-features = false, git = "https://
 primitives = { package = "sugarfunge-primitives", path = "../primitives", default-features = false }
 
 # local pallet
-sugarfunge-asset = { default-features = false, path = "../pallets/token" }
+sugarfunge-asset = { default-features = false, path = "../pallets/asset" }
 sugarfunge-currency = { default-features = false, path = "../pallets/currency" }
 sugarfunge-dex = { default-features = false, path = "../pallets/dex" }
 sugarfunge-exgine = { default-features = false, path = "../pallets/exgine" }

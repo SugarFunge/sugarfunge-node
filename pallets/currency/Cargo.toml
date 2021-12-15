@@ -19,13 +19,13 @@ sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-
 orml-traits = { version = "0.4.1-dev", default-features = false, git = "https://github.com/open-web3-stack/open-runtime-module-library.git", branch = "master" }
 
 sugarfunge-primitives = { package = "sugarfunge-primitives", path = "../../primitives", default-features = false }
-sugarfunge-asset = { package = "sugarfunge-asset", path = "../token", default-features = false }
+sugarfunge-asset = { package = "sugarfunge-asset", path = "../asset", default-features = false }
 
 [dev-dependencies]
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 orml-currencies = { version = '0.4.1-dev', default-features = false, git = "https://github.com/open-web3-stack/open-runtime-module-library.git", branch = "master" }
 orml-tokens = { version = '0.4.1-dev', default-features = false, git = "https://github.com/open-web3-stack/open-runtime-module-library.git", branch = "master" }
-sugarfunge-asset = { package = "sugarfunge-asset", path = "../token", default-features = false }
+sugarfunge-asset = { package = "sugarfunge-asset", path = "../asset", default-features = false }
 
 [features]
 default = ["std"]
