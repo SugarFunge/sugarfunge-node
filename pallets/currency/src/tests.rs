@@ -63,6 +63,8 @@ fn issue_and_mint_currency() {
             Asset::balance_of(&1, 0, new_currency_id.into()),
             500 * CENTS
         );
+        let asset_info = CurrencyAssets::<Test>::get(new_currency_id).unwrap();
+        assert_eq!(asset_info.total_supply, 500 * CENTS);
     })
 }
 
@@ -77,6 +79,8 @@ fn currency_mint_works() {
             mock::Event::Currency(crate::Event::AssetMint(SUGAR, 500 * CENTS, 1)),
         );
         assert_eq!(Asset::balance_of(&1, 0, SUGAR.into()), 500 * CENTS);
+        let asset_info = CurrencyAssets::<Test>::get(SUGAR).unwrap();
+        assert_eq!(asset_info.total_supply, 500 * CENTS);
     })
 }
 
