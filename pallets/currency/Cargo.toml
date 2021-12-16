@@ -9,23 +9,23 @@ license = "Proprietary"
 codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false, features = ["derive"] }
 scale-info = { version = "1.0", default-features = false, features = ["derive"] }
 
-frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", default-features = false }
-frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", default-features = false }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", default-features = false }
-sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", default-features = false }
-sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", default-features = false }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", default-features = false }
+frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
+frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
 
-orml-traits = { version = "0.4.1-dev", default-features = false, git = "https://github.com/open-web3-stack/open-runtime-module-library.git", branch = "master" }
+orml-traits = { branch = "polkadot-v0.9.13", default-features = false, git = "https://github.com/open-web3-stack/open-runtime-module-library.git" }
 
 sugarfunge-primitives = { package = "sugarfunge-primitives", path = "../../primitives", default-features = false }
 sugarfunge-asset = { package = "sugarfunge-asset", path = "../asset", default-features = false }
 
 [dev-dependencies]
-pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", default-features = false }
-pallet-sudo = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", default-features = false }
-orml-currencies = { version = '0.4.1-dev', default-features = false, git = "https://github.com/open-web3-stack/open-runtime-module-library.git", branch = "master" }
-orml-tokens = { version = '0.4.1-dev', default-features = false, git = "https://github.com/open-web3-stack/open-runtime-module-library.git", branch = "master" }
+pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
+pallet-sudo = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
+orml-currencies = { branch = "polkadot-v0.9.13", default-features = false, git = "https://github.com/open-web3-stack/open-runtime-module-library.git" }
+orml-tokens = { branch = "polkadot-v0.9.13", default-features = false, git = "https://github.com/open-web3-stack/open-runtime-module-library.git" }
 sugarfunge-asset = { package = "sugarfunge-asset", path = "../asset", default-features = false }
 
 [features]
