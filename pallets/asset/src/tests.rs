@@ -27,8 +27,42 @@ fn create_asset_not_works() {
 #[test]
 fn create_class_works() {
     new_test_ext().execute_with(|| {
-        let data = vec![0, 1];
-        assert_ok!(Asset::do_create_class(&1, data));
+        let metadata = vec![0, 1];
+        assert_ok!(Asset::do_create_class(&1, metadata));
+    })
+}
+
+#[test]
+fn update_class_metadata() {
+    new_test_ext().execute_with(|| {
+        let metadata = vec![0, 1];
+        assert_ok!(Asset::do_create_class(&1, metadata.clone()));
+        let class = Classes::<Test>::get(0).unwrap();
+        assert_eq!(class.metadata, metadata);
+        let new_metadata = vec![0, 1, 2, 3, 4];
+        assert_ok!(Asset::do_update_class_metadata(&1, 0, new_metadata.clone()));
+        let class = Classes::<Test>::get(0).unwrap();
+        assert_eq!(class.metadata, new_metadata);
+    })
+}
+
+#[test]
+fn update_asset_metadata() {
+    new_test_ext().execute_with(|| {
+        assert_ok!(Asset::do_create_class(&1, [0].to_vec()));
+        let metadata = vec![0, 1];
+        assert_ok!(Asset::do_create_asset(&1, 0, 1000, metadata.clone()));
+        let asset = Assets::<Test>::get(0, 1000).unwrap();
+        assert_eq!(asset.metadata, metadata);
+        let new_metadata = vec![0, 1, 2, 3, 4];
+        assert_ok!(Asset::do_update_asset_metadata(
+            &1,
+            0,
+            1000,
+            new_metadata.clone()
+        ));
+        let asset = Assets::<Test>::get(0, 1000).unwrap();
+        assert_eq!(asset.metadata, new_metadata);
     })
 }
 

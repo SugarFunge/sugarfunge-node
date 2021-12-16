@@ -361,7 +361,7 @@ impl<T: Config> Pallet<T> {
             total_currency,
         )?;
 
-        // Send assets all assets purchased
+        // Send all assets purchased
         sugarfunge_asset::Pallet::<T>::do_batch_transfer_from(
             &exchange.vault,
             &exchange.vault,

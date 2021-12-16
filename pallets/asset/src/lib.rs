@@ -76,7 +76,7 @@ pub mod pallet {
     pub struct Pallet<T>(_);
 
     #[pallet::storage]
-    pub(super) type Classs<T: Config> =
+    pub(super) type Classes<T: Config> =
         StorageMap<_, Blake2_128Concat, T::ClassId, Class<T::AccountId>>;
 
     #[pallet::storage]
@@ -100,12 +100,13 @@ pub mod pallet {
 
     #[pallet::storage]
     #[pallet::getter(fn balances)]
-    pub(super) type Balances<T: Config> = StorageDoubleMap<
+    pub(super) type Balances<T: Config> = StorageNMap<
         _,
-        Blake2_128Concat,
-        T::AccountId,
-        Blake2_128Concat,
-        (T::ClassId, T::AssetId),
+        (
+            NMapKey<Blake2_128Concat, T::AccountId>,
+            NMapKey<Blake2_128Concat, T::ClassId>,
+            NMapKey<Blake2_128Concat, T::AssetId>,
+        ),
         Balance,
         ValueQuery,
     >;
@@ -290,6 +291,33 @@ pub mod pallet {
 
             Ok(().into())
         }
+
+        #[pallet::weight(10_000)]
+        pub fn update_class_metadata(
+            origin: OriginFor<T>,
+            class_id: T::ClassId,
+            metadata: Vec<u8>,
+        ) -> DispatchResultWithPostInfo {
+            let who = ensure_signed(origin)?;
+
+            Self::do_update_class_metadata(&who, class_id, metadata)?;
+
+            Ok(().into())
+        }
+
+        #[pallet::weight(10_000)]
+        pub fn update_asset_metadata(
+            origin: OriginFor<T>,
+            class_id: T::ClassId,
+            asset_id: T::AssetId,
+            metadata: Vec<u8>,
+        ) -> DispatchResultWithPostInfo {
+            let who = ensure_signed(origin)?;
+
+            Self::do_update_asset_metadata(&who, class_id, asset_id, metadata)?;
+
+            Ok(().into())
+        }
     }
 }
 
@@ -314,7 +342,7 @@ impl<T: Config> Pallet<T> {
             metadata,
         };
 
-        Classs::<T>::insert(class_id, class);
+        Classes::<T>::insert(class_id, class);
 
         Self::deposit_event(Event::ClassCreated(class_id, who.clone()));
 
@@ -354,6 +382,45 @@ impl<T: Config> Pallet<T> {
         Ok(())
     }
 
+    pub fn do_update_class_metadata(
+        who: &T::AccountId,
+        class_id: T::ClassId,
+        metadata: Vec<u8>,
+    ) -> DispatchResult {
+        Self::maybe_check_owner(who, class_id)?;
+        ensure!(
+            Classes::<T>::contains_key(class_id),
+            Error::<T>::InvalidClassId
+        );
+        Classes::<T>::try_mutate(class_id, |class| -> DispatchResult {
+            if let Some(class) = class {
+                class.metadata = metadata.clone();
+            }
+            Ok(())
+        })?;
+        Ok(())
+    }
+
+    pub fn do_update_asset_metadata(
+        who: &T::AccountId,
+        class_id: T::ClassId,
+        asset_id: T::AssetId,
+        metadata: Vec<u8>,
+    ) -> DispatchResult {
+        Self::maybe_check_owner(who, class_id)?;
+        ensure!(
+            Assets::<T>::contains_key(class_id, asset_id),
+            Error::<T>::InvalidAssetId
+        );
+        Assets::<T>::try_mutate(class_id, asset_id, |asset| -> DispatchResult {
+            if let Some(asset) = asset {
+                asset.metadata = metadata.clone();
+            }
+            Ok(())
+        })?;
+        Ok(())
+    }
+
     pub fn do_set_approval_for_all(
         who: &T::AccountId,
         operator: &T::AccountId,
@@ -361,7 +428,7 @@ impl<T: Config> Pallet<T> {
         approved: bool,
     ) -> DispatchResult {
         ensure!(
-            Classs::<T>::contains_key(class_id),
+            Classes::<T>::contains_key(class_id),
             Error::<T>::ClassNotFound
         );
 
@@ -564,7 +631,7 @@ impl<T: Config> Pallet<T> {
     }
 
     pub fn balance_of(owner: &T::AccountId, class_id: T::ClassId, asset_id: T::AssetId) -> Balance {
-        Self::balances(owner, (class_id, asset_id))
+        Self::balances((owner, class_id, asset_id))
     }
 
     pub fn balance_of_batch(
@@ -584,7 +651,7 @@ impl<T: Config> Pallet<T> {
             let owner = &owners[i];
             let asset_id = asset_ids[i];
 
-            batch_balances[i] = Self::balances(owner, (class_id, asset_id));
+            batch_balances[i] = Self::balances((owner, class_id, asset_id));
         }
 
         Ok(batch_balances)
@@ -602,7 +669,7 @@ impl<T: Config> Pallet<T> {
             let owner = owner.clone();
             let asset_id = asset_ids[i];
 
-            batch_balances[i] = Self::balances(owner, (class_id, asset_id));
+            batch_balances[i] = Self::balances((owner, class_id, asset_id));
         }
 
         Ok(batch_balances)
@@ -614,7 +681,7 @@ impl<T: Config> Pallet<T> {
         asset_id: T::AssetId,
         amount: Balance,
     ) -> DispatchResult {
-        Balances::<T>::try_mutate(to, (class_id, asset_id), |balance| -> DispatchResult {
+        Balances::<T>::try_mutate((to, class_id, asset_id), |balance| -> DispatchResult {
             *balance = balance.checked_add(amount).ok_or(Error::<T>::NumOverflow)?;
             Ok(())
         })?;
@@ -628,7 +695,7 @@ impl<T: Config> Pallet<T> {
         asset_id: T::AssetId,
         amount: Balance,
     ) -> DispatchResult {
-        Balances::<T>::try_mutate(from, (class_id, asset_id), |balance| -> DispatchResult {
+        Balances::<T>::try_mutate((from, class_id, asset_id), |balance| -> DispatchResult {
             *balance = balance.checked_sub(amount).ok_or(Error::<T>::NumOverflow)?;
             Ok(())
         })?;
@@ -637,9 +704,8 @@ impl<T: Config> Pallet<T> {
     }
 
     fn maybe_check_owner(who: &T::AccountId, class_id: T::ClassId) -> DispatchResult {
-        let class = Classs::<T>::get(class_id).ok_or(Error::<T>::InvalidClassId)?;
+        let class = Classes::<T>::get(class_id).ok_or(Error::<T>::InvalidClassId)?;
         ensure!(*who == class.owner, Error::<T>::NoPermission);
-
         Ok(())
     }
 }
