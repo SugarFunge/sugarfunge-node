@@ -8,7 +8,7 @@ use frame_support::{
 };
 use scale_info::TypeInfo;
 use sp_runtime::{
-    traits::{AtLeast32BitUnsigned, CheckedAdd, One, Zero},
+    traits::{AtLeast32BitUnsigned, One, Zero},
     RuntimeDebug,
 };
 use sp_std::prelude::*;
@@ -65,6 +65,7 @@ pub mod pallet {
         type ClassId: Member
             + Parameter
             + AtLeast32BitUnsigned
+            + MaybeSerializeDeserialize
             + Default
             + Copy
             + From<u64>
@@ -78,10 +79,6 @@ pub mod pallet {
     #[pallet::storage]
     pub(super) type Classes<T: Config> =
         StorageMap<_, Blake2_128Concat, T::ClassId, Class<T::AccountId>>;
-
-    #[pallet::storage]
-    #[pallet::getter(fn next_class_id)]
-    pub(super) type NextClassId<T: Config> = StorageValue<_, T::ClassId, ValueQuery>;
 
     #[pallet::storage]
     pub(super) type Assets<T: Config> = StorageDoubleMap<
@@ -165,10 +162,10 @@ pub mod pallet {
     #[pallet::call]
     impl<T: Config> Pallet<T> {
         #[pallet::weight(10_000)]
-        pub fn create_class(origin: OriginFor<T>, metadata: Vec<u8>) -> DispatchResultWithPostInfo {
+        pub fn create_class(origin: OriginFor<T>, class_id: T::ClassId, metadata: Vec<u8>) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
 
-            Self::do_create_class(&who, metadata)?;
+            Self::do_create_class(&who, class_id, metadata)?;
 
             Ok(().into())
         }
@@ -324,18 +321,16 @@ pub mod pallet {
 impl<T: Config> Pallet<T> {
     pub fn do_create_class(
         who: &T::AccountId,
+        class_id: T::ClassId,
         metadata: Vec<u8>,
-    ) -> Result<T::ClassId, DispatchError> {
+    ) -> DispatchResult {
+        ensure!(
+            !Classes::<T>::contains_key(class_id),
+            Error::<T>::InvalidClassId
+        );
+
         let deposit = T::CreateAssetClassDeposit::get();
         T::Currency::reserve(&who, deposit.clone())?;
-
-        let class_id = NextClassId::<T>::try_mutate(|id| -> Result<T::ClassId, DispatchError> {
-            let current_id = *id;
-            *id = id
-                .checked_add(&One::one())
-                .ok_or(Error::<T>::NoAvailableClassId)?;
-            Ok(current_id)
-        })?;
 
         let class = Class {
             owner: who.clone(),
@@ -345,8 +340,7 @@ impl<T: Config> Pallet<T> {
         Classes::<T>::insert(class_id, class);
 
         Self::deposit_event(Event::ClassCreated(class_id, who.clone()));
-
-        Ok(class_id)
+        Ok(())
     }
 
     pub fn do_create_asset(

@@ -207,6 +207,7 @@ fn testnet_genesis(
         currency: CurrencyConfig {
             class: (
                 get_account_id_from_seed::<sr25519::Public>("Alice"),
+                0,
                 "currency asset class".as_bytes().to_vec(),
             ),
         },

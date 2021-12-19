@@ -46,7 +46,11 @@ pub mod pallet {
         type GetNativeCurrencyId: Get<CurrencyId>;
     }
 
-    pub type GenesisInstance<T> = (<T as frame_system::Config>::AccountId, Vec<u8>);
+    pub type GenesisInstance<T> = (
+        <T as frame_system::Config>::AccountId,
+        <T as sugarfunge_asset::Config>::ClassId,
+        Vec<u8>,
+    );
 
     #[pallet::genesis_config]
     pub struct GenesisConfig<T: Config> {
@@ -65,7 +69,7 @@ pub mod pallet {
     #[pallet::genesis_build]
     impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
         fn build(&self) {
-            Pallet::<T>::create_class(&self.class.0, self.class.1.to_vec())
+            Pallet::<T>::create_class(&self.class.0, self.class.1, self.class.2.to_vec())
                 .expect("Create class cannot fail while building genesis");
         }
     }
@@ -215,14 +219,14 @@ impl<T: Config> Pallet<T> {
         T::PalletId::get().into_account()
     }
 
-    pub fn create_class(who: &T::AccountId, data: Vec<u8>) -> DispatchResult {
+    pub fn create_class(who: &T::AccountId, class_id: T::ClassId, data: Vec<u8>) -> DispatchResult {
         let module_account = Self::account_id();
         let native_currency_id = T::GetNativeCurrencyId::get();
         let amount = T::CreateCurrencyClassDeposit::get();
 
         <T as Config>::Currency::transfer(native_currency_id, &who, &module_account, amount)?;
 
-        let class_id = sugarfunge_asset::Pallet::<T>::do_create_class(&module_account, data)?;
+        sugarfunge_asset::Pallet::<T>::do_create_class(&module_account, class_id, data)?;
         CurrencyClass::<T>::put(class_id);
 
         Ok(())

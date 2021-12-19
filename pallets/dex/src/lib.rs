@@ -147,6 +147,7 @@ pub mod pallet {
             origin: OriginFor<T>,
             currency_id: CurrencyId,
             asset_class_id: T::ClassId,
+            lp_class_id: T::ClassId,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
 
@@ -164,8 +165,11 @@ pub mod pallet {
             let deposit = T::CreateExchangeDeposit::get();
             <T as Config>::Currency::transfer(&who, &fund_account, deposit, AllowDeath)?;
 
-            let lp_class_id =
-                sugarfunge_asset::Pallet::<T>::do_create_class(&fund_account, [].to_vec())?;
+            sugarfunge_asset::Pallet::<T>::do_create_class(
+                &fund_account,
+                lp_class_id,
+                [].to_vec(),
+            )?;
 
             let (currency_class_id, currency_asset_id) =
                 sugarfunge_currency::Pallet::<T>::get_currency_asset(currency_id)?;

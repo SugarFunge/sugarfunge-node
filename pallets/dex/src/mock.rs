@@ -185,7 +185,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     .assimilate_storage(&mut t)
     .unwrap();
     sugarfunge_currency::GenesisConfig::<Test> {
-        class: (1, [].to_vec()),
+        class: (1, 0, [].to_vec()),
     }
     .assimilate_storage(&mut t)
     .unwrap();
