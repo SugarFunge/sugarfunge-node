@@ -149,7 +149,6 @@ pub mod pallet {
         NumOverflow,
         InvalidArrayLength,
         Overflow,
-        NoAvailableClassId,
         InvalidClassId,
         NoPermission,
         ClassNotFound,

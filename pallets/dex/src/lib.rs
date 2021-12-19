@@ -10,7 +10,7 @@ use frame_support::{
 use scale_info::TypeInfo;
 use sp_core::U256;
 use sp_runtime::{
-    traits::{AccountIdConversion, One, Zero},
+    traits::{AccountIdConversion, Zero},
     RuntimeDebug,
 };
 use sp_std::{convert::TryInto, fmt::Debug, prelude::*};
@@ -55,10 +55,6 @@ pub mod pallet {
     #[pallet::storage]
     pub(super) type Exchanges<T: Config> =
         StorageMap<_, Blake2_128, ExchangeId, Exchange<T::ClassId, T::AssetId, T::AccountId>>;
-
-    #[pallet::storage]
-    #[pallet::getter(fn next_exchange_id)]
-    pub(super) type NextExchangeId<T: Config> = StorageValue<_, ExchangeId, ValueQuery>;
 
     #[pallet::storage]
     #[pallet::getter(fn total_supplies)]
@@ -124,7 +120,6 @@ pub mod pallet {
     pub enum Error<T> {
         Overflow,
         InvalidExchangeId,
-        NoAvailableExchangeId,
         InvalidMaxCurrency,
         InsufficientCurrencyAmount,
         InsufficientAssetAmount,
@@ -145,20 +140,17 @@ pub mod pallet {
         #[pallet::weight(10_000)]
         pub fn create_exchange(
             origin: OriginFor<T>,
+            exchange_id: ExchangeId,
             currency_id: CurrencyId,
             asset_class_id: T::ClassId,
             lp_class_id: T::ClassId,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
 
-            let exchange_id =
-                NextExchangeId::<T>::try_mutate(|id| -> Result<ExchangeId, DispatchError> {
-                    let current_id = *id;
-                    *id = id
-                        .checked_add(One::one())
-                        .ok_or(Error::<T>::NoAvailableExchangeId)?;
-                    Ok(current_id)
-                })?;
+            ensure!(
+                !Exchanges::<T>::contains_key(exchange_id),
+                Error::<T>::InvalidExchangeId
+            );
 
             let fund_account = <T as Config>::PalletId::get().into_sub_account(exchange_id);
 

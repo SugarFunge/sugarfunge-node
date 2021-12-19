@@ -94,7 +94,7 @@ fn endow_user_2_works() {
 fn create_exchange_works() {
     new_test_ext().execute_with(|| {
         before_exchange();
-        assert_ok!(Dex::create_exchange(Origin::signed(1), SUGAR, 1, 9000));
+        assert_ok!(Dex::create_exchange(Origin::signed(1), 0, SUGAR, 1, 9000));
         assert_eq!(
             last_event(),
             mock::Event::Dex(crate::Event::ExchangeCreated(0, 1)),
@@ -106,7 +106,7 @@ fn create_exchange_works() {
 fn add_liquidity_works() {
     new_test_ext().execute_with(|| {
         before_exchange();
-        assert_ok!(Dex::create_exchange(Origin::signed(1), SUGAR, 1, 9000));
+        assert_ok!(Dex::create_exchange(Origin::signed(1), 0, SUGAR, 1, 9000));
         assert_eq!(
             last_event(),
             mock::Event::Dex(crate::Event::ExchangeCreated(0, 1)),
@@ -133,7 +133,7 @@ fn add_liquidity_works() {
 fn sell_price_works() {
     new_test_ext().execute_with(|| {
         before_exchange();
-        assert_ok!(Dex::create_exchange(Origin::signed(1), SUGAR, 1, 9000));
+        assert_ok!(Dex::create_exchange(Origin::signed(1), 0, SUGAR, 1, 9000));
         assert_ok!(Dex::add_liquidity(
             Origin::signed(1),
             0,
@@ -157,7 +157,7 @@ fn sell_price_works() {
 fn buy_price_works() {
     new_test_ext().execute_with(|| {
         before_exchange();
-        assert_ok!(Dex::create_exchange(Origin::signed(1), SUGAR, 1, 9000));
+        assert_ok!(Dex::create_exchange(Origin::signed(1), 0, SUGAR, 1, 9000));
         assert_ok!(Dex::add_liquidity(
             Origin::signed(1),
             0,
@@ -181,7 +181,7 @@ fn buy_assets_works() {
     new_test_ext().execute_with(|| {
         before_exchange();
         endow_user_2();
-        assert_ok!(Dex::create_exchange(Origin::signed(1), SUGAR, 1, 9000));
+        assert_ok!(Dex::create_exchange(Origin::signed(1), 0, SUGAR, 1, 9000));
         assert_eq!(
             last_event(),
             mock::Event::Dex(crate::Event::ExchangeCreated(0, 1)),
@@ -212,7 +212,7 @@ fn buy_more_assets_than_available() {
     new_test_ext().execute_with(|| {
         before_exchange();
         endow_user_2();
-        assert_ok!(Dex::create_exchange(Origin::signed(1), SUGAR, 1, 9000));
+        assert_ok!(Dex::create_exchange(Origin::signed(1), 0, SUGAR, 1, 9000));
         assert_eq!(
             last_event(),
             mock::Event::Dex(crate::Event::ExchangeCreated(0, 1)),
