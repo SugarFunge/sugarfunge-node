@@ -7021,9 +7021,48 @@ dependencies = [
 ]
 
 [[package]]
+name = "sugarfunge-dao"
+version = "0.1.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "sugarfunge-dex"
 version = "0.1.0"
 dependencies = [
+ "frame-support",
+ "frame-system",
+ "integer-sqrt",
+ "orml-currencies",
+ "orml-tokens",
+ "orml-traits",
+ "pallet-balances",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "sugarfunge-asset",
+ "sugarfunge-currency",
+ "sugarfunge-primitives",
+]
+
+[[package]]
+name = "sugarfunge-escrow"
+version = "0.1.0"
+dependencies = [
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "integer-sqrt",
@@ -7159,7 +7198,9 @@ dependencies = [
  "substrate-wasm-builder",
  "sugarfunge-asset",
  "sugarfunge-currency",
+ "sugarfunge-dao",
  "sugarfunge-dex",
+ "sugarfunge-escrow",
  "sugarfunge-exgine",
  "sugarfunge-primitives",
 ]

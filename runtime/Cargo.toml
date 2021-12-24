@@ -60,6 +60,8 @@ primitives = { package = "sugarfunge-primitives", path = "../primitives", defaul
 sugarfunge-asset = { default-features = false, path = "../pallets/asset" }
 sugarfunge-currency = { default-features = false, path = "../pallets/currency" }
 sugarfunge-dex = { default-features = false, path = "../pallets/dex" }
+sugarfunge-dao = { default-features = false, path = "../pallets/dao" }
+sugarfunge-escrow = { default-features = false, path = "../pallets/escrow" }
 sugarfunge-exgine = { default-features = false, path = "../pallets/exgine" }
 
 [build-dependencies]

@@ -325,6 +325,7 @@ impl orml_currencies::Config for Runtime {
 parameter_types! {
     pub const CreateAssetClassDeposit: Balance = 500 * MILLICENTS;
     pub const CreateExchangeDeposit: Balance = 500 * MILLICENTS;
+    pub const CreateEscrowDeposit: Balance = 500 * MILLICENTS;
     pub const CreateCurrencyClassDeposit: Balance = 500 * MILLICENTS;
 }
 
@@ -339,6 +340,7 @@ impl sugarfunge_asset::Config for Runtime {
 parameter_types! {
     pub const CurrencyModuleId: PalletId = PalletId(*b"sug/curr");
     pub const DexModuleId: PalletId = PalletId(*b"sug/dexm");
+    pub const EscrowModuleId: PalletId = PalletId(*b"sug/crow");
 }
 
 impl sugarfunge_currency::Config for Runtime {
@@ -353,6 +355,17 @@ impl sugarfunge_dex::Config for Runtime {
     type Event = Event;
     type PalletId = DexModuleId;
     type CreateExchangeDeposit = CreateExchangeDeposit;
+    type Currency = Balances;
+}
+
+impl sugarfunge_dao::Config for Runtime {
+    type Event = Event;
+}
+
+impl sugarfunge_escrow::Config for Runtime {
+    type Event = Event;
+    type PalletId = EscrowModuleId;
+    type CreateEscrowDeposit = CreateEscrowDeposit;
     type Currency = Balances;
 }
 
@@ -382,6 +395,8 @@ construct_runtime!(
         Asset: sugarfunge_asset::{Pallet, Call, Storage, Event<T>},
         Currency: sugarfunge_currency::{Pallet, Call, Storage, Event<T>, Config<T>},
         Dex: sugarfunge_dex::{Pallet, Call, Storage, Event<T>},
+        Dao: sugarfunge_dao::{Pallet, Call, Storage, Event<T>},
+        Escrow: sugarfunge_escrow::{Pallet, Call, Storage, Event<T>},
         Exgine: sugarfunge_exgine::{Pallet, Call, Storage, Event<T>},
     }
 );
