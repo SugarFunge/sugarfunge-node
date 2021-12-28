@@ -29,7 +29,7 @@ type BalanceOf<T> =
 #[frame_support::pallet]
 pub mod pallet {
     use super::*;
-    use frame_support::{dispatch::DispatchResult, pallet_prelude::*};
+    use frame_support::pallet_prelude::*;
     use frame_system::pallet_prelude::*;
 
     /// Configure the pallet by specifying the parameters and types on which it depends.
@@ -55,43 +55,13 @@ pub mod pallet {
     pub(super) type Escrows<T: Config> =
         StorageMap<_, Blake2_128, T::AccountId, Escrow<T::AccountId>>;
 
-    // #[pallet::storage]
-    // pub(super) type Exchanges<T: Config> =
-    //     StorageMap<_, Blake2_128, ExchangeId, Exchange<T::ClassId, T::AssetId, T::AccountId>>;
-
-    // #[pallet::storage]
-    // #[pallet::getter(fn escrows)]
-    // pub(super) type Escrows<T: Config> = StorageNMap<
-    //     _,
-    //     (
-    //         NMapKey<Blake2_128Concat, T::AccountId>, // Escrow account
-    //         NMapKey<Blake2_128Concat, T::AccountId>, // Creator of escrow
-    //         NMapKey<Blake2_128Concat, T::AccountId>, // Owner of assets
-    //     ),
-    //     (),
-    //     ValueQuery,
-    // >;
-
     #[pallet::storage]
     #[pallet::getter(fn next_pool_id)]
     pub(super) type NextEscrowId<T: Config> = StorageValue<_, u32, ValueQuery>;
 
-    // The pallet's runtime storage items.
-    // https://docs.substrate.io/v3/runtime/storage
-    #[pallet::storage]
-    #[pallet::getter(fn something)]
-    // Learn more about declaring storage items:
-    // https://docs.substrate.io/v3/runtime/storage#declaring-storage-items
-    pub type Something<T> = StorageValue<_, u32>;
-
-    // Pallets use events to inform users when important changes are made.
-    // https://docs.substrate.io/v3/runtime/events-and-errors
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
-        /// Event documentation should end with an array that provides descriptive names for event
-        /// parameters. [something, who]
-        SomethingStored(u32, T::AccountId),
         /// EscrowCreated(escrow, creator, owner)
         EscrowCreated(T::AccountId, T::AccountId, T::AccountId),
     }
@@ -112,43 +82,6 @@ pub mod pallet {
     // Dispatchable functions must be annotated with a weight and must return a DispatchResult.
     #[pallet::call]
     impl<T: Config> Pallet<T> {
-        /// An example dispatchable that takes a singles value as a parameter, writes the value to
-        /// storage and emits an event. This function must be dispatched by a signed extrinsic.
-        #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
-        pub fn do_something(origin: OriginFor<T>, something: u32) -> DispatchResult {
-            // Check that the extrinsic was signed and get the signer.
-            // This function will return an error if the extrinsic is not signed.
-            // https://docs.substrate.io/v3/runtime/origins
-            let who = ensure_signed(origin)?;
-
-            // Update storage.
-            <Something<T>>::put(something);
-
-            // Emit an event.
-            Self::deposit_event(Event::SomethingStored(something, who));
-            // Return a successful DispatchResultWithPostInfo
-            Ok(())
-        }
-
-        /// An example dispatchable that may throw a custom error.
-        #[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
-        pub fn cause_error(origin: OriginFor<T>) -> DispatchResult {
-            let _who = ensure_signed(origin)?;
-
-            // Read a value from storage.
-            match <Something<T>>::get() {
-                // Return an error if the value has not been set.
-                None => Err(Error::<T>::NoneValue)?,
-                Some(old) => {
-                    // Increment the value read from storage; will error in the event of overflow.
-                    let new = old.checked_add(1).ok_or(Error::<T>::StorageOverflow)?;
-                    // Update the value in storage with the incremented result.
-                    <Something<T>>::put(new);
-                    Ok(())
-                }
-            }
-        }
-
         #[pallet::weight(10_000)]
         pub fn create_escrow(
             origin: OriginFor<T>,
@@ -175,15 +108,23 @@ pub mod pallet {
 
             Ok(().into())
         }
+
+        #[pallet::weight(10_000)]
+        pub fn refund_assets(
+            origin: OriginFor<T>,
+            escrow: T::AccountId,
+        ) -> DispatchResultWithPostInfo {
+            let who = ensure_signed(origin)?;
+
+            Self::do_refund_assets(&who, &escrow)?;
+
+            Ok(().into())
+        }
     }
 }
 
 #[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
-pub struct Escrow<
-    // ClassId: Encode + Decode + Clone + Debug + Eq + PartialEq,
-    // AssetId: Encode + Decode + Clone + Debug + Eq + PartialEq,
-    AccountId: Encode + Decode + Clone + Debug + Eq + PartialEq,
-> {
+pub struct Escrow<AccountId: Encode + Decode + Clone + Debug + Eq + PartialEq> {
     /// The creator of the escrow
     pub creator: AccountId,
     /// The owner of the assets
@@ -254,5 +195,59 @@ impl<T: Config> Pallet<T> {
         )?;
 
         Ok(().into())
+    }
+
+    pub fn do_refund_assets(
+        who: &T::AccountId,
+        escrow: &T::AccountId,
+    ) -> Result<(Vec<T::ClassId>, Vec<Vec<T::AssetId>>, Vec<Vec<Balance>>), DispatchError> {
+        let escrow_info = Escrows::<T>::get(escrow).ok_or(Error::<T>::InvalidEscrowAccount)?;
+
+        ensure!(
+            escrow_info.creator == *who,
+            Error::<T>::InvalidEscrowAccount
+        );
+
+        let balances = sugarfunge_asset::Pallet::<T>::balances_of_owner(&escrow)?;
+        let balances = balances.iter().fold(
+            (
+                Vec::<T::ClassId>::new(),
+                Vec::<Vec<T::AssetId>>::new(),
+                Vec::<Vec<Balance>>::new(),
+            ),
+            |(mut class_ids, mut asset_ids, mut balances), (class_id, asset_id, balance)| {
+                let class_idx = if let Some(class_idx) =
+                    class_ids.iter().position(|class| *class == *class_id)
+                {
+                    class_idx
+                } else {
+                    let class_idx = class_ids.len();
+                    class_ids.push(*class_id);
+                    class_idx
+                };
+                if asset_ids.len() <= class_idx {
+                    asset_ids.resize(class_idx + 1, vec![]);
+                }
+                asset_ids[class_idx].push(*asset_id);
+                if balances.len() <= class_idx {
+                    balances.resize(class_idx + 1, vec![]);
+                }
+                balances[class_idx].push(*balance);
+                (class_ids, asset_ids, balances)
+            },
+        );
+
+        for (idx, class_id) in balances.0.iter().enumerate() {
+            sugarfunge_asset::Pallet::<T>::do_batch_transfer_from(
+                &escrow,
+                &escrow,
+                &escrow_info.owner,
+                *class_id,
+                balances.1[idx].clone(),
+                balances.2[idx].clone(),
+            )?;
+        }
+
+        Ok(balances)
     }
 }

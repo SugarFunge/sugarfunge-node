@@ -1,4 +1,8 @@
-use crate::{mock::*, pallet::*, Error};
+use crate::{
+    mock::*,
+    pallet::{Assets, Classes},
+    Error,
+};
 use frame_support::{assert_noop, assert_ok};
 
 #[test]
@@ -79,7 +83,7 @@ fn do_set_approval_for_all() {
 fn do_mint() {
     new_test_ext().execute_with(|| {
         assert_ok!(Asset::do_create_class(&1, 1, [0].to_vec()));
-        assert_ok!(Asset::do_create_class(&1, 2, [0].to_vec()));
+        assert_ok!(Asset::do_create_asset(&1, 1, 2, vec![0]));
         assert_ok!(Asset::do_mint(&1, &2, 1, 2, 100));
     })
 }
@@ -88,7 +92,9 @@ fn do_mint() {
 fn do_batch_mint() {
     new_test_ext().execute_with(|| {
         assert_ok!(Asset::do_create_class(&1, 1, [0].to_vec()));
-        assert_ok!(Asset::do_create_class(&1, 2, [0].to_vec()));
+        assert_ok!(Asset::do_create_asset(&1, 1, 1, vec![0]));
+        assert_ok!(Asset::do_create_asset(&1, 1, 2, vec![0]));
+        assert_ok!(Asset::do_create_asset(&1, 1, 3, vec![0]));
         let asset_ids = vec![1, 2, 3];
         let amounts = vec![100; 3];
         assert_ok!(Asset::do_batch_mint(&1, &2, 1, asset_ids, amounts));
@@ -99,7 +105,7 @@ fn do_batch_mint() {
 fn do_burn_works() {
     new_test_ext().execute_with(|| {
         assert_ok!(Asset::do_create_class(&1, 1, [0].to_vec()));
-        assert_ok!(Asset::do_create_class(&1, 2, [0].to_vec()));
+        assert_ok!(Asset::do_create_asset(&1, 1, 2, vec![0]));
         assert_ok!(Asset::do_mint(&1, &2, 1, 2, 100));
         assert_ok!(Asset::do_burn(&1, &2, 1, 2, 100));
     })
@@ -109,7 +115,11 @@ fn do_burn_works() {
 fn do_batch_burn() {
     new_test_ext().execute_with(|| {
         assert_ok!(Asset::do_create_class(&1, 1, [0].to_vec()));
-        assert_ok!(Asset::do_create_class(&1, 2, [0].to_vec()));
+
+        assert_ok!(Asset::do_create_asset(&1, 1, 1, vec![0]));
+        assert_ok!(Asset::do_create_asset(&1, 1, 2, vec![0]));
+        assert_ok!(Asset::do_create_asset(&1, 1, 3, vec![0]));
+
         let asset_ids = vec![1, 2, 3];
         let amounts = vec![100; 3];
         assert_ok!(Asset::do_batch_mint(
@@ -127,7 +137,7 @@ fn do_batch_burn() {
 fn do_transfer_from() {
     new_test_ext().execute_with(|| {
         assert_ok!(Asset::do_create_class(&1, 1, [0].to_vec()));
-        assert_ok!(Asset::do_create_class(&1, 2, [0].to_vec()));
+        assert_ok!(Asset::do_create_asset(&1, 1, 2, vec![0]));
         assert_ok!(Asset::do_mint(&1, &1, 1, 2, 100));
         assert_ok!(Asset::do_transfer_from(&1, &1, &2, 1, 2, 100));
     })
@@ -137,7 +147,9 @@ fn do_transfer_from() {
 fn do_batch_transfer_from() {
     new_test_ext().execute_with(|| {
         assert_ok!(Asset::do_create_class(&1, 1, [0].to_vec()));
-        assert_ok!(Asset::do_create_class(&1, 2, [0].to_vec()));
+        assert_ok!(Asset::do_create_asset(&1, 1, 1, vec![0]));
+        assert_ok!(Asset::do_create_asset(&1, 1, 2, vec![0]));
+        assert_ok!(Asset::do_create_asset(&1, 1, 3, vec![0]));
         let asset_ids = vec![1, 2, 3];
         let amounts = vec![100; 3];
         assert_ok!(Asset::do_batch_mint(
@@ -171,7 +183,7 @@ fn is_approved_for_all() {
 fn balance_of() {
     new_test_ext().execute_with(|| {
         assert_ok!(Asset::do_create_class(&1, 1, [0].to_vec()));
-        assert_ok!(Asset::do_create_class(&1, 2, [0].to_vec()));
+        assert_ok!(Asset::do_create_asset(&1, 1, 2, vec![0]));
         assert_ok!(Asset::do_mint(&1, &2, 1, 2, 100));
         assert_eq!(Asset::balance_of(&2, 1, 2), 100);
     })
@@ -181,7 +193,10 @@ fn balance_of() {
 fn balance_of_batch_asset_ids_sample() {
     new_test_ext().execute_with(|| {
         assert_ok!(Asset::do_create_class(&1, 1, [0].to_vec()));
-        assert_ok!(Asset::do_create_class(&1, 2, [0].to_vec()));
+
+        assert_ok!(Asset::do_create_asset(&1, 1, 1, vec![0]));
+        assert_ok!(Asset::do_create_asset(&1, 1, 3, vec![0]));
+
         let asset_ids = vec![1; 3];
         let amounts = vec![100; 3];
 
@@ -219,7 +234,11 @@ fn balance_of_batch_asset_ids_sample() {
 fn balance_of_batch_asset_ids_not_sample() {
     new_test_ext().execute_with(|| {
         assert_ok!(Asset::do_create_class(&1, 1, [0].to_vec()));
-        assert_ok!(Asset::do_create_class(&1, 2, [0].to_vec()));
+
+        assert_ok!(Asset::do_create_asset(&1, 1, 1, vec![0]));
+        assert_ok!(Asset::do_create_asset(&1, 1, 2, vec![0]));
+        assert_ok!(Asset::do_create_asset(&1, 1, 3, vec![0]));
+
         let asset_ids = vec![1, 2, 3];
         let amounts = vec![100; 3];
 
@@ -250,5 +269,66 @@ fn balance_of_batch_asset_ids_not_sample() {
             Asset::balance_of_batch(&account, 1, asset_ids).unwrap(),
             amounts
         );
+    })
+}
+
+#[test]
+fn do_iter_all_balances_of_owner() {
+    new_test_ext().execute_with(|| {
+        assert_ok!(Asset::do_create_class(&1, 1, [0].to_vec()));
+        assert_ok!(Asset::do_create_class(&1, 2, [0].to_vec()));
+        assert_ok!(Asset::do_create_class(&1, 3, [0].to_vec()));
+        assert_ok!(Asset::do_create_class(&1, 4, [0].to_vec()));
+
+        assert_ok!(Asset::do_create_asset(&1, 1, 1, vec![0]));
+        assert_ok!(Asset::do_create_asset(&1, 1, 2, vec![0]));
+        assert_ok!(Asset::do_create_asset(&1, 1, 3, vec![0]));
+
+        let asset_ids = vec![1, 2, 3];
+        let amounts = vec![1, 20, 300];
+        assert_ok!(Asset::do_batch_mint(&1, &2, 1, asset_ids, amounts));
+
+        let account_id = 2;
+        let mut balances = Asset::balances_of_owner(&account_id).unwrap();
+        balances.sort();
+
+        let expected_balances = vec![(1, 1, 1), (1, 2, 20), (1, 3, 300)];
+        assert_eq!(balances, expected_balances);
+    })
+}
+
+#[test]
+fn do_iter_class_balances_of_owner() {
+    new_test_ext().execute_with(|| {
+        assert_ok!(Asset::do_create_class(&1, 1, [0].to_vec()));
+        assert_ok!(Asset::do_create_class(&1, 2, [0].to_vec()));
+        assert_ok!(Asset::do_create_class(&1, 3, [0].to_vec()));
+        assert_ok!(Asset::do_create_class(&1, 4, [0].to_vec()));
+
+        let asset_ids = vec![1, 2, 3];
+        let amounts = vec![1, 20, 300];
+
+        assert_ok!(Asset::do_batch_mint(
+            &1,
+            &2,
+            1,
+            asset_ids.clone(),
+            amounts.clone()
+        ));
+        assert_ok!(Asset::do_batch_mint(
+            &1,
+            &2,
+            2,
+            asset_ids.clone(),
+            amounts.clone()
+        ));
+
+        let account_id = 2;
+        let class_id = 1;
+        let mut balances = Asset::class_balances_of_owner(&account_id, class_id).unwrap();
+        balances.sort();
+
+        let expected_balances = vec![(1, 1), (2, 20), (3, 300)];
+        assert_eq!(balances, expected_balances);
     })
 }

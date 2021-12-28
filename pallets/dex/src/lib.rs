@@ -120,6 +120,7 @@ pub mod pallet {
     pub enum Error<T> {
         Overflow,
         InvalidExchangeId,
+        InvalidClassId,
         InvalidMaxCurrency,
         InsufficientCurrencyAmount,
         InsufficientAssetAmount,
@@ -150,6 +151,16 @@ pub mod pallet {
             ensure!(
                 !Exchanges::<T>::contains_key(exchange_id),
                 Error::<T>::InvalidExchangeId
+            );
+
+            ensure!(
+                sugarfunge_asset::Pallet::<T>::class_exists(asset_class_id),
+                Error::<T>::InvalidClassId
+            );
+
+            ensure!(
+                !sugarfunge_asset::Pallet::<T>::class_exists(lp_class_id),
+                Error::<T>::InvalidClassId
             );
 
             let fund_account = <T as Config>::PalletId::get().into_sub_account(exchange_id);

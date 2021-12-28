@@ -161,7 +161,11 @@ pub mod pallet {
     #[pallet::call]
     impl<T: Config> Pallet<T> {
         #[pallet::weight(10_000)]
-        pub fn create_class(origin: OriginFor<T>, class_id: T::ClassId, metadata: Vec<u8>) -> DispatchResultWithPostInfo {
+        pub fn create_class(
+            origin: OriginFor<T>,
+            class_id: T::ClassId,
+            metadata: Vec<u8>,
+        ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
 
             Self::do_create_class(&who, class_id, metadata)?;
@@ -414,6 +418,14 @@ impl<T: Config> Pallet<T> {
         Ok(())
     }
 
+    pub fn class_exists(class_id: T::ClassId) -> bool {
+        Classes::<T>::contains_key(class_id)
+    }
+
+    pub fn asset_exists(class_id: T::ClassId, asset_id: T::AssetId) -> bool {
+        Assets::<T>::contains_key(class_id, asset_id)
+    }
+
     pub fn do_set_approval_for_all(
         who: &T::AccountId,
         operator: &T::AccountId,
@@ -477,7 +489,6 @@ impl<T: Config> Pallet<T> {
         for i in 0..n {
             let asset_id = asset_ids[i];
             let amount = amounts[i];
-
             Self::add_balance_to(to, class_id, asset_id, amount)?;
         }
 
@@ -666,6 +677,31 @@ impl<T: Config> Pallet<T> {
         }
 
         Ok(batch_balances)
+    }
+
+    pub fn balances_of_owner(
+        owner: &T::AccountId,
+    ) -> Result<Vec<(T::ClassId, T::AssetId, Balance)>, DispatchError> {
+        let mut balances = vec![];
+        let assets = Balances::<T>::iter_key_prefix((owner,));
+        for (class_id, asset_id) in assets {
+            let balance = Balances::<T>::get((owner, class_id, asset_id));
+            balances.push((class_id, asset_id, balance));
+        }
+        Ok(balances)
+    }
+
+    pub fn class_balances_of_owner(
+        owner: &T::AccountId,
+        class_id: T::ClassId,
+    ) -> Result<Vec<(T::AssetId, Balance)>, DispatchError> {
+        let mut balances = vec![];
+        let assets = Balances::<T>::iter_key_prefix((owner, class_id));
+        for asset_id in assets {
+            let balance = Balances::<T>::get((owner, class_id, asset_id));
+            balances.push((asset_id, balance));
+        }
+        Ok(balances)
     }
 
     fn add_balance_to(

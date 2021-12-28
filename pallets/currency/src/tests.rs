@@ -1,8 +1,8 @@
-use super::*;
+use super::{CurrencyAssets, CurrencyId};
 use crate::mock::*;
 use frame_support::assert_ok;
 
-fn last_event() -> mock::Event {
+fn last_event() -> Event {
     frame_system::Pallet::<Test>::events()
         .pop()
         .expect("Event expected")
@@ -16,7 +16,7 @@ fn currency_eth_works() {
         assert_ok!(Currency::mint(Origin::signed(1), ETH, 500 * CENTS));
         assert_eq!(
             last_event(),
-            mock::Event::Currency(crate::Event::AssetMint(ETH, 500 * CENTS, 1)),
+            Event::Currency(crate::Event::AssetMint(ETH, 500 * CENTS, 1)),
         );
         assert_eq!(Asset::balance_of(&1, 0, ETH.into()), 500 * CENTS);
     })
@@ -29,7 +29,7 @@ fn currency_btc_works() {
         assert_ok!(Currency::mint(Origin::signed(1), BTC, 500 * CENTS));
         assert_eq!(
             last_event(),
-            mock::Event::Currency(crate::Event::AssetMint(BTC, 500 * CENTS, 1)),
+            Event::Currency(crate::Event::AssetMint(BTC, 500 * CENTS, 1)),
         );
         assert_eq!(Asset::balance_of(&1, 0, BTC.into()), 500 * CENTS);
     })
@@ -41,7 +41,7 @@ fn issue_and_mint_currency() {
         run_to_block(10);
         let new_currency_id = CurrencyId::Id(1000);
         assert_eq!(Asset::balance_of(&1, 0, new_currency_id.into()), 0);
-        let call = Box::new(mock::Call::OrmlCurrencies(
+        let call = Box::new(Call::OrmlCurrencies(
             orml_currencies::module::Call::update_balance {
                 who: 1,
                 currency_id: new_currency_id,
@@ -57,7 +57,7 @@ fn issue_and_mint_currency() {
         ));
         assert_eq!(
             last_event(),
-            mock::Event::Currency(crate::Event::AssetMint(new_currency_id, 500 * CENTS, 1)),
+            Event::Currency(crate::Event::AssetMint(new_currency_id, 500 * CENTS, 1)),
         );
         assert_eq!(
             Asset::balance_of(&1, 0, new_currency_id.into()),
@@ -76,7 +76,7 @@ fn currency_mint_works() {
         assert_ok!(Currency::mint(Origin::signed(1), SUGAR, 500 * CENTS));
         assert_eq!(
             last_event(),
-            mock::Event::Currency(crate::Event::AssetMint(SUGAR, 500 * CENTS, 1)),
+            Event::Currency(crate::Event::AssetMint(SUGAR, 500 * CENTS, 1)),
         );
         assert_eq!(Asset::balance_of(&1, 0, SUGAR.into()), 500 * CENTS);
         let asset_info = CurrencyAssets::<Test>::get(SUGAR).unwrap();
@@ -92,7 +92,7 @@ fn currency_burn_works() {
         assert_ok!(Currency::burn(Origin::signed(1), SUGAR, 400 * CENTS));
         assert_eq!(
             last_event(),
-            mock::Event::Currency(crate::Event::AssetBurn(SUGAR, 400 * CENTS, 1)),
+            Event::Currency(crate::Event::AssetBurn(SUGAR, 400 * CENTS, 1)),
         );
         assert_eq!(Asset::balance_of(&1, 0, SUGAR.into()), 100 * CENTS);
     })
