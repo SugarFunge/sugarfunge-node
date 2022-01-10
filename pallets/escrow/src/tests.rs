@@ -70,8 +70,8 @@ fn deposit_assets() {
         ));
 
         assert_ok!(Escrow::create_escrow(Origin::signed(1), 2));
-        if let Event::Escrow(crate::Event::EscrowCreated(escrow, creator, owner)) = last_event() {
-            assert_eq!(creator, 1);
+        if let Event::Escrow(crate::Event::EscrowCreated(escrow, operator, owner)) = last_event() {
+            assert_eq!(operator, 1);
             assert_eq!(owner, 2);
 
             assert_ok!(Escrow::deposit_assets(
@@ -167,8 +167,8 @@ fn refund_assets() {
         ));
 
         assert_ok!(Escrow::create_escrow(Origin::signed(1), 2));
-        if let Event::Escrow(crate::Event::EscrowCreated(escrow, creator, owner)) = last_event() {
-            assert_eq!(creator, 1);
+        if let Event::Escrow(crate::Event::EscrowCreated(escrow, operator, owner)) = last_event() {
+            assert_eq!(operator, 1);
             assert_eq!(owner, 2);
 
             assert_ok!(Escrow::deposit_assets(

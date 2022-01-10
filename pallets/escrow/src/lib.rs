@@ -62,7 +62,7 @@ pub mod pallet {
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
-        /// EscrowCreated(escrow, creator, owner)
+        /// EscrowCreated(escrow, operator, owner)
         EscrowCreated(T::AccountId, T::AccountId, T::AccountId),
     }
 
@@ -73,6 +73,7 @@ pub mod pallet {
         StorageOverflow,
         EscrowAccountExists,
         InvalidEscrowAccount,
+        InvalidEscrowOperator,
         InvalidEscrowOwner,
         InvalidArrayLength,
     }
@@ -125,15 +126,15 @@ pub mod pallet {
 
 #[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
 pub struct Escrow<AccountId: Encode + Decode + Clone + Debug + Eq + PartialEq> {
-    /// The creator of the escrow
-    pub creator: AccountId,
+    /// The operator of the escrow
+    pub operator: AccountId,
     /// The owner of the assets
     pub owner: AccountId,
 }
 
 impl<T: Config> Pallet<T> {
     pub fn do_create_escrow(
-        creator: &T::AccountId,
+        operator: &T::AccountId,
         owner: &T::AccountId,
     ) -> Result<T::AccountId, DispatchError> {
         let next_id = NextEscrowId::<T>::try_mutate(|id| -> Result<u32, DispatchError> {
@@ -152,10 +153,10 @@ impl<T: Config> Pallet<T> {
         );
 
         let deposit = T::CreateEscrowDeposit::get();
-        <T as Config>::Currency::transfer(creator, &escrow, deposit, AllowDeath)?;
+        <T as Config>::Currency::transfer(operator, &escrow, deposit, AllowDeath)?;
 
         let new_escrow = Escrow {
-            creator: creator.clone(),
+            operator: operator.clone(),
             owner: owner.clone(),
         };
 
@@ -163,7 +164,7 @@ impl<T: Config> Pallet<T> {
 
         Self::deposit_event(Event::EscrowCreated(
             escrow.clone(),
-            creator.clone(),
+            operator.clone(),
             owner.clone(),
         ));
 
@@ -179,7 +180,7 @@ impl<T: Config> Pallet<T> {
     ) -> DispatchResult {
         let exchange = Escrows::<T>::get(escrow).ok_or(Error::<T>::InvalidEscrowAccount)?;
 
-        ensure!(exchange.owner == *who, Error::<T>::InvalidEscrowAccount);
+        ensure!(exchange.owner == *who, Error::<T>::InvalidEscrowOwner);
         ensure!(
             asset_ids.len() == amounts.len(),
             Error::<T>::InvalidArrayLength
@@ -204,8 +205,8 @@ impl<T: Config> Pallet<T> {
         let escrow_info = Escrows::<T>::get(escrow).ok_or(Error::<T>::InvalidEscrowAccount)?;
 
         ensure!(
-            escrow_info.creator == *who,
-            Error::<T>::InvalidEscrowAccount
+            escrow_info.operator == *who,
+            Error::<T>::InvalidEscrowOperator
         );
 
         let balances = sugarfunge_asset::Pallet::<T>::balances_of_owner(&escrow)?;
