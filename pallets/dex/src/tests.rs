@@ -18,11 +18,7 @@ pub fn before_exchange() {
     ));
     assert_eq!(
         last_event(),
-        mock::Event::Currency(sugarfunge_currency::Event::Mint(
-            SUGAR,
-            500 * DOLLARS,
-            1
-        )),
+        mock::Event::Currency(sugarfunge_currency::Event::Mint(SUGAR, 500 * DOLLARS, 1)),
     );
     assert_eq!(Asset::balance_of(&1, SUGAR.0, SUGAR.1), 500 * DOLLARS);
     assert_ok!(Asset::create_class(Origin::signed(1), 1, [0].to_vec()));
@@ -139,17 +135,18 @@ fn sell_price_works() {
             0,
             1,
             [1].to_vec(),
-            [1000 * DOLLARS].to_vec(),
+            [100 * DOLLARS].to_vec(),
             [100 * DOLLARS].to_vec(),
         ));
         let currency_reserve = Dex::currency_reserves(0, 1);
         assert_eq!(currency_reserve, 100 * DOLLARS);
-        let balances = Dex::get_asset_reserves(&1, 1, [1].to_vec());
-        assert_eq!(balances, [49000 * DOLLARS].to_vec());
+        let exchange = Exchanges::<Test>::get(0).unwrap();
+        let balances = Dex::get_asset_reserves(&exchange.vault, 1, [1].to_vec());
+        assert_eq!(balances, [100 * DOLLARS].to_vec());
         let amount = 1 * DOLLARS;
         let price =
             Dex::get_sell_price(amount, balances[0].saturating_sub(amount), currency_reserve);
-        assert_eq!(price, Ok(0_002030612452103311));
+        assert_eq!(price, Ok(0_995049752487624381));
     });
 }
 
@@ -163,16 +160,17 @@ fn buy_price_works() {
             0,
             1,
             [1].to_vec(),
-            [1000 * DOLLARS].to_vec(),
+            [100 * DOLLARS].to_vec(),
             [100 * DOLLARS].to_vec(),
         ));
         let currency_reserve = Dex::currency_reserves(0, 1);
         assert_eq!(currency_reserve, 100 * DOLLARS);
-        let balances = Dex::get_asset_reserves(&1, 1, [1].to_vec());
-        assert_eq!(balances, [49000 * DOLLARS].to_vec());
+        let exchange = Exchanges::<Test>::get(0).unwrap();
+        let balances = Dex::get_asset_reserves(&exchange.vault, 1, [1].to_vec());
+        assert_eq!(balances, [100 * DOLLARS].to_vec());
         let amount = 1 * DOLLARS;
-        let price = Dex::get_buy_price(amount, balances[0], currency_reserve);
-        assert_eq!(price, Ok(497_436678341200954267));
+        let price = Dex::get_buy_price(amount, currency_reserve, balances[0]);
+        assert_eq!(price, Ok(1_015176894573879499));
     });
 }
 
