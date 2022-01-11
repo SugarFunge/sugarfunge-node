@@ -91,9 +91,8 @@ pub mod pallet {
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
-        AssetCreated(CurrencyId, T::AccountId),
-        AssetMint(CurrencyId, Balance, T::AccountId),
-        AssetBurn(CurrencyId, Balance, T::AccountId),
+        Mint(CurrencyId, Balance, T::AccountId),
+        Burn(CurrencyId, Balance, T::AccountId),
     }
 
     // Errors inform users that something went wrong.
@@ -101,7 +100,6 @@ pub mod pallet {
     pub enum Error<T> {
         Unknown,
         NumOverflow,
-        CurrencyClassNotCreated,
         CurrencyAssetNotFound,
     }
 
@@ -156,7 +154,7 @@ pub mod pallet {
                 Ok(())
             })?;
 
-            Self::deposit_event(Event::AssetMint(currency_id, amount, who));
+            Self::deposit_event(Event::Mint(currency_id, amount, who));
 
             Ok(().into())
         }
@@ -194,7 +192,7 @@ pub mod pallet {
                 Ok(())
             })?;
 
-            Self::deposit_event(Event::AssetBurn(currency_id, amount, who));
+            Self::deposit_event(Event::Burn(currency_id, amount, who));
 
             Ok(().into())
         }
@@ -239,9 +237,4 @@ impl<T: Config> Pallet<T> {
         let _ = CurrencyAssets::<T>::get(currency_id).ok_or(Error::<T>::CurrencyAssetNotFound)?;
         Ok((class_id.into(), asset_id.into()))
     }
-
-    // pub fn convert_to_asset_id(id: CurrencyId) -> T::AssetId {
-    //     let n: u64 = id.into();
-    //     n.into()
-    // }
 }
