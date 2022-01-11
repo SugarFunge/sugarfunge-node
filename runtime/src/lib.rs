@@ -54,8 +54,8 @@ pub use sugarfunge_exgine::Call as ExgineCall;
 mod constants;
 pub use constants::{currency::*, time::*};
 pub use primitives::{
-    AccountId, AccountIndex, Amount, AssetSymbol, Balance, BlockNumber, CurrencyId, Hash, Index,
-    Moment, Signature,
+    AccountId, AccountIndex, Amount, Balance, BlockNumber, CurrencyId, Hash, Index, Moment,
+    Signature,
 };
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
@@ -310,8 +310,10 @@ impl orml_tokens::Config for Runtime {
     type DustRemovalWhitelist = Nothing;
 }
 
+pub const SUGAR: CurrencyId = CurrencyId(0, 0);
+
 parameter_types! {
-    pub const GetNativeCurrencyId: CurrencyId = CurrencyId::Asset(AssetSymbol::SUGAR);
+    pub const GetNativeCurrencyId: CurrencyId = SUGAR;
 }
 
 impl orml_currencies::Config for Runtime {

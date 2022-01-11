@@ -49,6 +49,7 @@ pub mod pallet {
     pub type GenesisInstance<T> = (
         <T as frame_system::Config>::AccountId,
         <T as sugarfunge_asset::Config>::ClassId,
+        <T as sugarfunge_asset::Config>::AssetId,
         Vec<u8>,
     );
 
@@ -69,8 +70,13 @@ pub mod pallet {
     #[pallet::genesis_build]
     impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
         fn build(&self) {
-            Pallet::<T>::create_class(&self.class.0, self.class.1, self.class.2.to_vec())
-                .expect("Create class cannot fail while building genesis");
+            Pallet::<T>::create_currency(
+                &self.class.0,
+                self.class.1,
+                self.class.2,
+                self.class.3.to_vec(),
+            )
+            .expect("Create class cannot fail while building genesis");
         }
     }
 
@@ -79,12 +85,8 @@ pub mod pallet {
     pub struct Pallet<T>(_);
 
     #[pallet::storage]
-    #[pallet::getter(fn currency_class)]
-    pub(super) type CurrencyClass<T: Config> = StorageValue<_, T::ClassId, OptionQuery>;
-
-    #[pallet::storage]
     pub(super) type CurrencyAssets<T: Config> =
-        StorageMap<_, Blake2_128Concat, CurrencyId, AssetInfo<T::ClassId, T::AssetId, Balance>>;
+        StorageMap<_, Blake2_128Concat, CurrencyId, AssetInfo<Balance>>;
 
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -116,23 +118,20 @@ pub mod pallet {
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
 
-            let class_id = CurrencyClass::<T>::get().ok_or(Error::<T>::CurrencyClassNotCreated)?;
+            let CurrencyId(class_id, asset_id) = currency_id;
 
             let module_account = Self::account_id();
             <T as Config>::Currency::transfer(currency_id, &who, &module_account, amount)?;
 
             if !CurrencyAssets::<T>::contains_key(currency_id) {
-                let asset_id = Self::convert_to_asset_id(currency_id);
                 sugarfunge_asset::Pallet::<T>::do_create_asset(
                     &module_account,
-                    class_id,
-                    asset_id,
+                    class_id.into(),
+                    asset_id.into(),
                     [].to_vec(),
                 )?;
 
                 let asset_info = AssetInfo {
-                    class_id,
-                    asset_id: asset_id.clone(),
                     total_supply: Default::default(),
                 };
 
@@ -145,8 +144,8 @@ pub mod pallet {
                 sugarfunge_asset::Pallet::<T>::do_mint(
                     &module_account,
                     &who,
-                    class_id,
-                    info.asset_id,
+                    class_id.into(),
+                    asset_id.into(),
                     amount,
                 )?;
 
@@ -170,13 +169,12 @@ pub mod pallet {
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
 
+            let CurrencyId(class_id, asset_id) = currency_id;
+
             CurrencyAssets::<T>::try_mutate(currency_id, |asset_info| -> DispatchResult {
                 let info = asset_info
                     .as_mut()
                     .ok_or(Error::<T>::CurrencyAssetNotFound)?;
-
-                let class_id =
-                    CurrencyClass::<T>::get().ok_or(Error::<T>::CurrencyClassNotCreated)?;
 
                 let module_account = Self::account_id();
                 <T as Config>::Currency::transfer(currency_id, &module_account, &who, amount)?;
@@ -184,8 +182,8 @@ pub mod pallet {
                 sugarfunge_asset::Pallet::<T>::do_burn(
                     &module_account,
                     &who,
-                    class_id,
-                    info.asset_id,
+                    class_id.into(),
+                    asset_id.into(),
                     amount,
                 )?;
 
@@ -204,13 +202,7 @@ pub mod pallet {
 }
 
 #[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
-pub struct AssetInfo<
-    ClassId: Encode + Decode + Clone + Debug + Eq + PartialEq,
-    AssetId: Encode + Decode + Clone + Debug + Eq + PartialEq,
-    Balance: Encode + Decode + Clone + Debug + Eq + PartialEq,
-> {
-    class_id: ClassId,
-    asset_id: AssetId,
+pub struct AssetInfo<Balance: Encode + Decode + Clone + Debug + Eq + PartialEq> {
     total_supply: Balance,
 }
 
@@ -219,15 +211,23 @@ impl<T: Config> Pallet<T> {
         T::PalletId::get().into_account()
     }
 
-    pub fn create_class(who: &T::AccountId, class_id: T::ClassId, data: Vec<u8>) -> DispatchResult {
+    pub fn create_currency(
+        who: &T::AccountId,
+        class_id: T::ClassId,
+        asset_id: T::AssetId,
+        data: Vec<u8>,
+    ) -> DispatchResult {
         let module_account = Self::account_id();
         let native_currency_id = T::GetNativeCurrencyId::get();
         let amount = T::CreateCurrencyClassDeposit::get();
 
         <T as Config>::Currency::transfer(native_currency_id, &who, &module_account, amount)?;
 
-        sugarfunge_asset::Pallet::<T>::do_create_class(&module_account, class_id, data)?;
-        CurrencyClass::<T>::put(class_id);
+        sugarfunge_asset::Pallet::<T>::do_create_class(&module_account, class_id, data.clone())?;
+        sugarfunge_asset::Pallet::<T>::do_create_asset(&module_account, class_id, asset_id, data.clone())?;
+
+        let currency_id = CurrencyId(class_id.into(), asset_id.into());
+        CurrencyAssets::<T>::insert(currency_id, AssetInfo { total_supply: 0 });
 
         Ok(())
     }
@@ -235,13 +235,13 @@ impl<T: Config> Pallet<T> {
     pub fn get_currency_asset(
         currency_id: CurrencyId,
     ) -> Result<(T::ClassId, T::AssetId), DispatchError> {
-        let asset_info =
-            CurrencyAssets::<T>::get(currency_id).ok_or(Error::<T>::CurrencyAssetNotFound)?;
-        Ok((asset_info.class_id, asset_info.asset_id))
+        let CurrencyId(class_id, asset_id) = currency_id;
+        let _ = CurrencyAssets::<T>::get(currency_id).ok_or(Error::<T>::CurrencyAssetNotFound)?;
+        Ok((class_id.into(), asset_id.into()))
     }
 
-    pub fn convert_to_asset_id(id: CurrencyId) -> T::AssetId {
-        let n: u64 = id.into();
-        n.into()
-    }
+    // pub fn convert_to_asset_id(id: CurrencyId) -> T::AssetId {
+    //     let n: u64 = id.into();
+    //     n.into()
+    // }
 }

@@ -19,7 +19,7 @@ pub fn before_escrow() {
             1
         )),
     );
-    assert_eq!(Asset::balance_of(&1, 0, SUGAR.into()), 500 * DOLLARS);
+    assert_eq!(Asset::balance_of(&1, SUGAR.0, SUGAR.1), 500 * DOLLARS);
     assert_ok!(Asset::create_class(Origin::signed(1), 1, [0].to_vec()));
     assert_ok!(Asset::create_asset(Origin::signed(1), 1, 1, [0].to_vec()));
     assert_ok!(Asset::mint(Origin::signed(1), 1, 1, 1, 50000 * DOLLARS));

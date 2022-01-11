@@ -60,10 +60,19 @@ pub mod pallet {
 
         type Currency: Currency<Self::AccountId> + ReservableCurrency<Self::AccountId>;
 
-        type AssetId: Member + Parameter + Default + Copy + HasCompact + From<u64> + Into<u64>;
-
         type ClassId: Member
             + Parameter
+            + HasCompact
+            + AtLeast32BitUnsigned
+            + MaybeSerializeDeserialize
+            + Default
+            + Copy
+            + From<u64>
+            + Into<u64>;
+
+        type AssetId: Member
+            + Parameter
+            + HasCompact
             + AtLeast32BitUnsigned
             + MaybeSerializeDeserialize
             + Default

@@ -5,9 +5,8 @@ use sp_core::{sr25519, Pair, Public};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{IdentifyAccount, Verify};
 use sugarfunge_runtime::{
-    AccountId, AssetSymbol, AuraConfig, Balance, BalancesConfig, CurrencyConfig, CurrencyId,
-    GenesisConfig, GrandpaConfig, OrmlTokensConfig, Signature, SudoConfig, SystemConfig, DOLLARS,
-    WASM_BINARY,
+    AccountId, AuraConfig, Balance, BalancesConfig, CurrencyConfig, CurrencyId, GenesisConfig,
+    GrandpaConfig, OrmlTokensConfig, Signature, SudoConfig, SystemConfig, DOLLARS, WASM_BINARY,
 };
 
 // The URL for the telemetry server.
@@ -37,6 +36,11 @@ where
 pub fn authority_keys_from_seed(s: &str) -> (AuraId, GrandpaId) {
     (get_from_seed::<AuraId>(s), get_from_seed::<GrandpaId>(s))
 }
+
+// Default currencies
+pub const DOT: CurrencyId = CurrencyId(0, 1);
+pub const ETH: CurrencyId = CurrencyId(0, 2);
+pub const BTC: CurrencyId = CurrencyId(0, 3);
 
 pub fn development_config() -> Result<ChainSpec, String> {
     let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
@@ -184,21 +188,9 @@ fn testnet_genesis(
                 .iter()
                 .flat_map(|x| {
                     vec![
-                        (
-                            x.clone(),
-                            CurrencyId::Asset(AssetSymbol::DOT),
-                            1000000 * DOLLARS,
-                        ),
-                        (
-                            x.clone(),
-                            CurrencyId::Asset(AssetSymbol::ETH),
-                            1000000 * DOLLARS,
-                        ),
-                        (
-                            x.clone(),
-                            CurrencyId::Asset(AssetSymbol::BTC),
-                            1000000 * DOLLARS,
-                        ),
+                        (x.clone(), DOT, 1000000 * DOLLARS),
+                        (x.clone(), ETH, 1000000 * DOLLARS),
+                        (x.clone(), BTC, 1000000 * DOLLARS),
                     ]
                 })
                 .collect(),
@@ -206,6 +198,7 @@ fn testnet_genesis(
         currency: CurrencyConfig {
             class: (
                 get_account_id_from_seed::<sr25519::Public>("Alice"),
+                0,
                 0,
                 "currency asset class".as_bytes().to_vec(),
             ),

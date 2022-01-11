@@ -11,15 +11,16 @@ use sp_runtime::{
     testing::Header,
     traits::{BlakeTwo256, IdentityLookup, Zero},
 };
-use sugarfunge_primitives::{Amount, AssetSymbol, Balance, BlockNumber, CurrencyId};
+use sugarfunge_primitives::{Amount, Balance, BlockNumber, CurrencyId};
 
 pub const MILLICENTS: Balance = 10_000_000_000_000;
 pub const CENTS: Balance = 1_000 * MILLICENTS;
 pub const DOLLARS: Balance = 100 * CENTS;
 
-pub const SUGAR: CurrencyId = CurrencyId::Asset(AssetSymbol::SUGAR);
-pub const ETH: CurrencyId = CurrencyId::Asset(AssetSymbol::ETH);
-pub const BTC: CurrencyId = CurrencyId::Asset(AssetSymbol::BTC);
+pub const SUGAR: CurrencyId = CurrencyId(0, 0);
+pub const DOT: CurrencyId = CurrencyId(0, 1);
+pub const ETH: CurrencyId = CurrencyId(0, 2);
+pub const BTC: CurrencyId = CurrencyId(0, 3);
 
 parameter_types! {
     pub const CreateAssetClassDeposit: Balance = 500 * MILLICENTS;
@@ -66,7 +67,7 @@ impl orml_tokens::Config for Test {
 }
 
 parameter_types! {
-    pub const GetNativeCurrencyId: CurrencyId = CurrencyId::Asset(AssetSymbol::SUGAR);
+    pub const GetNativeCurrencyId: CurrencyId = SUGAR;
 }
 
 impl orml_currencies::Config for Test {
@@ -164,15 +165,15 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
         .unwrap();
     orml_tokens::GenesisConfig::<Test> {
         balances: vec![
-            (1, CurrencyId::Asset(AssetSymbol::DOT), 1000000 * DOLLARS),
-            (1, CurrencyId::Asset(AssetSymbol::ETH), 1000000 * DOLLARS),
-            (1, CurrencyId::Asset(AssetSymbol::BTC), 1000000 * DOLLARS),
+            (1, DOT, 1000000 * DOLLARS),
+            (1, ETH, 1000000 * DOLLARS),
+            (1, BTC, 1000000 * DOLLARS),
         ],
     }
     .assimilate_storage(&mut t)
     .unwrap();
     sugarfunge_currency::GenesisConfig::<Test> {
-        class: (1, 0, [].to_vec()),
+        class: (1, 0, 0, [].to_vec()),
     }
     .assimilate_storage(&mut t)
     .unwrap();

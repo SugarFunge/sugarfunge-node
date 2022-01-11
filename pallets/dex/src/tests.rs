@@ -24,7 +24,7 @@ pub fn before_exchange() {
             1
         )),
     );
-    assert_eq!(Asset::balance_of(&1, 0, SUGAR.into()), 500 * DOLLARS);
+    assert_eq!(Asset::balance_of(&1, SUGAR.0, SUGAR.1), 500 * DOLLARS);
     assert_ok!(Asset::create_class(Origin::signed(1), 1, [0].to_vec()));
     assert_ok!(Asset::create_asset(Origin::signed(1), 1, 1, [0].to_vec()));
     assert_ok!(Asset::mint(Origin::signed(1), 1, 1, 1, 50000 * DOLLARS));
@@ -33,14 +33,14 @@ pub fn before_exchange() {
 
 pub fn endow_user_2() {
     run_to_block(10);
-    assert_eq!(Asset::balance_of(&2, 0, SUGAR.into()), 0 * DOLLARS);
+    assert_eq!(Asset::balance_of(&2, SUGAR.0, SUGAR.1), 0 * DOLLARS);
     assert_eq!(Asset::balance_of(&2, 1, 1), 0 * DOLLARS);
     assert_ok!(Asset::transfer_from(
         Origin::signed(1),
         1,
         2,
-        0,
-        SUGAR.into(),
+        SUGAR.0,
+        SUGAR.1,
         100 * DOLLARS
     ));
     assert_eq!(
@@ -48,12 +48,12 @@ pub fn endow_user_2() {
         mock::Event::Asset(sugarfunge_asset::Event::Transferred(
             1,
             2,
-            0,
-            SUGAR.into(),
+            SUGAR.0,
+            SUGAR.1,
             100 * DOLLARS
         )),
     );
-    assert_eq!(Asset::balance_of(&2, 0, SUGAR.into()), 100 * DOLLARS);
+    assert_eq!(Asset::balance_of(&2, SUGAR.0, SUGAR.1), 100 * DOLLARS);
 }
 
 #[test]
@@ -72,13 +72,13 @@ fn many_currencies_works() {
             last_event(),
             mock::Event::Currency(sugarfunge_currency::Event::AssetMint(ETH, 500 * DOLLARS, 1)),
         );
-        assert_eq!(Asset::balance_of(&1, 0, ETH.into()), 500 * DOLLARS);
+        assert_eq!(Asset::balance_of(&1, ETH.0, ETH.1), 500 * DOLLARS);
         assert_ok!(mock::Currency::mint(Origin::signed(1), BTC, 500 * DOLLARS));
         assert_eq!(
             last_event(),
             mock::Event::Currency(sugarfunge_currency::Event::AssetMint(BTC, 500 * DOLLARS, 1)),
         );
-        assert_eq!(Asset::balance_of(&1, 0, BTC.into()), 500 * DOLLARS);
+        assert_eq!(Asset::balance_of(&1, BTC.0, BTC.1), 500 * DOLLARS);
     })
 }
 

@@ -7,7 +7,7 @@ use sp_runtime::{
     traits::{BlakeTwo256, IdentifyAccount, Verify},
     MultiSignature, OpaqueExtrinsic, RuntimeDebug,
 };
-use sp_std::{convert::Into, prelude::*};
+use sp_std::prelude::*;
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -54,29 +54,9 @@ pub type BlockId = generic::BlockId<Block>;
 /// Signed version of Balance
 pub type Amount = i128;
 
+pub type ClassId = u64;
 pub type AssetId = u64;
 
 #[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub enum AssetSymbol {
-    SUGAR = 0,
-    DOT = 1,
-    ETH = 2,
-    BTC = 3,
-}
-
-#[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord, TypeInfo)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub enum CurrencyId {
-    Asset(AssetSymbol),
-    Id(AssetId),
-}
-
-impl Into<u64> for CurrencyId {
-    fn into(self) -> u64 {
-        match self {
-            CurrencyId::Asset(asset) => asset as u64,
-            CurrencyId::Id(id) => id,
-        }
-    }
-}
+pub struct CurrencyId(pub ClassId, pub AssetId);
