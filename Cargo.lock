@@ -7000,6 +7000,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "sugarfunge-bundle"
+version = "0.1.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "sugarfunge-asset",
+ "sugarfunge-primitives",
+]
+
+[[package]]
 name = "sugarfunge-currency"
 version = "0.1.0"
 dependencies = [
@@ -7095,6 +7113,24 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+]
+
+[[package]]
+name = "sugarfunge-market"
+version = "0.1.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "sugarfunge-asset",
+ "sugarfunge-primitives",
 ]
 
 [[package]]
@@ -7197,11 +7233,13 @@ dependencies = [
  "sp-version",
  "substrate-wasm-builder",
  "sugarfunge-asset",
+ "sugarfunge-bundle",
  "sugarfunge-currency",
  "sugarfunge-dao",
  "sugarfunge-dex",
  "sugarfunge-escrow",
  "sugarfunge-exgine",
+ "sugarfunge-market",
  "sugarfunge-primitives",
 ]
 

@@ -61,8 +61,10 @@ sugarfunge-asset = { default-features = false, path = "../pallets/asset" }
 sugarfunge-currency = { default-features = false, path = "../pallets/currency" }
 sugarfunge-dex = { default-features = false, path = "../pallets/dex" }
 sugarfunge-dao = { default-features = false, path = "../pallets/dao" }
+sugarfunge-bundle = { default-features = false, path = "../pallets/bundle" }
 sugarfunge-escrow = { default-features = false, path = "../pallets/escrow" }
 sugarfunge-exgine = { default-features = false, path = "../pallets/exgine" }
+sugarfunge-market = { default-features = false, path = "../pallets/market" }
 
 [build-dependencies]
 substrate-wasm-builder = { version = "5.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
@@ -106,7 +108,9 @@ std = [
 	"sugarfunge-asset/std",
 	"sugarfunge-currency/std",
 	"sugarfunge-dex/std",
+	"sugarfunge-bundle/std",
 	"sugarfunge-exgine/std",
+	"sugarfunge-market/std",
 ]
 
 runtime-benchmarks = [

@@ -1,4 +1,4 @@
-//! Benchmarking setup for sugarfunge-exgine
+//! Benchmarking setup for sugarfunge-dao
 
 use super::*;
 

@@ -48,7 +48,9 @@ use pallet_transaction_payment::CurrencyAdapter;
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 pub use sugarfunge_currency::Call as CurrencyCall;
+pub use sugarfunge_bundle::Call as BundleCall;
 pub use sugarfunge_exgine::Call as ExgineCall;
+pub use sugarfunge_market::Call as MarketCall;
 
 /// Constant values used within the runtime.
 mod constants;
@@ -342,7 +344,9 @@ impl sugarfunge_asset::Config for Runtime {
 parameter_types! {
     pub const CurrencyModuleId: PalletId = PalletId(*b"sug/curr");
     pub const DexModuleId: PalletId = PalletId(*b"sug/dexm");
+    pub const BundleModuleId: PalletId = PalletId(*b"sug/bndl");
     pub const EscrowModuleId: PalletId = PalletId(*b"sug/crow");
+    pub const MarketModuleId: PalletId = PalletId(*b"sug/mrkt");
 }
 
 impl sugarfunge_currency::Config for Runtime {
@@ -364,6 +368,11 @@ impl sugarfunge_dao::Config for Runtime {
     type Event = Event;
 }
 
+impl sugarfunge_bundle::Config for Runtime {
+    type Event = Event;
+    type PalletId = BundleModuleId;
+}
+
 impl sugarfunge_escrow::Config for Runtime {
     type Event = Event;
     type PalletId = EscrowModuleId;
@@ -373,6 +382,11 @@ impl sugarfunge_escrow::Config for Runtime {
 
 impl sugarfunge_exgine::Config for Runtime {
     type Event = Event;
+}
+
+impl sugarfunge_market::Config for Runtime {
+    type Event = Event;
+    type PalletId = MarketModuleId;
 }
 
 construct_runtime!(
@@ -398,8 +412,10 @@ construct_runtime!(
         Currency: sugarfunge_currency::{Pallet, Call, Storage, Event<T>, Config<T>},
         Dex: sugarfunge_dex::{Pallet, Call, Storage, Event<T>},
         Dao: sugarfunge_dao::{Pallet, Call, Storage, Event<T>},
+        Bundle: sugarfunge_bundle::{Pallet, Call, Storage, Event<T>},
         Escrow: sugarfunge_escrow::{Pallet, Call, Storage, Event<T>},
         Exgine: sugarfunge_exgine::{Pallet, Call, Storage, Event<T>},
+        Market: sugarfunge_market::{Pallet, Call, Storage, Event<T>},
     }
 );
 
