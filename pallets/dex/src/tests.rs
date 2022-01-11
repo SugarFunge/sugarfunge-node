@@ -18,7 +18,7 @@ pub fn before_exchange() {
     ));
     assert_eq!(
         last_event(),
-        mock::Event::Currency(sugarfunge_currency::Event::AssetMint(
+        mock::Event::Currency(sugarfunge_currency::Event::Mint(
             SUGAR,
             500 * DOLLARS,
             1
@@ -70,13 +70,13 @@ fn many_currencies_works() {
         assert_ok!(mock::Currency::mint(Origin::signed(1), ETH, 500 * DOLLARS));
         assert_eq!(
             last_event(),
-            mock::Event::Currency(sugarfunge_currency::Event::AssetMint(ETH, 500 * DOLLARS, 1)),
+            mock::Event::Currency(sugarfunge_currency::Event::Mint(ETH, 500 * DOLLARS, 1)),
         );
         assert_eq!(Asset::balance_of(&1, ETH.0, ETH.1), 500 * DOLLARS);
         assert_ok!(mock::Currency::mint(Origin::signed(1), BTC, 500 * DOLLARS));
         assert_eq!(
             last_event(),
-            mock::Event::Currency(sugarfunge_currency::Event::AssetMint(BTC, 500 * DOLLARS, 1)),
+            mock::Event::Currency(sugarfunge_currency::Event::Mint(BTC, 500 * DOLLARS, 1)),
         );
         assert_eq!(Asset::balance_of(&1, BTC.0, BTC.1), 500 * DOLLARS);
     })

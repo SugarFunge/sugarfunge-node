@@ -13,7 +13,7 @@ pub fn before_escrow() {
     assert_ok!(Currency::mint(Origin::signed(1), SUGAR, 500 * DOLLARS));
     assert_eq!(
         last_event(),
-        Event::Currency(sugarfunge_currency::Event::AssetMint(
+        Event::Currency(sugarfunge_currency::Event::Mint(
             SUGAR,
             500 * DOLLARS,
             1
