@@ -207,7 +207,12 @@ impl<T: Config> Pallet<T> {
 
         let operator: T::AccountId = <T as Config>::PalletId::get().into_account();
 
-        let escrow = sugarfunge_escrow::Pallet::<T>::do_create_escrow(&operator, &operator)?;
+        let escrow = if Balances::<T>::contains_key((who, bundle_id)) {
+            let (escrow_account, _) = Balances::<T>::get((who, bundle_id));
+            escrow_account
+        } else {
+            sugarfunge_escrow::Pallet::<T>::do_create_escrow(&operator, &operator)?
+        };
 
         for (idx, class_id) in class_ids.iter().enumerate() {
             sugarfunge_asset::Pallet::<T>::do_batch_transfer_from(
