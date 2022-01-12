@@ -46,7 +46,7 @@ pub fn before_bundle() {
 }
 
 #[test]
-fn create_bundle_works() {
+fn mint_bundle_works() {
     new_test_ext().execute_with(|| {
         before_bundle();
 
@@ -77,7 +77,7 @@ fn create_bundle_works() {
         ));
         assert_eq!(Bundle::asset_bundles((9000, 0)), Some(bundle_id));
 
-        Bundle::do_create_bundles(&2, bundle_id, 10).unwrap();
+        Bundle::do_mint_bundles(&2, bundle_id, 10).unwrap();
 
         let bundle = Bundle::bundles(bundle_id).unwrap();
 
@@ -102,7 +102,7 @@ fn create_bundle_works() {
 }
 
 #[test]
-fn create_bundle_fails() {
+fn mint_bundle_fails() {
     new_test_ext().execute_with(|| {
         before_bundle();
 
@@ -135,7 +135,7 @@ fn create_bundle_fails() {
         ));
 
         assert_err!(
-            Bundle::do_create_bundles(&2, bundle_id, 10),
+            Bundle::do_mint_bundles(&2, bundle_id, 10),
             Error::<Test>::InsufficientBalance
         );
 
@@ -177,8 +177,8 @@ fn add_assets_to_existing_bundle() {
             vec![]
         ));
 
-        Bundle::do_create_bundles(&2, bundle_id, 10).unwrap();
-        Bundle::do_create_bundles(&2, bundle_id, 10).unwrap();
+        Bundle::do_mint_bundles(&2, bundle_id, 10).unwrap();
+        Bundle::do_mint_bundles(&2, bundle_id, 10).unwrap();
 
         let bundle = Bundle::bundles(bundle_id).unwrap();
 
@@ -193,6 +193,67 @@ fn add_assets_to_existing_bundle() {
         assert_eq!(
             vec![80, 160, 240, 320, 400,],
             Asset::balance_of_single_owner_batch(&2, 4000, asset_ids.clone()).unwrap()
+        );
+    })
+}
+
+#[test]
+fn burn_bundle_works() {
+    new_test_ext().execute_with(|| {
+        before_bundle();
+
+        let asset_ids = [1, 2, 3, 4, 5].to_vec();
+
+        let basset_ids: BoundedVec<u64, MaxAssets> = asset_ids.clone().try_into().unwrap();
+        let bamounts: BoundedVec<u128, MaxAssets> = vec![1, 2, 3, 4, 5].try_into().unwrap();
+
+        let schema: BundleSchema<Test> = (
+            vec![2000, 3000, 4000].try_into().unwrap(),
+            vec![basset_ids.clone(), basset_ids.clone(), basset_ids.clone()]
+                .try_into()
+                .unwrap(),
+            vec![bamounts.clone(), bamounts.clone(), bamounts.clone()]
+                .try_into()
+                .unwrap(),
+        );
+
+        let bundle_id = BlakeTwo256::hash_of(&schema);
+
+        assert_ok!(Bundle::do_register_bundle(
+            &1,
+            9000,
+            0,
+            bundle_id,
+            &schema,
+            vec![]
+        ));
+
+        Bundle::do_mint_bundles(&2, bundle_id, 10).unwrap();
+        Bundle::do_mint_bundles(&2, bundle_id, 10).unwrap();
+
+        let bundle = Bundle::bundles(bundle_id).unwrap();
+
+        let bundle_asset_balance = Asset::balance_of(&2, 9000, 0);
+        assert_eq!(20, bundle_asset_balance);
+
+        assert_eq!(
+            vec![20, 40, 60, 80, 100,],
+            Asset::balance_of_single_owner_batch(&bundle.vault, 4000, asset_ids.clone()).unwrap()
+        );
+
+        assert_eq!(
+            vec![80, 160, 240, 320, 400,],
+            Asset::balance_of_single_owner_batch(&2, 4000, asset_ids.clone()).unwrap()
+        );
+
+        assert_ok!(Bundle::do_burn_bundles(&2, bundle_id, 5));
+
+        let bundle_asset_balance = Asset::balance_of(&2, 9000, 0);
+        assert_eq!(15, bundle_asset_balance);
+
+        assert_eq!(
+            vec![15, 30, 45, 60, 75,],
+            Asset::balance_of_single_owner_batch(&bundle.vault, 4000, asset_ids.clone()).unwrap()
         );
     })
 }

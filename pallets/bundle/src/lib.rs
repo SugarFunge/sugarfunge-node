@@ -2,7 +2,7 @@
 
 use codec::{Decode, Encode};
 use frame_support::{
-    dispatch::{DispatchError, DispatchResult},
+    dispatch::DispatchResult,
     ensure,
     traits::{Currency, Get, ReservableCurrency},
     BoundedVec, PalletId,
@@ -132,9 +132,9 @@ pub mod pallet {
 pub struct Bundle<ClassId, AssetId, BundleSchema, AccountId> {
     /// Creator
     creator: AccountId,
-    /// Asset class
+    /// IOU asset class
     class_id: ClassId,
-    /// Asset id
+    /// IOU asset id
     asset_id: AssetId,
     /// Bundle metadata
     metadata: Vec<u8>,
@@ -193,7 +193,7 @@ impl<T: Config> Pallet<T> {
         Ok(())
     }
 
-    pub fn do_create_bundles(
+    pub fn do_mint_bundles(
         who: &T::AccountId,
         bundle_id: BundleId,
         amount: Balance,
@@ -210,6 +210,7 @@ impl<T: Config> Pallet<T> {
             Error::<T>::InvalidArrayLength
         );
 
+        // Ensure creator has enough assets to create bundle
         for (class_idx, class_id) in class_ids.iter().enumerate() {
             let balances = sugarfunge_asset::Pallet::<T>::balance_of_single_owner_batch(
                 who,
@@ -219,7 +220,7 @@ impl<T: Config> Pallet<T> {
             let amounts = amounts[class_idx]
                 .iter()
                 .map(|balance| balance.saturating_mul(amount))
-                .collect::<Vec<u128>>();
+                .collect::<Vec<Balance>>();
             for (balance_idx, balance) in balances.iter().enumerate() {
                 ensure!(
                     *balance >= amounts[balance_idx],
@@ -228,6 +229,7 @@ impl<T: Config> Pallet<T> {
             }
         }
 
+        // Transfer assets to bundle from creator to bundle vault
         for (idx, class_id) in class_ids.iter().enumerate() {
             sugarfunge_asset::Pallet::<T>::do_batch_transfer_from(
                 &who,
@@ -244,7 +246,80 @@ impl<T: Config> Pallet<T> {
 
         let operator: T::AccountId = <T as Config>::PalletId::get().into_account();
 
+        // Mint IOU assets to creator for each bundle created
         sugarfunge_asset::Pallet::<T>::do_mint(
+            &operator,
+            who,
+            bundle.class_id,
+            bundle.asset_id,
+            amount,
+        )?;
+
+        Self::deposit_event(Event::Created(bundle_id, who.clone(), amount));
+
+        Ok(())
+    }
+
+    pub fn do_burn_bundles(
+        who: &T::AccountId,
+        bundle_id: BundleId,
+        amount: Balance,
+    ) -> DispatchResult {
+        let bundle = Bundles::<T>::get(bundle_id).ok_or(Error::<T>::BundleNotFound)?;
+
+        let (class_ids, asset_ids, amounts) = bundle.schema;
+        ensure!(
+            class_ids.len() == asset_ids.len(),
+            Error::<T>::InvalidArrayLength
+        );
+        ensure!(
+            class_ids.len() == amounts.len(),
+            Error::<T>::InvalidArrayLength
+        );
+
+        // Ensure enough IOU assets to recover bundle assets
+        let iou_balance =
+            sugarfunge_asset::Pallet::<T>::balances((who, bundle.class_id, bundle.asset_id));
+        ensure!(iou_balance >= amount, Error::<T>::InsufficientBalance);
+
+        // Ensure enough bundle assets in vault to cover IOU
+        for (class_idx, class_id) in class_ids.iter().enumerate() {
+            let balances = sugarfunge_asset::Pallet::<T>::balance_of_single_owner_batch(
+                &bundle.vault,
+                *class_id,
+                asset_ids[class_idx].to_vec(),
+            )?;
+            let amounts = amounts[class_idx]
+                .iter()
+                .map(|balance| balance.saturating_mul(amount))
+                .collect::<Vec<Balance>>();
+            for (balance_idx, balance) in balances.iter().enumerate() {
+                ensure!(
+                    *balance >= amounts[balance_idx],
+                    Error::<T>::InsufficientBalance
+                );
+            }
+        }
+
+        let operator: T::AccountId = <T as Config>::PalletId::get().into_account();
+
+        // Transfer bundle assets from reserves to IOU owner
+        for (idx, class_id) in class_ids.iter().enumerate() {
+            sugarfunge_asset::Pallet::<T>::do_batch_transfer_from(
+                &operator,
+                &operator,
+                &who,
+                *class_id,
+                asset_ids[idx].to_vec(),
+                amounts[idx]
+                    .iter()
+                    .map(|balance| balance.saturating_mul(amount))
+                    .collect(),
+            )?;
+        }
+
+        // Burn IOU assets
+        sugarfunge_asset::Pallet::<T>::do_burn(
             &operator,
             who,
             bundle.class_id,
