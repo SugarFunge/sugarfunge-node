@@ -231,7 +231,7 @@ impl<T: Config> Pallet<T> {
             }
         }
 
-        // Transfer assets to bundle from creator to bundle vault
+        // Transfer creator assets to bundle vault
         for (idx, class_id) in class_ids.iter().enumerate() {
             sugarfunge_asset::Pallet::<T>::do_batch_transfer_from(
                 &who,
