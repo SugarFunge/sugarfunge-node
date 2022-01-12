@@ -21,6 +21,7 @@ sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkad
 
 sugarfunge-primitives = { package = "sugarfunge-primitives", path = "../../primitives", default-features = false }
 sugarfunge-asset = { package = "sugarfunge-asset", path = "../asset", default-features = false }
+sugarfunge-escrow = { package = "sugarfunge-escrow", path = "../escrow", default-features = false }
 
 [dev-dependencies]
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
@@ -42,6 +43,7 @@ std = [
 	'frame-benchmarking/std',
     "sugarfunge-primitives/std",
     "sugarfunge-asset/std",
+	"sugarfunge-escrow/std",
 ]
 
 runtime-benchmarks = ["frame-benchmarking"]

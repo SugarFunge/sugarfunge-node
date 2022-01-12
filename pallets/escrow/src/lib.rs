@@ -56,14 +56,15 @@ pub mod pallet {
         StorageMap<_, Blake2_128, T::AccountId, Escrow<T::AccountId>>;
 
     #[pallet::storage]
-    #[pallet::getter(fn next_pool_id)]
     pub(super) type NextEscrowId<T: Config> = StorageValue<_, u32, ValueQuery>;
 
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
-        /// EscrowCreated(escrow, operator, owner)
-        EscrowCreated(T::AccountId, T::AccountId, T::AccountId),
+        /// Created(escrow, operator, owner)
+        Created(T::AccountId, T::AccountId, T::AccountId),
+        /// Refund(escrow, operator, owner)
+        Refund(T::AccountId, T::AccountId, T::AccountId),
     }
 
     // Errors inform users that something went wrong.
@@ -162,7 +163,7 @@ impl<T: Config> Pallet<T> {
 
         Escrows::<T>::insert(&escrow, new_escrow);
 
-        Self::deposit_event(Event::EscrowCreated(
+        Self::deposit_event(Event::Created(
             escrow.clone(),
             operator.clone(),
             owner.clone(),
@@ -248,6 +249,12 @@ impl<T: Config> Pallet<T> {
                 balances.2[idx].clone(),
             )?;
         }
+
+        Self::deposit_event(Event::Refund(
+            escrow.clone(),
+            escrow_info.operator.clone(),
+            escrow_info.owner.clone(),
+        ));
 
         Ok(balances)
     }

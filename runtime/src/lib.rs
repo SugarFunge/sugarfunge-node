@@ -47,8 +47,8 @@ use pallet_transaction_payment::CurrencyAdapter;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
-pub use sugarfunge_currency::Call as CurrencyCall;
 pub use sugarfunge_bundle::Call as BundleCall;
+pub use sugarfunge_currency::Call as CurrencyCall;
 pub use sugarfunge_exgine::Call as ExgineCall;
 pub use sugarfunge_market::Call as MarketCall;
 
@@ -331,6 +331,7 @@ parameter_types! {
     pub const CreateExchangeDeposit: Balance = 500 * MILLICENTS;
     pub const CreateEscrowDeposit: Balance = 500 * MILLICENTS;
     pub const CreateCurrencyClassDeposit: Balance = 500 * MILLICENTS;
+    pub const CreateBundleDeposit: Balance = 500 * MILLICENTS;
 }
 
 impl sugarfunge_asset::Config for Runtime {
@@ -368,9 +369,16 @@ impl sugarfunge_dao::Config for Runtime {
     type Event = Event;
 }
 
+parameter_types! {
+    pub const MaxAssets: u32 = 20;
+}
+
 impl sugarfunge_bundle::Config for Runtime {
     type Event = Event;
     type PalletId = BundleModuleId;
+    type CreateBundleDeposit = CreateBundleDeposit;
+    type Currency = Balances;
+    type MaxAssets = MaxAssets;
 }
 
 impl sugarfunge_escrow::Config for Runtime {

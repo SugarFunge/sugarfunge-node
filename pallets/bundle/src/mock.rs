@@ -19,6 +19,8 @@ pub const DOLLARS: Balance = 100 * CENTS;
 parameter_types! {
     pub const CreateAssetClassDeposit: Balance = 500 * MILLICENTS;
     pub const CreateCurrencyClassDeposit: Balance = 500 * MILLICENTS;
+    pub const CreateEscrowDeposit: Balance = 1;
+    pub const CreateBundleDeposit: Balance = 1;
 }
 
 parameter_types! {
@@ -46,12 +48,27 @@ impl sugarfunge_asset::Config for Test {
 }
 
 parameter_types! {
+    pub const EscrowModuleId: PalletId = PalletId(*b"sug/crow");
     pub const BundleModuleId: PalletId = PalletId(*b"sug/bndl");
+}
+
+impl sugarfunge_escrow::Config for Test {
+    type Event = Event;
+    type PalletId = EscrowModuleId;
+    type CreateEscrowDeposit = CreateEscrowDeposit;
+    type Currency = Balances;
+}
+
+parameter_types! {
+    pub const MaxAssets: u32 = 20;
 }
 
 impl sugarfunge_bundle::Config for Test {
     type Event = Event;
     type PalletId = BundleModuleId;
+    type CreateBundleDeposit = CreateBundleDeposit;
+    type Currency = Balances;
+    type MaxAssets = MaxAssets;
 }
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
@@ -67,6 +84,7 @@ frame_support::construct_runtime!(
         System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
         Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
         Asset: sugarfunge_asset::{Pallet, Call, Storage, Event<T>},
+        Escrow: sugarfunge_escrow::{Pallet, Call, Storage, Event<T>},
         Bundle: sugarfunge_bundle::{Pallet, Call, Storage, Event<T>},
     }
 );

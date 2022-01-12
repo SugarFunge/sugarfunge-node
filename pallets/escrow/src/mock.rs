@@ -149,8 +149,8 @@ construct_runtime!(
         Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
         OrmlTokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>},
         OrmlCurrencies: orml_currencies::{Pallet, Call, Event<T>},
-        Escrow: sugarfunge_escrow::{Pallet, Call, Storage, Event<T>},
         Asset: sugarfunge_asset::{Pallet, Call, Storage, Event<T>},
+        Escrow: sugarfunge_escrow::{Pallet, Call, Storage, Event<T>},
         Currency: sugarfunge_currency::{Pallet, Call, Storage, Event<T>},
     }
 );
