@@ -86,7 +86,7 @@ fn mint_bundle_works() {
 
         assert_eq!(
             last_event(),
-            Event::Bundle(crate::Event::Created(bundle_id, 2, 10)),
+            Event::Bundle(crate::Event::Mint(bundle_id, 2, 10)),
         );
 
         assert_eq!(
@@ -247,6 +247,11 @@ fn burn_bundle_works() {
         );
 
         assert_ok!(Bundle::do_burn_bundles(&2, bundle_id, 5));
+
+        assert_eq!(
+            last_event(),
+            Event::Bundle(crate::Event::Burn(bundle_id, 2, 5)),
+        );
 
         let bundle_asset_balance = Asset::balance_of(&2, 9000, 0);
         assert_eq!(15, bundle_asset_balance);

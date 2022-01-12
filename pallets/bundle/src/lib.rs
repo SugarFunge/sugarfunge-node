@@ -100,8 +100,10 @@ pub mod pallet {
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
-        // Created(bundle_id, who, amount)
-        Created(BundleId, T::AccountId, Balance),
+        // Mint(bundle_id, who, amount)
+        Mint(BundleId, T::AccountId, Balance),
+        // Burn(bundle_id, who, amount)
+        Burn(BundleId, T::AccountId, Balance),   
     }
 
     // Errors inform users that something went wrong.
@@ -255,7 +257,7 @@ impl<T: Config> Pallet<T> {
             amount,
         )?;
 
-        Self::deposit_event(Event::Created(bundle_id, who.clone(), amount));
+        Self::deposit_event(Event::Mint(bundle_id, who.clone(), amount));
 
         Ok(())
     }
@@ -327,7 +329,7 @@ impl<T: Config> Pallet<T> {
             amount,
         )?;
 
-        Self::deposit_event(Event::Created(bundle_id, who.clone(), amount));
+        Self::deposit_event(Event::Burn(bundle_id, who.clone(), amount));
 
         Ok(())
     }
