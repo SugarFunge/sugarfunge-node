@@ -9,7 +9,7 @@ use frame_support::{
 };
 use scale_info::TypeInfo;
 use sp_runtime::{traits::AccountIdConversion, RuntimeDebug};
-use sp_std::{fmt::Debug, prelude::*};
+use sp_std::prelude::*;
 use sugarfunge_primitives::Balance;
 
 pub use pallet::*;
@@ -126,7 +126,7 @@ pub mod pallet {
 }
 
 #[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
-pub struct Escrow<AccountId: Encode + Decode + Clone + Debug + Eq + PartialEq> {
+pub struct Escrow<AccountId> {
     /// The operator of the escrow
     pub operator: AccountId,
     /// The owner of the assets

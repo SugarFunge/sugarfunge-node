@@ -12,7 +12,7 @@ use sp_runtime::{
     traits::{AccountIdConversion, BlakeTwo256, Hash},
     RuntimeDebug,
 };
-use sp_std::{fmt::Debug, prelude::*};
+use sp_std::prelude::*;
 use sugarfunge_primitives::Balance;
 
 pub use pallet::*;
@@ -77,19 +77,22 @@ pub mod pallet {
 
     #[pallet::storage]
     #[pallet::getter(fn bundles)]
-    pub(super) type Bundles<T: Config> =
-        StorageMap<_, Blake2_128Concat, BundleId, Bundle<BundleSchema<T>, T::AccountId>>;
+    pub(super) type Bundles<T: Config> = StorageMap<
+        _,
+        Blake2_128Concat,
+        BundleId,
+        Bundle<T::ClassId, T::AssetId, BundleSchema<T>, T::AccountId>,
+    >;
 
     #[pallet::storage]
-    #[pallet::getter(fn balances)]
-    pub(super) type Balances<T: Config> = StorageNMap<
+    #[pallet::getter(fn asset_bundles)]
+    pub(super) type AssetBundles<T: Config> = StorageNMap<
         _,
         (
-            NMapKey<Blake2_128Concat, T::AccountId>,
-            NMapKey<Blake2_128Concat, BundleId>,
+            NMapKey<Blake2_128Concat, T::ClassId>,
+            NMapKey<Blake2_128Concat, T::AssetId>,
         ),
-        (T::AccountId, Balance),
-        ValueQuery,
+        BundleId,
     >;
 
     // Pallets use events to inform users when important changes are made.
@@ -97,15 +100,19 @@ pub mod pallet {
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
-        // Bundle created who, escrow, balance
-        Created(BundleId, T::AccountId, T::AccountId, Balance),
+        // Created(bundle_id, who, amount)
+        Created(BundleId, T::AccountId, Balance),
     }
 
     // Errors inform users that something went wrong.
     #[pallet::error]
     pub enum Error<T> {
+        /// Bundle hash does not match bundle id
+        InvalidBundleIdForBundle,
         /// Bundle already exists
         BundleExists,
+        /// Bundle does not exists
+        BundleNotFound,
         /// Number Overflow
         NumOverflow,
         /// Array is of wrong length
@@ -122,24 +129,35 @@ pub mod pallet {
 }
 
 #[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
-pub struct Bundle<
-    BundleSchema,
-    AccountId: Encode + Decode + Clone + Debug + Eq + PartialEq + TypeInfo,
-> {
+pub struct Bundle<ClassId, AssetId, BundleSchema, AccountId> {
     /// Creator
     creator: AccountId,
+    /// Asset class
+    class_id: ClassId,
+    /// Asset id
+    asset_id: AssetId,
     /// Bundle metadata
     metadata: Vec<u8>,
     /// Schema
-    schema: BundleSchema,
+    pub schema: BundleSchema,
+    /// Vault
+    vault: AccountId,
 }
 
 impl<T: Config> Pallet<T> {
     pub fn do_register_bundle(
         creator: &T::AccountId,
+        class_id: T::ClassId,
+        asset_id: T::AssetId,
+        bundle_id: BundleId,
         schema: &BundleSchema<T>,
         metadata: Vec<u8>,
-    ) -> Result<BundleId, DispatchError> {
+    ) -> DispatchResult {
+        ensure!(
+            BlakeTwo256::hash_of(&schema) == bundle_id,
+            Error::<T>::InvalidBundleIdForBundle
+        );
+
         let bundle_id: BundleId = BlakeTwo256::hash_of(&schema);
 
         ensure!(
@@ -147,26 +165,42 @@ impl<T: Config> Pallet<T> {
             Error::<T>::BundleExists
         );
 
+        let operator = <T as Config>::PalletId::get().into_account();
+
+        sugarfunge_asset::Pallet::<T>::do_create_class(
+            &creator,
+            &operator,
+            class_id,
+            metadata.clone(),
+        )?;
+
+        let vault: T::AccountId = <T as Config>::PalletId::get().into_sub_account(bundle_id);
+
         Bundles::<T>::insert(
             &bundle_id,
-            &Bundle::<BundleSchema<T>, T::AccountId> {
+            &Bundle {
                 creator: creator.clone(),
+                class_id,
+                asset_id,
                 schema: schema.clone(),
                 metadata,
+                vault,
             },
         );
 
-        Ok(bundle_id)
+        AssetBundles::<T>::insert((class_id, asset_id), bundle_id);
+
+        Ok(())
     }
 
     pub fn do_create_bundles(
         who: &T::AccountId,
-        schema: &BundleSchema<T>,
+        bundle_id: BundleId,
         amount: Balance,
-    ) -> Result<(BundleId, T::AccountId), DispatchError> {
-        let bundle_id: BundleId = BlakeTwo256::hash_of(&schema);
+    ) -> DispatchResult {
+        let bundle = Bundles::<T>::get(bundle_id).ok_or(Error::<T>::BundleNotFound)?;
 
-        let (class_ids, asset_ids, amounts) = schema;
+        let (class_ids, asset_ids, amounts) = bundle.schema;
         ensure!(
             class_ids.len() == asset_ids.len(),
             Error::<T>::InvalidArrayLength
@@ -194,31 +228,11 @@ impl<T: Config> Pallet<T> {
             }
         }
 
-        if !Bundles::<T>::contains_key(bundle_id) {
-            Bundles::<T>::insert(
-                &bundle_id,
-                &Bundle::<BundleSchema<T>, T::AccountId> {
-                    creator: who.clone(),
-                    schema: schema.clone(),
-                    metadata: vec![],
-                },
-            );
-        }
-
-        let operator: T::AccountId = <T as Config>::PalletId::get().into_account();
-
-        let escrow = if Balances::<T>::contains_key((who, bundle_id)) {
-            let (escrow_account, _) = Balances::<T>::get((who, bundle_id));
-            escrow_account
-        } else {
-            sugarfunge_escrow::Pallet::<T>::do_create_escrow(&operator, &operator)?
-        };
-
         for (idx, class_id) in class_ids.iter().enumerate() {
             sugarfunge_asset::Pallet::<T>::do_batch_transfer_from(
                 &who,
                 &who,
-                &escrow,
+                &bundle.vault,
                 *class_id,
                 asset_ids[idx].to_vec(),
                 amounts[idx]
@@ -228,22 +242,18 @@ impl<T: Config> Pallet<T> {
             )?;
         }
 
-        Balances::<T>::try_mutate((who, bundle_id), |balance| -> DispatchResult {
-            balance.0 = escrow.clone();
-            balance.1 = balance
-                .1
-                .checked_add(amount)
-                .ok_or(Error::<T>::NumOverflow)?;
-            Ok(())
-        })?;
+        let operator: T::AccountId = <T as Config>::PalletId::get().into_account();
 
-        Self::deposit_event(Event::Created(
-            bundle_id,
-            who.clone(),
-            escrow.clone(),
+        sugarfunge_asset::Pallet::<T>::do_mint(
+            &operator,
+            who,
+            bundle.class_id,
+            bundle.asset_id,
             amount,
-        ));
+        )?;
 
-        Ok((bundle_id, escrow))
+        Self::deposit_event(Event::Created(bundle_id, who.clone(), amount));
+
+        Ok(())
     }
 }

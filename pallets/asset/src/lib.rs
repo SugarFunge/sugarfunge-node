@@ -172,12 +172,13 @@ pub mod pallet {
         #[pallet::weight(10_000)]
         pub fn create_class(
             origin: OriginFor<T>,
+            owner: T::AccountId,
             class_id: T::ClassId,
             metadata: Vec<u8>,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
 
-            Self::do_create_class(&who, class_id, metadata)?;
+            Self::do_create_class(&who, &owner, class_id, metadata)?;
 
             Ok(().into())
         }
@@ -333,6 +334,7 @@ pub mod pallet {
 impl<T: Config> Pallet<T> {
     pub fn do_create_class(
         who: &T::AccountId,
+        owner: &T::AccountId,
         class_id: T::ClassId,
         metadata: Vec<u8>,
     ) -> DispatchResult {
@@ -345,7 +347,7 @@ impl<T: Config> Pallet<T> {
         T::Currency::reserve(&who, deposit.clone())?;
 
         let class = Class {
-            owner: who.clone(),
+            owner: owner.clone(),
             metadata,
         };
 

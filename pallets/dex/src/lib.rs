@@ -170,6 +170,7 @@ pub mod pallet {
 
             sugarfunge_asset::Pallet::<T>::do_create_class(
                 &fund_account,
+                &fund_account,
                 lp_class_id,
                 [].to_vec(),
             )?;

@@ -13,9 +13,9 @@ fn last_event() -> Event {
 pub fn before_bundle() {
     run_to_block(10);
 
-    assert_ok!(Asset::do_create_class(&1, 2000, [0].to_vec()));
-    assert_ok!(Asset::do_create_class(&1, 3000, [0].to_vec()));
-    assert_ok!(Asset::do_create_class(&1, 4000, [0].to_vec()));
+    assert_ok!(Asset::do_create_class(&1, &1, 2000, [0].to_vec()));
+    assert_ok!(Asset::do_create_class(&1, &1, 3000, [0].to_vec()));
+    assert_ok!(Asset::do_create_class(&1, &1, 4000, [0].to_vec()));
 
     let asset_ids = [1, 2, 3, 4, 5].to_vec();
     let amounts = [100, 200, 300, 400, 500].to_vec();
@@ -65,28 +65,39 @@ fn create_bundle_works() {
                 .unwrap(),
         );
 
-        let (bundle_id, bundle_account) = Bundle::do_create_bundles(&2, &schema, 10).unwrap();
-        assert_eq!(BlakeTwo256::hash_of(&schema), bundle_id);
+        let bundle_id = BlakeTwo256::hash_of(&schema);
+
+        assert_ok!(Bundle::do_register_bundle(
+            &1,
+            9000,
+            0,
+            bundle_id,
+            &schema,
+            vec![]
+        ));
+        assert_eq!(Bundle::asset_bundles((9000, 0)), Some(bundle_id));
+
+        Bundle::do_create_bundles(&2, bundle_id, 10).unwrap();
+
+        let bundle = Bundle::bundles(bundle_id).unwrap();
+
+        let bundle_asset_balance = Asset::balance_of(&2, 9000, 0);
+        assert_eq!(10, bundle_asset_balance);
 
         assert_eq!(
             last_event(),
-            Event::Bundle(crate::Event::Created(bundle_id, 2, bundle_account, 10)),
+            Event::Bundle(crate::Event::Created(bundle_id, 2, 10)),
         );
 
         assert_eq!(
             vec![10, 20, 30, 40, 50,],
-            Asset::balance_of_single_owner_batch(&bundle_account, 4000, asset_ids.clone()).unwrap()
+            Asset::balance_of_single_owner_batch(&bundle.vault, 4000, asset_ids.clone()).unwrap()
         );
 
         assert_eq!(
             vec![90, 180, 270, 360, 450,],
             Asset::balance_of_single_owner_batch(&2, 4000, asset_ids.clone()).unwrap()
         );
-
-        let bundle_id = BlakeTwo256::hash_of(&schema);
-        let (a_account_id, a_balance) = Bundle::balances((2, bundle_id));
-        assert_eq!(bundle_account, a_account_id);
-        assert_eq!(10, a_balance);
     })
 }
 
@@ -112,8 +123,19 @@ fn create_bundle_fails() {
                 .unwrap(),
         );
 
+        let bundle_id = BlakeTwo256::hash_of(&schema);
+
+        assert_ok!(Bundle::do_register_bundle(
+            &1,
+            9000,
+            0,
+            bundle_id,
+            &schema,
+            vec![]
+        ));
+
         assert_err!(
-            Bundle::do_create_bundles(&2, &schema, 10),
+            Bundle::do_create_bundles(&2, bundle_id, 10),
             Error::<Test>::InsufficientBalance
         );
 
@@ -125,7 +147,7 @@ fn create_bundle_fails() {
 }
 
 #[test]
-fn create_same_bundle_adds_to_existing_bundle() {
+fn add_assets_to_existing_bundle() {
     new_test_ext().execute_with(|| {
         before_bundle();
 
@@ -144,31 +166,34 @@ fn create_same_bundle_adds_to_existing_bundle() {
                 .unwrap(),
         );
 
-        let (bundle_id, first_bundle_account) = Bundle::do_create_bundles(&2, &schema, 10).unwrap();
-        assert_eq!(BlakeTwo256::hash_of(&schema), bundle_id);
+        let bundle_id = BlakeTwo256::hash_of(&schema);
 
-        let (bundle_id, second_bundle_account) =
-            Bundle::do_create_bundles(&2, &schema, 10).unwrap();
-        assert_eq!(BlakeTwo256::hash_of(&schema), bundle_id);
+        assert_ok!(Bundle::do_register_bundle(
+            &1,
+            9000,
+            0,
+            bundle_id,
+            &schema,
+            vec![]
+        ));
 
-        assert_eq!(first_bundle_account, second_bundle_account);
+        Bundle::do_create_bundles(&2, bundle_id, 10).unwrap();
+        Bundle::do_create_bundles(&2, bundle_id, 10).unwrap();
 
-        let bundle_account = first_bundle_account;
+        let bundle = Bundle::bundles(bundle_id).unwrap();
+
+        let bundle_asset_balance = Asset::balance_of(&2, 9000, 0);
+        assert_eq!(20, bundle_asset_balance);
 
         assert_eq!(
             vec![20, 40, 60, 80, 100,],
-            Asset::balance_of_single_owner_batch(&bundle_account, 4000, asset_ids.clone()).unwrap()
+            Asset::balance_of_single_owner_batch(&bundle.vault, 4000, asset_ids.clone()).unwrap()
         );
 
         assert_eq!(
             vec![80, 160, 240, 320, 400,],
             Asset::balance_of_single_owner_batch(&2, 4000, asset_ids.clone()).unwrap()
         );
-
-        let bundle_id = BlakeTwo256::hash_of(&schema);
-        let (a_account_id, a_balance) = Bundle::balances((2, bundle_id));
-        assert_eq!(bundle_account, a_account_id);
-        assert_eq!(20, a_balance);
     })
 }
 

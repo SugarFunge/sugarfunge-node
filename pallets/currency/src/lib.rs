@@ -221,8 +221,18 @@ impl<T: Config> Pallet<T> {
 
         <T as Config>::Currency::transfer(native_currency_id, &who, &module_account, amount)?;
 
-        sugarfunge_asset::Pallet::<T>::do_create_class(&module_account, class_id, data.clone())?;
-        sugarfunge_asset::Pallet::<T>::do_create_asset(&module_account, class_id, asset_id, data.clone())?;
+        sugarfunge_asset::Pallet::<T>::do_create_class(
+            &module_account,
+            &module_account,
+            class_id,
+            data.clone(),
+        )?;
+        sugarfunge_asset::Pallet::<T>::do_create_asset(
+            &module_account,
+            class_id,
+            asset_id,
+            data.clone(),
+        )?;
 
         let currency_id = CurrencyId(class_id.into(), asset_id.into());
         CurrencyAssets::<T>::insert(currency_id, AssetInfo { total_supply: 0 });
