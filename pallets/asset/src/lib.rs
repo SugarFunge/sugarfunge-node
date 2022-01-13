@@ -132,21 +132,65 @@ pub mod pallet {
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
-        ClassCreated(T::ClassId, T::AccountId),
-        AssetCreated(T::ClassId, T::AssetId, T::AccountId),
-        Mint(T::AccountId, T::ClassId, T::AssetId, Balance),
-        BatchMint(T::AccountId, T::ClassId, Vec<T::AssetId>, Vec<Balance>),
-        Burn(T::AccountId, T::ClassId, T::AssetId, Balance),
-        BatchBurn(T::AccountId, T::ClassId, Vec<T::AssetId>, Vec<Balance>),
-        Transferred(T::AccountId, T::AccountId, T::ClassId, T::AssetId, Balance),
-        BatchTransferred(
-            T::AccountId,
-            T::AccountId,
-            T::ClassId,
-            Vec<T::AssetId>,
-            Vec<Balance>,
-        ),
-        ApprovalForAll(T::AccountId, T::AccountId, T::ClassId, bool),
+        ClassCreated {
+            class_id: T::ClassId,
+            who: T::AccountId,
+        },
+        AssetCreated {
+            class_id: T::ClassId,
+            asset_id: T::AssetId,
+            who: T::AccountId,
+        },
+        Mint {
+            who: T::AccountId,
+            to: T::AccountId,
+            class_id: T::ClassId,
+            asset_id: T::AssetId,
+            amount: Balance,
+        },
+        BatchMint {
+            who: T::AccountId,
+            to: T::AccountId,
+            class_id: T::ClassId,
+            asset_ids: Vec<T::AssetId>,
+            amounts: Vec<Balance>,
+        },
+        Burn {
+            who: T::AccountId,
+            from: T::AccountId,
+            class_id: T::ClassId,
+            asset_id: T::AssetId,
+            amount: Balance,
+        },
+        BatchBurn {
+            who: T::AccountId,
+            from: T::AccountId,
+            class_id: T::ClassId,
+            asset_ids: Vec<T::AssetId>,
+            amounts: Vec<Balance>,
+        },
+        Transferred {
+            who: T::AccountId,
+            from: T::AccountId,
+            to: T::AccountId,
+            class_id: T::ClassId,
+            asset_id: T::AssetId,
+            amount: Balance,
+        },
+        BatchTransferred {
+            who: T::AccountId,
+            from: T::AccountId,
+            to: T::AccountId,
+            class_id: T::ClassId,
+            asset_ids: Vec<T::AssetId>,
+            amounts: Vec<Balance>,
+        },
+        ApprovalForAll {
+            who: T::AccountId,
+            operator: T::AccountId,
+            class_id: T::ClassId,
+            approved: bool,
+        },
     }
 
     #[pallet::error]
@@ -193,6 +237,7 @@ pub mod pallet {
             let who = ensure_signed(origin)?;
 
             Self::do_create_asset(&who, class_id, asset_id, metadata)?;
+
             Ok(().into())
         }
 
@@ -353,7 +398,11 @@ impl<T: Config> Pallet<T> {
 
         Classes::<T>::insert(class_id, class);
 
-        Self::deposit_event(Event::ClassCreated(class_id, who.clone()));
+        Self::deposit_event(Event::ClassCreated {
+            class_id,
+            who: who.clone(),
+        });
+
         Ok(())
     }
 
@@ -386,7 +435,12 @@ impl<T: Config> Pallet<T> {
             Ok(())
         })?;
 
-        Self::deposit_event(Event::AssetCreated(class_id, asset_id, who.clone()));
+        Self::deposit_event(Event::AssetCreated {
+            class_id,
+            asset_id,
+            who: who.clone(),
+        });
+
         Ok(())
     }
 
@@ -457,12 +511,12 @@ impl<T: Config> Pallet<T> {
             Ok(())
         })?;
 
-        Self::deposit_event(Event::ApprovalForAll(
-            who.clone(),
-            operator.clone(),
+        Self::deposit_event(Event::ApprovalForAll {
+            who: who.clone(),
+            operator: operator.clone(),
             class_id,
             approved,
-        ));
+        });
 
         Ok(())
     }
@@ -478,7 +532,13 @@ impl<T: Config> Pallet<T> {
 
         Self::add_balance_to(to, class_id, asset_id, amount)?;
 
-        Self::deposit_event(Event::Mint(to.clone(), class_id, asset_id, amount));
+        Self::deposit_event(Event::Mint {
+            who: who.clone(),
+            to: to.clone(),
+            class_id,
+            asset_id,
+            amount,
+        });
 
         Ok(())
     }
@@ -503,7 +563,13 @@ impl<T: Config> Pallet<T> {
             Self::add_balance_to(to, class_id, asset_id, amount)?;
         }
 
-        Self::deposit_event(Event::BatchMint(to.clone(), class_id, asset_ids, amounts));
+        Self::deposit_event(Event::BatchMint {
+            who: who.clone(),
+            to: to.clone(),
+            class_id,
+            asset_ids,
+            amounts,
+        });
 
         Ok(())
     }
@@ -519,7 +585,13 @@ impl<T: Config> Pallet<T> {
 
         Self::remove_balance_from(from, class_id, asset_id, amount)?;
 
-        Self::deposit_event(Event::Burn(from.clone(), class_id, asset_id, amount));
+        Self::deposit_event(Event::Burn {
+            who: who.clone(),
+            from: from.clone(),
+            class_id,
+            asset_id,
+            amount,
+        });
 
         Ok(())
     }
@@ -545,7 +617,13 @@ impl<T: Config> Pallet<T> {
             Self::remove_balance_from(from, class_id, asset_id, amount)?;
         }
 
-        Self::deposit_event(Event::BatchBurn(from.clone(), class_id, asset_ids, amounts));
+        Self::deposit_event(Event::BatchBurn {
+            who: who.clone(),
+            from: from.clone(),
+            class_id,
+            asset_ids,
+            amounts,
+        });
 
         Ok(())
     }
@@ -571,13 +649,14 @@ impl<T: Config> Pallet<T> {
 
         Self::add_balance_to(to, class_id, asset_id, amount)?;
 
-        Self::deposit_event(Event::Transferred(
-            from.clone(),
-            to.clone(),
+        Self::deposit_event(Event::Transferred {
+            who: who.clone(),
+            from: from.clone(),
+            to: to.clone(),
             class_id,
             asset_id,
             amount,
-        ));
+        });
 
         Ok(())
     }
@@ -614,13 +693,14 @@ impl<T: Config> Pallet<T> {
             Self::add_balance_to(to, class_id, asset_id, amount)?;
         }
 
-        Self::deposit_event(Event::BatchTransferred(
-            from.clone(),
-            to.clone(),
+        Self::deposit_event(Event::BatchTransferred {
+            who: who.clone(),
+            from: from.clone(),
+            to: to.clone(),
             class_id,
             asset_ids,
             amounts,
-        ));
+        });
 
         Ok(())
     }

@@ -61,10 +61,16 @@ pub mod pallet {
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
-        /// Created(escrow, operator, owner)
-        Created(T::AccountId, T::AccountId, T::AccountId),
-        /// Refund(escrow, operator, owner)
-        Refund(T::AccountId, T::AccountId, T::AccountId),
+        Created {
+            escrow: T::AccountId,
+            operator: T::AccountId,
+            owner: T::AccountId,
+        },
+        Refund {
+            escrow: T::AccountId,
+            operator: T::AccountId,
+            owner: T::AccountId,
+        },
     }
 
     // Errors inform users that something went wrong.
@@ -163,11 +169,11 @@ impl<T: Config> Pallet<T> {
 
         Escrows::<T>::insert(&escrow, new_escrow);
 
-        Self::deposit_event(Event::Created(
-            escrow.clone(),
-            operator.clone(),
-            owner.clone(),
-        ));
+        Self::deposit_event(Event::Created {
+            escrow: escrow.clone(),
+            operator: operator.clone(),
+            owner: owner.clone(),
+        });
 
         Ok(escrow.clone())
     }
@@ -250,11 +256,11 @@ impl<T: Config> Pallet<T> {
             )?;
         }
 
-        Self::deposit_event(Event::Refund(
-            escrow.clone(),
-            escrow_info.operator.clone(),
-            escrow_info.owner.clone(),
-        ));
+        Self::deposit_event(Event::Refund {
+            escrow: escrow.clone(),
+            operator: escrow_info.operator.clone(),
+            owner: escrow_info.owner.clone(),
+        });
 
         Ok(balances)
     }

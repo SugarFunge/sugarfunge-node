@@ -13,7 +13,7 @@ use sp_runtime::{
     traits::{AccountIdConversion, Zero},
     RuntimeDebug,
 };
-use sp_std::{convert::TryInto, fmt::Debug, prelude::*};
+use sp_std::{convert::TryInto, prelude::*};
 use sugarfunge_primitives::{Balance, CurrencyId};
 
 pub use pallet::*;
@@ -83,37 +83,42 @@ pub mod pallet {
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
-        ExchangeCreated(ExchangeId, T::AccountId),
-        CurrencyToAsset(
-            ExchangeId,
-            T::AccountId,
-            T::AccountId,
-            Vec<T::AssetId>,
-            Vec<Balance>,
-            Vec<Balance>,
-        ),
-        AssetToCurrency(
-            ExchangeId,
-            T::AccountId,
-            T::AccountId,
-            Vec<T::AssetId>,
-            Vec<Balance>,
-            Vec<Balance>,
-        ),
-        LiquidityAdded(
-            T::AccountId,
-            T::AccountId,
-            Vec<T::AssetId>,
-            Vec<Balance>,
-            Vec<Balance>,
-        ),
-        LiquidityRemoved(
-            T::AccountId,
-            T::AccountId,
-            Vec<T::AssetId>,
-            Vec<Balance>,
-            Vec<Balance>,
-        ),
+        ExchangeCreated {
+            exchange_id: ExchangeId,
+            who: T::AccountId,
+        },
+        CurrencyToAsset {
+            exchange_id: ExchangeId,
+            who: T::AccountId,
+            to: T::AccountId,
+            asset_ids: Vec<T::AssetId>,
+            asset_amounts_out: Vec<Balance>,
+            currency_amounts_in: Vec<Balance>,
+        },
+        AssetToCurrency {
+            exchange_id: ExchangeId,
+            who: T::AccountId,
+            to: T::AccountId,
+            asset_ids: Vec<T::AssetId>,
+            asset_amounts_in: Vec<Balance>,
+            currency_amounts_out: Vec<Balance>,
+        },
+        LiquidityAdded {
+            exchange_id: ExchangeId,
+            who: T::AccountId,
+            to: T::AccountId,
+            asset_ids: Vec<T::AssetId>,
+            asset_amounts: Vec<Balance>,
+            currency_amounts: Vec<Balance>,
+        },
+        LiquidityRemoved {
+            exchange_id: ExchangeId,
+            who: T::AccountId,
+            to: T::AccountId,
+            asset_ids: Vec<T::AssetId>,
+            asset_amounts: Vec<Balance>,
+            currency_amounts: Vec<Balance>,
+        },
     }
 
     #[pallet::error]
@@ -189,7 +194,7 @@ pub mod pallet {
 
             Exchanges::<T>::insert(exchange_id, new_exchange);
 
-            Self::deposit_event(Event::ExchangeCreated(exchange_id, who));
+            Self::deposit_event(Event::ExchangeCreated { exchange_id, who });
 
             Ok(().into())
         }
@@ -291,11 +296,7 @@ pub mod pallet {
 }
 
 #[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
-pub struct Exchange<
-    ClassId: Encode + Decode + Clone + Debug + Eq + PartialEq,
-    AssetId: Encode + Decode + Clone + Debug + Eq + PartialEq,
-    AccountId: Encode + Decode + Clone + Debug + Eq + PartialEq,
-> {
+pub struct Exchange<ClassId, AssetId, AccountId> {
     /// The creator of Exchange
     pub creator: AccountId,
     /// The class of the assets
@@ -324,7 +325,7 @@ impl<T: Config> Pallet<T> {
 
         let n = asset_ids.len();
         let mut total_currency = Balance::from(0u128);
-        let mut amounts_in = vec![Balance::from(0u128); n];
+        let mut currency_amounts_in = vec![Balance::from(0u128); n];
 
         let asset_reserves =
             Self::get_asset_reserves(&exchange.vault, exchange.asset_class_id, asset_ids.clone());
@@ -345,7 +346,7 @@ impl<T: Config> Pallet<T> {
                 Error::<T>::MaxCurrencyAmountExceeded
             );
 
-            amounts_in[i] = currency_amount;
+            currency_amounts_in[i] = currency_amount;
 
             CurrencyReserves::<T>::try_mutate(
                 exchange_id,
@@ -379,14 +380,14 @@ impl<T: Config> Pallet<T> {
             asset_amounts_out.clone(),
         )?;
 
-        Self::deposit_event(Event::CurrencyToAsset(
+        Self::deposit_event(Event::CurrencyToAsset {
             exchange_id,
-            who.clone(),
-            to.clone(),
+            who: who.clone(),
+            to: to.clone(),
             asset_ids,
             asset_amounts_out,
-            amounts_in,
-        ));
+            currency_amounts_in,
+        });
 
         Ok(())
     }
@@ -404,7 +405,7 @@ impl<T: Config> Pallet<T> {
 
         let n = asset_ids.len();
         let mut total_currency = Balance::from(0u128);
-        let mut amounts_out = vec![Balance::from(0u128); n];
+        let mut currency_amounts_out = vec![Balance::from(0u128); n];
 
         let asset_reserves =
             Self::get_asset_reserves(&exchange.vault, exchange.asset_class_id, asset_ids.clone());
@@ -424,7 +425,7 @@ impl<T: Config> Pallet<T> {
             )?;
 
             total_currency = total_currency.saturating_add(currency_amount);
-            amounts_out[i] = currency_amount;
+            currency_amounts_out[i] = currency_amount;
 
             CurrencyReserves::<T>::try_mutate(
                 exchange_id,
@@ -463,14 +464,14 @@ impl<T: Config> Pallet<T> {
             total_currency,
         )?;
 
-        Self::deposit_event(Event::AssetToCurrency(
+        Self::deposit_event(Event::AssetToCurrency {
             exchange_id,
-            who.clone(),
-            to.clone(),
+            who: who.clone(),
+            to: to.clone(),
             asset_ids,
             asset_amounts_in,
-            amounts_out,
-        ));
+            currency_amounts_out,
+        });
 
         Ok(())
     }
@@ -609,13 +610,14 @@ impl<T: Config> Pallet<T> {
             total_currency,
         )?;
 
-        Self::deposit_event(Event::LiquidityAdded(
-            who.clone(),
-            to.clone(),
+        Self::deposit_event(Event::LiquidityAdded {
+            exchange_id,
+            who: who.clone(),
+            to: to.clone(),
             asset_ids,
             asset_amounts,
             currency_amounts,
-        ));
+        });
 
         Ok(())
     }
@@ -740,13 +742,14 @@ impl<T: Config> Pallet<T> {
             asset_amounts.clone(),
         )?;
 
-        Self::deposit_event(Event::LiquidityRemoved(
-            who.clone(),
-            to.clone(),
+        Self::deposit_event(Event::LiquidityRemoved {
+            exchange_id,
+            who: who.clone(),
+            to: to.clone(),
             asset_ids,
             asset_amounts,
             currency_amounts,
-        ));
+        });
 
         Ok(())
     }

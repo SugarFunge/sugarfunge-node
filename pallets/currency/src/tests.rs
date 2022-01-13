@@ -16,7 +16,11 @@ fn currency_eth_works() {
         assert_ok!(Currency::mint(Origin::signed(1), ETH, 500 * CENTS));
         assert_eq!(
             last_event(),
-            Event::Currency(crate::Event::Mint(ETH, 500 * CENTS, 1)),
+            Event::Currency(crate::Event::Mint {
+                currency_id: ETH,
+                amount: 500 * CENTS,
+                who: 1
+            }),
         );
         assert_eq!(Asset::balance_of(&1, ETH.0, ETH.1), 500 * CENTS);
     })
@@ -29,7 +33,11 @@ fn currency_btc_works() {
         assert_ok!(Currency::mint(Origin::signed(1), BTC, 500 * CENTS));
         assert_eq!(
             last_event(),
-            Event::Currency(crate::Event::Mint(BTC, 500 * CENTS, 1)),
+            Event::Currency(crate::Event::Mint {
+                currency_id: BTC,
+                amount: 500 * CENTS,
+                who: 1
+            }),
         );
         assert_eq!(Asset::balance_of(&1, BTC.0, BTC.1), 500 * CENTS);
     })
@@ -60,7 +68,11 @@ fn issue_and_mint_currency() {
         ));
         assert_eq!(
             last_event(),
-            Event::Currency(crate::Event::Mint(new_currency_id, 500 * CENTS, 1)),
+            Event::Currency(crate::Event::Mint {
+                currency_id: new_currency_id,
+                amount: 500 * CENTS,
+                who: 1
+            }),
         );
         assert_eq!(
             Asset::balance_of(&1, new_currency_id.0, new_currency_id.1),
@@ -79,7 +91,11 @@ fn currency_mint_works() {
         assert_ok!(Currency::mint(Origin::signed(1), SUGAR, 500 * CENTS));
         assert_eq!(
             last_event(),
-            Event::Currency(crate::Event::Mint(SUGAR, 500 * CENTS, 1)),
+            Event::Currency(crate::Event::Mint {
+                currency_id: SUGAR,
+                amount: 500 * CENTS,
+                who: 1
+            }),
         );
         assert_eq!(Asset::balance_of(&1, SUGAR.0, SUGAR.1), 500 * CENTS);
         let asset_info = CurrencyAssets::<Test>::get(SUGAR).unwrap();
@@ -95,7 +111,11 @@ fn currency_burn_works() {
         assert_ok!(Currency::burn(Origin::signed(1), SUGAR, 400 * CENTS));
         assert_eq!(
             last_event(),
-            Event::Currency(crate::Event::Burn(SUGAR, 400 * CENTS, 1)),
+            Event::Currency(crate::Event::Burn {
+                currency_id: SUGAR,
+                amount: 400 * CENTS,
+                who: 1
+            }),
         );
         assert_eq!(Asset::balance_of(&1, SUGAR.0, SUGAR.1), 100 * CENTS);
     })

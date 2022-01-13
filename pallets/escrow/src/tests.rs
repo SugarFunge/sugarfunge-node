@@ -13,7 +13,11 @@ pub fn before_escrow() {
     assert_ok!(Currency::mint(Origin::signed(1), SUGAR, 500 * DOLLARS));
     assert_eq!(
         last_event(),
-        Event::Currency(sugarfunge_currency::Event::Mint(SUGAR, 500 * DOLLARS, 1)),
+        Event::Currency(sugarfunge_currency::Event::Mint {
+            currency_id: SUGAR,
+            amount: 500 * DOLLARS,
+            who: 1
+        }),
     );
     assert_eq!(Asset::balance_of(&1, SUGAR.0, SUGAR.1), 500 * DOLLARS);
     assert_ok!(Asset::create_class(Origin::signed(1), 1, 1, [0].to_vec()));
@@ -66,7 +70,12 @@ fn deposit_assets() {
         ));
 
         assert_ok!(Escrow::create_escrow(Origin::signed(1), 2));
-        if let Event::Escrow(crate::Event::Created(escrow, operator, owner)) = last_event() {
+        if let Event::Escrow(crate::Event::Created {
+            escrow,
+            operator,
+            owner,
+        }) = last_event()
+        {
             assert_eq!(operator, 1);
             assert_eq!(owner, 2);
 
@@ -163,7 +172,12 @@ fn refund_assets() {
         ));
 
         assert_ok!(Escrow::create_escrow(Origin::signed(1), 2));
-        if let Event::Escrow(crate::Event::Created(escrow, operator, owner)) = last_event() {
+        if let Event::Escrow(crate::Event::Created {
+            escrow,
+            operator,
+            owner,
+        }) = last_event()
+        {
             assert_eq!(operator, 1);
             assert_eq!(owner, 2);
 

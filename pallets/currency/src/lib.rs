@@ -91,8 +91,16 @@ pub mod pallet {
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
-        Mint(CurrencyId, Balance, T::AccountId),
-        Burn(CurrencyId, Balance, T::AccountId),
+        Mint {
+            currency_id: CurrencyId,
+            amount: Balance,
+            who: T::AccountId,
+        },
+        Burn {
+            currency_id: CurrencyId,
+            amount: Balance,
+            who: T::AccountId,
+        },
     }
 
     // Errors inform users that something went wrong.
@@ -154,7 +162,11 @@ pub mod pallet {
                 Ok(())
             })?;
 
-            Self::deposit_event(Event::Mint(currency_id, amount, who));
+            Self::deposit_event(Event::Mint {
+                currency_id,
+                amount,
+                who,
+            });
 
             Ok(().into())
         }
@@ -192,7 +204,11 @@ pub mod pallet {
                 Ok(())
             })?;
 
-            Self::deposit_event(Event::Burn(currency_id, amount, who));
+            Self::deposit_event(Event::Burn {
+                currency_id,
+                amount,
+                who,
+            });
 
             Ok(().into())
         }

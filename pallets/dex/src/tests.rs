@@ -18,7 +18,11 @@ pub fn before_exchange() {
     ));
     assert_eq!(
         last_event(),
-        mock::Event::Currency(sugarfunge_currency::Event::Mint(SUGAR, 500 * DOLLARS, 1)),
+        mock::Event::Currency(sugarfunge_currency::Event::Mint {
+            currency_id: SUGAR,
+            amount: 500 * DOLLARS,
+            who: 1
+        }),
     );
     assert_eq!(Asset::balance_of(&1, SUGAR.0, SUGAR.1), 500 * DOLLARS);
     assert_ok!(Asset::create_class(Origin::signed(1), 1, 1, [0].to_vec()));
@@ -41,13 +45,14 @@ pub fn endow_user_2() {
     ));
     assert_eq!(
         last_event(),
-        mock::Event::Asset(sugarfunge_asset::Event::Transferred(
-            1,
-            2,
-            SUGAR.0,
-            SUGAR.1,
-            100 * DOLLARS
-        )),
+        mock::Event::Asset(sugarfunge_asset::Event::Transferred {
+            who: 1,
+            from: 1,
+            to: 2,
+            class_id: SUGAR.0,
+            asset_id: SUGAR.1,
+            amount: 100 * DOLLARS
+        }),
     );
     assert_eq!(Asset::balance_of(&2, SUGAR.0, SUGAR.1), 100 * DOLLARS);
 }
@@ -66,13 +71,21 @@ fn many_currencies_works() {
         assert_ok!(mock::Currency::mint(Origin::signed(1), ETH, 500 * DOLLARS));
         assert_eq!(
             last_event(),
-            mock::Event::Currency(sugarfunge_currency::Event::Mint(ETH, 500 * DOLLARS, 1)),
+            mock::Event::Currency(sugarfunge_currency::Event::Mint {
+                currency_id: ETH,
+                amount: 500 * DOLLARS,
+                who: 1
+            }),
         );
         assert_eq!(Asset::balance_of(&1, ETH.0, ETH.1), 500 * DOLLARS);
         assert_ok!(mock::Currency::mint(Origin::signed(1), BTC, 500 * DOLLARS));
         assert_eq!(
             last_event(),
-            mock::Event::Currency(sugarfunge_currency::Event::Mint(BTC, 500 * DOLLARS, 1)),
+            mock::Event::Currency(sugarfunge_currency::Event::Mint {
+                currency_id: BTC,
+                amount: 500 * DOLLARS,
+                who: 1
+            }),
         );
         assert_eq!(Asset::balance_of(&1, BTC.0, BTC.1), 500 * DOLLARS);
     })
@@ -93,7 +106,10 @@ fn create_exchange_works() {
         assert_ok!(Dex::create_exchange(Origin::signed(1), 0, SUGAR, 1, 9000));
         assert_eq!(
             last_event(),
-            mock::Event::Dex(crate::Event::ExchangeCreated(0, 1)),
+            mock::Event::Dex(crate::Event::ExchangeCreated {
+                exchange_id: 0,
+                who: 1
+            }),
         );
     })
 }
@@ -105,7 +121,10 @@ fn add_liquidity_works() {
         assert_ok!(Dex::create_exchange(Origin::signed(1), 0, SUGAR, 1, 9000));
         assert_eq!(
             last_event(),
-            mock::Event::Dex(crate::Event::ExchangeCreated(0, 1)),
+            mock::Event::Dex(crate::Event::ExchangeCreated {
+                exchange_id: 0,
+                who: 1
+            }),
         );
         assert_ok!(Dex::add_liquidity(
             Origin::signed(1),
@@ -182,7 +201,10 @@ fn buy_assets_works() {
         assert_ok!(Dex::create_exchange(Origin::signed(1), 0, SUGAR, 1, 9000));
         assert_eq!(
             last_event(),
-            mock::Event::Dex(crate::Event::ExchangeCreated(0, 1)),
+            mock::Event::Dex(crate::Event::ExchangeCreated {
+                exchange_id: 0,
+                who: 1
+            }),
         );
         assert_ok!(Dex::add_liquidity(
             Origin::signed(1),
@@ -213,7 +235,10 @@ fn buy_more_assets_than_available() {
         assert_ok!(Dex::create_exchange(Origin::signed(1), 0, SUGAR, 1, 9000));
         assert_eq!(
             last_event(),
-            mock::Event::Dex(crate::Event::ExchangeCreated(0, 1)),
+            mock::Event::Dex(crate::Event::ExchangeCreated {
+                exchange_id: 0,
+                who: 1
+            }),
         );
         assert_ok!(Dex::add_liquidity(
             Origin::signed(1),
