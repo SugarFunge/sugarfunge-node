@@ -18,7 +18,7 @@ pub const DOLLARS: Balance = 100 * CENTS;
 
 parameter_types! {
     pub const CreateAssetClassDeposit: Balance = 500 * MILLICENTS;
-    pub const CreateCurrencyClassDeposit: Balance = 500 * MILLICENTS;
+    pub const CreateCurrencyClassDeposit: Balance = 5 * CENTS;
 }
 
 parameter_types! {
@@ -46,7 +46,19 @@ impl sugarfunge_asset::Config for Test {
 }
 
 parameter_types! {
+    pub const BundleModuleId: PalletId = PalletId(*b"sug/bndl");
     pub const MarketModuleId: PalletId = PalletId(*b"sug/mrkt");
+}
+
+parameter_types! {
+    pub const MaxAssets: u32 = 20;
+}
+
+impl sugarfunge_bundle::Config for Test {
+    type Event = Event;
+    type PalletId = BundleModuleId;
+    type Currency = Balances;
+    type MaxAssets = MaxAssets;
 }
 
 impl sugarfunge_market::Config for Test {
@@ -67,6 +79,7 @@ frame_support::construct_runtime!(
         System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
         Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
         Asset: sugarfunge_asset::{Pallet, Call, Storage, Event<T>},
+        Bundle: sugarfunge_bundle::{Pallet, Call, Storage, Event<T>},
         Market: sugarfunge_market::{Pallet, Call, Storage, Event<T>},
     }
 );

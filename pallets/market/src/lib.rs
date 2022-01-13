@@ -1,20 +1,11 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use codec::{Decode, Encode};
-use frame_support::{
-    dispatch::{DispatchError, DispatchResult},
-    ensure,
-    traits::{Currency, ExistenceRequirement::AllowDeath, Get, ReservableCurrency},
-    PalletId,
-};
+use frame_support::{dispatch::DispatchResult, ensure, traits::Get, PalletId};
 use scale_info::TypeInfo;
-// use sp_core::U256;
-use sp_runtime::{
-    traits::{AccountIdConversion, Zero},
-    RuntimeDebug,
-};
-use sp_std::{convert::TryInto, fmt::Debug, prelude::*};
-use sugarfunge_primitives::{Balance, CurrencyId};
+use sp_runtime::{traits::AccountIdConversion, RuntimeDebug};
+use sp_std::prelude::*;
+use sugarfunge_primitives::Balance;
 
 pub use pallet::*;
 
@@ -28,12 +19,54 @@ mod tests;
 mod benchmarking;
 
 pub type MarketId = u32;
+pub type MarketRateId = u32;
+
+#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
+pub enum AmountOp {
+    Equal(Balance),
+    LessThan(Balance),
+    LessEqualThan(Balance),
+    GreaterThan(Balance),
+    GreaterEqualThan(Balance),
+}
+
+#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
+pub enum RateAmount {
+    Credit(Balance),
+    Debit(Balance),
+    Mint(Balance),
+    Burn(Balance),
+    Has(AmountOp),
+}
+
+#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
+pub enum RateTarget<AccountId> {
+    Account(AccountId),
+    Creator,
+    Buyer,
+    Seller,
+    Market,
+}
+
+#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
+pub struct AssetRate<AccountId, ClassId, AssetId> {
+    class_id: ClassId,
+    asset_id: AssetId,
+    amount: RateAmount,
+    target: RateTarget<AccountId>,
+}
+
+#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
+pub struct MarketRate<AccountId, ClassId, AssetId> {
+    goods: Vec<AssetRate<AccountId, ClassId, AssetId>>,
+    price: Vec<AssetRate<AccountId, ClassId, AssetId>>,
+    metadata: Vec<u8>,
+}
 
 #[frame_support::pallet]
 pub mod pallet {
     use super::*;
-    use frame_support::{dispatch::DispatchResult, pallet_prelude::*};
-    use frame_system::pallet_prelude::*;
+    use frame_support::pallet_prelude::*;
 
     /// Configure the pallet by specifying the parameters and types on which it depends.
     #[pallet::config]
@@ -49,93 +82,107 @@ pub mod pallet {
     #[pallet::generate_store(pub(super) trait Store)]
     pub struct Pallet<T>(_);
 
-    // The pallet's runtime storage items.
-    // https://docs.substrate.io/v3/runtime/storage
     #[pallet::storage]
-    #[pallet::getter(fn something)]
-    // Learn more about declaring storage items:
-    // https://docs.substrate.io/v3/runtime/storage#declaring-storage-items
-    pub type Something<T> = StorageValue<_, u32>;
+    #[pallet::getter(fn markets)]
+    pub(super) type Markets<T: Config> = StorageMap<_, Blake2_128, MarketId, Market<T::AccountId>>;
 
     #[pallet::storage]
-    pub(super) type Exchanges<T: Config> =
-        StorageMap<_, Blake2_128, MarketId, Market<T::ClassId, T::AssetId, T::AccountId>>;
+    #[pallet::getter(fn market_rates)]
+    pub(super) type MarketRates<T: Config> = StorageNMap<
+        _,
+        (
+            NMapKey<Blake2_128Concat, MarketId>,
+            NMapKey<Blake2_128Concat, MarketRateId>,
+        ),
+        MarketRate<T::AccountId, T::ClassId, T::AssetId>,
+    >;
 
-    // Pallets use events to inform users when important changes are made.
-    // https://docs.substrate.io/v3/runtime/events-and-errors
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
-        /// Event documentation should end with an array that provides descriptive names for event
-        /// parameters. [something, who]
-        SomethingStored(u32, T::AccountId),
+        Created {
+            market_id: MarketId,
+            who: T::AccountId,
+        },
+        RateCreated {
+            market_id: MarketId,
+            market_rate_id: MarketRateId,
+            who: T::AccountId,
+        },
     }
 
-    // Errors inform users that something went wrong.
     #[pallet::error]
     pub enum Error<T> {
-        /// Error names should be descriptive.
-        NoneValue,
-        /// Errors should have helpful documentation associated with them.
-        StorageOverflow,
+        InvalidMarketId,
+        InvalidMarketRateId,
+        MarketExists,
+        MarketRateExists,
     }
 
     // Dispatchable functions allows users to interact with the pallet and invoke state changes.
     // These functions materialize as "extrinsics", which are often compared to transactions.
     // Dispatchable functions must be annotated with a weight and must return a DispatchResult.
     #[pallet::call]
-    impl<T: Config> Pallet<T> {
-        /// An example dispatchable that takes a singles value as a parameter, writes the value to
-        /// storage and emits an event. This function must be dispatched by a signed extrinsic.
-        #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
-        pub fn do_something(origin: OriginFor<T>, something: u32) -> DispatchResult {
-            // Check that the extrinsic was signed and get the signer.
-            // This function will return an error if the extrinsic is not signed.
-            // https://docs.substrate.io/v3/runtime/origins
-            let who = ensure_signed(origin)?;
-
-            // Update storage.
-            <Something<T>>::put(something);
-
-            // Emit an event.
-            Self::deposit_event(Event::SomethingStored(something, who));
-            // Return a successful DispatchResultWithPostInfo
-            Ok(())
-        }
-
-        /// An example dispatchable that may throw a custom error.
-        #[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
-        pub fn cause_error(origin: OriginFor<T>) -> DispatchResult {
-            let _who = ensure_signed(origin)?;
-
-            // Read a value from storage.
-            match <Something<T>>::get() {
-                // Return an error if the value has not been set.
-                None => Err(Error::<T>::NoneValue)?,
-                Some(old) => {
-                    // Increment the value read from storage; will error in the event of overflow.
-                    let new = old.checked_add(1).ok_or(Error::<T>::StorageOverflow)?;
-                    // Update the value in storage with the incremented result.
-                    <Something<T>>::put(new);
-                    Ok(())
-                }
-            }
-        }
-    }
+    impl<T: Config> Pallet<T> {}
 }
 
 #[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
-pub struct Market<
-    ClassId: Encode + Decode + Clone + Debug + Eq + PartialEq,
-    AssetId: Encode + Decode + Clone + Debug + Eq + PartialEq,
-    AccountId: Encode + Decode + Clone + Debug + Eq + PartialEq,
-> {
-    /// The creator of the Market
+pub struct Market<AccountId> {
+    /// The creator of the market
     pub creator: AccountId,
-    /// The fund account of exchange
+    /// The fund account of the market
     pub vault: AccountId,
+}
 
-    /// Placeholder
-    pub class_id: ClassId,
-    pub asset_id: AssetId,
+impl<T: Config> Pallet<T> {
+    pub fn do_create_market(creator: &T::AccountId, market_id: MarketId) -> DispatchResult {
+        ensure!(
+            !Markets::<T>::contains_key(market_id),
+            Error::<T>::MarketExists
+        );
+
+        let vault: T::AccountId = <T as Config>::PalletId::get().into_sub_account(market_id);
+
+        Markets::<T>::insert(
+            market_id,
+            Market {
+                creator: creator.clone(),
+                vault,
+            },
+        );
+
+        Self::deposit_event(Event::Created {
+            market_id,
+            who: creator.clone(),
+        });
+
+        Ok(())
+    }
+
+    pub fn do_create_market_rate(
+        creator: &T::AccountId,
+        market_id: MarketId,
+        market_rate_id: MarketRateId,
+        market_rate: &MarketRate<T::AccountId, T::ClassId, T::AssetId>,
+    ) -> DispatchResult {
+        ensure!(
+            Markets::<T>::contains_key(market_id),
+            Error::<T>::InvalidMarketId
+        );
+
+        ensure!(
+            !MarketRates::<T>::contains_key((market_id, market_rate_id)),
+            Error::<T>::MarketRateExists
+        );
+
+        MarketRates::<T>::insert((market_id, market_rate_id), market_rate);
+
+        Self::deposit_event(Event::RateCreated {
+            market_id,
+            market_rate_id,
+            who: creator.clone(),
+        });
+
+        Ok(())
+    }
 }

@@ -331,7 +331,6 @@ parameter_types! {
     pub const CreateExchangeDeposit: Balance = 500 * MILLICENTS;
     pub const CreateEscrowDeposit: Balance = 500 * MILLICENTS;
     pub const CreateCurrencyClassDeposit: Balance = 500 * MILLICENTS;
-    pub const CreateBundleDeposit: Balance = 500 * MILLICENTS;
 }
 
 impl sugarfunge_asset::Config for Runtime {
@@ -376,7 +375,6 @@ parameter_types! {
 impl sugarfunge_bundle::Config for Runtime {
     type Event = Event;
     type PalletId = BundleModuleId;
-    type CreateBundleDeposit = CreateBundleDeposit;
     type Currency = Balances;
     type MaxAssets = MaxAssets;
 }

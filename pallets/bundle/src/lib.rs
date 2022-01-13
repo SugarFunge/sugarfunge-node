@@ -37,9 +37,6 @@ pub type BundleSchema<T> = (
 
 pub type BundleId = sugarfunge_primitives::Hash;
 
-type BalanceOf<T> =
-    <<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
-
 pub fn argsort<T: Ord>(data: &[T]) -> Vec<usize> {
     let mut indices = (0..data.len()).collect::<Vec<_>>();
     indices.sort_by_key(|&i| &data[i]);
@@ -53,16 +50,12 @@ pub mod pallet {
 
     /// Configure the pallet by specifying the parameters and types on which it depends.
     #[pallet::config]
-    pub trait Config: frame_system::Config + sugarfunge_escrow::Config {
+    pub trait Config: frame_system::Config + sugarfunge_asset::Config {
         /// Because this pallet emits events, it depends on the runtime's definition of an event.
         type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
         #[pallet::constant]
         type PalletId: Get<PalletId>;
-
-        /// The minimum balance to create bundle
-        #[pallet::constant]
-        type CreateBundleDeposit: Get<BalanceOf<Self>>;
 
         /// Max number of assets in a bundle
         #[pallet::constant]
@@ -147,7 +140,7 @@ pub struct Bundle<ClassId, AssetId, BundleSchema, AccountId> {
     /// Bundle metadata
     metadata: Vec<u8>,
     /// Schema
-    pub schema: BundleSchema,
+    schema: BundleSchema,
     /// Vault
     vault: AccountId,
 }
