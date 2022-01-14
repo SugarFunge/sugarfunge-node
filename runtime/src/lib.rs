@@ -393,6 +393,8 @@ impl sugarfunge_exgine::Config for Runtime {
 impl sugarfunge_market::Config for Runtime {
     type Event = Event;
     type PalletId = MarketModuleId;
+    type MarketId = u64;
+    type MarketRateId = u64;
 }
 
 construct_runtime!(

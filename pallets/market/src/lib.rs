@@ -1,9 +1,12 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use codec::{Decode, Encode};
+use codec::{Decode, Encode, HasCompact};
 use frame_support::{dispatch::DispatchResult, ensure, traits::Get, PalletId};
 use scale_info::TypeInfo;
-use sp_runtime::{traits::AccountIdConversion, RuntimeDebug};
+use sp_runtime::{
+    traits::{AccountIdConversion, AtLeast32BitUnsigned},
+    RuntimeDebug,
+};
 use sp_std::prelude::*;
 use sugarfunge_primitives::Balance;
 
@@ -76,6 +79,26 @@ pub mod pallet {
 
         #[pallet::constant]
         type PalletId: Get<PalletId>;
+
+        type MarketId: Member
+            + Parameter
+            + HasCompact
+            + AtLeast32BitUnsigned
+            + MaybeSerializeDeserialize
+            + Default
+            + Copy
+            + From<u64>
+            + Into<u64>;
+
+        type MarketRateId: Member
+            + Parameter
+            + HasCompact
+            + AtLeast32BitUnsigned
+            + MaybeSerializeDeserialize
+            + Default
+            + Copy
+            + From<u64>
+            + Into<u64>;
     }
 
     #[pallet::pallet]
@@ -113,10 +136,13 @@ pub mod pallet {
 
     #[pallet::error]
     pub enum Error<T> {
-        InvalidMarketId,
-        InvalidMarketRateId,
+        InvalidMarket,
+        InvalidMarketRate,
+        InvalidMarketOwner,
+        NotAuthorizedToMintAsset,
         MarketExists,
         MarketRateExists,
+        InvalidAsset,
     }
 
     // Dispatchable functions allows users to interact with the pallet and invoke state changes.
@@ -128,14 +154,14 @@ pub mod pallet {
 
 #[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
 pub struct Market<AccountId> {
-    /// The creator of the market
-    pub creator: AccountId,
+    /// The owner of the market
+    pub owner: AccountId,
     /// The fund account of the market
     pub vault: AccountId,
 }
 
 impl<T: Config> Pallet<T> {
-    pub fn do_create_market(creator: &T::AccountId, market_id: MarketId) -> DispatchResult {
+    pub fn do_create_market(owner: &T::AccountId, market_id: MarketId) -> DispatchResult {
         ensure!(
             !Markets::<T>::contains_key(market_id),
             Error::<T>::MarketExists
@@ -146,29 +172,27 @@ impl<T: Config> Pallet<T> {
         Markets::<T>::insert(
             market_id,
             Market {
-                creator: creator.clone(),
+                owner: owner.clone(),
                 vault,
             },
         );
 
         Self::deposit_event(Event::Created {
             market_id,
-            who: creator.clone(),
+            who: owner.clone(),
         });
 
         Ok(())
     }
 
     pub fn do_create_market_rate(
-        creator: &T::AccountId,
+        who: &T::AccountId,
         market_id: MarketId,
         market_rate_id: MarketRateId,
         market_rate: &MarketRate<T::AccountId, T::ClassId, T::AssetId>,
     ) -> DispatchResult {
-        ensure!(
-            Markets::<T>::contains_key(market_id),
-            Error::<T>::InvalidMarketId
-        );
+        let market = Markets::<T>::get(market_id).ok_or(Error::<T>::InvalidMarket)?;
+        ensure!(*who == market.owner, Error::<T>::InvalidMarketOwner);
 
         ensure!(
             !MarketRates::<T>::contains_key((market_id, market_rate_id)),
@@ -180,9 +204,40 @@ impl<T: Config> Pallet<T> {
         Self::deposit_event(Event::RateCreated {
             market_id,
             market_rate_id,
-            who: creator.clone(),
+            who: who.clone(),
         });
 
         Ok(())
+    }
+
+    pub fn do_deposit_assets(
+        who: &T::AccountId,
+        market_id: MarketId,
+        market_rate_id: MarketRateId,
+        _amount: Balance,
+    ) -> DispatchResult {
+        let market = Markets::<T>::get(market_id).ok_or(Error::<T>::InvalidMarket)?;
+        let market_rate = MarketRates::<T>::get((market_id, market_rate_id))
+            .ok_or(Error::<T>::InvalidMarketRate)?;
+
+        ensure!(*who == market.owner, Error::<T>::InvalidMarketOwner);
+
+        let mut asset_rates: Vec<AssetRate<T::AccountId, T::ClassId, T::AssetId>> =
+            Vec::with_capacity(market_rate.goods.len() + market_rate.price.len());
+        asset_rates.extend(market_rate.goods.clone());
+        asset_rates.extend(market_rate.price.clone());
+
+        // Ensure assets exists
+        for asset_rate in asset_rates {
+            ensure!(
+                sugarfunge_asset::Pallet::<T>::asset_exists(
+                    asset_rate.class_id,
+                    asset_rate.asset_id
+                ),
+                Error::<T>::InvalidAsset
+            );
+        }
+
+        Ok(().into())
     }
 }

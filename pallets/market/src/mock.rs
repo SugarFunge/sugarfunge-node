@@ -64,6 +64,8 @@ impl sugarfunge_bundle::Config for Test {
 impl sugarfunge_market::Config for Test {
     type Event = Event;
     type PalletId = MarketModuleId;
+    type MarketId = u64;
+    type MarketRateId = u64;
 }
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;

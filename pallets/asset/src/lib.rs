@@ -38,12 +38,6 @@ pub struct Asset<ClassId, AccountId> {
     metadata: Vec<u8>,
 }
 
-#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, TypeInfo)]
-pub struct ApprovalKey<AccountId> {
-    owner: AccountId,
-    operator: AccountId,
-}
-
 #[frame_support::pallet]
 pub mod pallet {
     use super::*;
@@ -117,18 +111,6 @@ pub mod pallet {
         ValueQuery,
     >;
 
-    #[pallet::storage]
-    #[pallet::getter(fn operator_approvals)]
-    pub(super) type OperatorApprovals<T: Config> = StorageDoubleMap<
-        _,
-        Blake2_128Concat,
-        T::ClassId,
-        Blake2_128Concat,
-        ApprovalKey<T::AccountId>,
-        bool,
-        ValueQuery,
-    >;
-
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
@@ -185,7 +167,7 @@ pub mod pallet {
             asset_ids: Vec<T::AssetId>,
             amounts: Vec<Balance>,
         },
-        ApprovalForAll {
+        OperatorApprovalForAll {
             who: T::AccountId,
             operator: T::AccountId,
             class_id: T::ClassId,
@@ -235,22 +217,9 @@ pub mod pallet {
             metadata: Vec<u8>,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
+            Self::maybe_check_owner(&who, class_id)?;
 
             Self::do_create_asset(&who, class_id, asset_id, metadata)?;
-
-            Ok(().into())
-        }
-
-        #[pallet::weight(10_000)]
-        pub fn set_approval_for_all(
-            origin: OriginFor<T>,
-            operator: T::AccountId,
-            class_id: T::ClassId,
-            approved: bool,
-        ) -> DispatchResultWithPostInfo {
-            let who = ensure_signed(origin)?;
-
-            Self::do_set_approval_for_all(&who, &operator, class_id, approved)?;
 
             Ok(().into())
         }
@@ -265,6 +234,7 @@ pub mod pallet {
             amount: Balance,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
+            Self::maybe_check_owner(&who, class_id)?;
 
             Self::do_transfer_from(&who, &from, &to, class_id, asset_id, amount)?;
 
@@ -281,6 +251,7 @@ pub mod pallet {
             amounts: Vec<Balance>,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
+            Self::maybe_check_owner(&who, class_id)?;
 
             Self::do_batch_transfer_from(&who, &from, &to, class_id, asset_ids, amounts)?;
 
@@ -296,6 +267,7 @@ pub mod pallet {
             amount: Balance,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
+            Self::maybe_check_owner(&who, class_id)?;
 
             Self::do_mint(&who, &to, class_id, asset_id, amount)?;
 
@@ -311,6 +283,7 @@ pub mod pallet {
             amounts: Vec<Balance>,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
+            Self::maybe_check_owner(&who, class_id)?;
 
             Self::do_batch_mint(&who, &to, class_id, asset_ids, amounts)?;
 
@@ -326,6 +299,7 @@ pub mod pallet {
             amount: Balance,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
+            Self::maybe_check_owner(&who, class_id)?;
 
             Self::do_burn(&who, &from, class_id, asset_id, amount)?;
 
@@ -341,6 +315,7 @@ pub mod pallet {
             amounts: Vec<Balance>,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
+            Self::maybe_check_owner(&who, class_id)?;
 
             Self::do_batch_burn(&who, &from, class_id, asset_ids, amounts)?;
 
@@ -413,6 +388,7 @@ impl<T: Config> Pallet<T> {
         metadata: Vec<u8>,
     ) -> DispatchResult {
         Self::maybe_check_owner(who, class_id)?;
+
         ensure!(
             !Assets::<T>::contains_key(class_id, asset_id),
             Error::<T>::InUse
@@ -491,36 +467,6 @@ impl<T: Config> Pallet<T> {
         Assets::<T>::contains_key(class_id, asset_id)
     }
 
-    pub fn do_set_approval_for_all(
-        who: &T::AccountId,
-        operator: &T::AccountId,
-        class_id: T::ClassId,
-        approved: bool,
-    ) -> DispatchResult {
-        ensure!(
-            Classes::<T>::contains_key(class_id),
-            Error::<T>::ClassNotFound
-        );
-
-        let key = ApprovalKey {
-            owner: who.clone(),
-            operator: operator.clone(),
-        };
-        OperatorApprovals::<T>::try_mutate(class_id, &key, |status| -> DispatchResult {
-            *status = approved;
-            Ok(())
-        })?;
-
-        Self::deposit_event(Event::ApprovalForAll {
-            who: who.clone(),
-            operator: operator.clone(),
-            class_id,
-            approved,
-        });
-
-        Ok(())
-    }
-
     pub fn do_mint(
         who: &T::AccountId,
         to: &T::AccountId,
@@ -528,8 +474,6 @@ impl<T: Config> Pallet<T> {
         asset_id: T::AssetId,
         amount: Balance,
     ) -> DispatchResult {
-        Self::maybe_check_owner(who, class_id)?;
-
         Self::add_balance_to(to, class_id, asset_id, amount)?;
 
         Self::deposit_event(Event::Mint {
@@ -550,7 +494,6 @@ impl<T: Config> Pallet<T> {
         asset_ids: Vec<T::AssetId>,
         amounts: Vec<Balance>,
     ) -> DispatchResult {
-        Self::maybe_check_owner(who, class_id)?;
         ensure!(
             asset_ids.len() == amounts.len(),
             Error::<T>::InvalidArrayLength
@@ -581,8 +524,6 @@ impl<T: Config> Pallet<T> {
         asset_id: T::AssetId,
         amount: Balance,
     ) -> DispatchResult {
-        Self::maybe_check_owner(who, class_id)?;
-
         Self::remove_balance_from(from, class_id, asset_id, amount)?;
 
         Self::deposit_event(Event::Burn {
@@ -603,7 +544,6 @@ impl<T: Config> Pallet<T> {
         asset_ids: Vec<T::AssetId>,
         amounts: Vec<Balance>,
     ) -> DispatchResult {
-        Self::maybe_check_owner(who, class_id)?;
         ensure!(
             asset_ids.len() == amounts.len(),
             Error::<T>::InvalidArrayLength
@@ -636,11 +576,6 @@ impl<T: Config> Pallet<T> {
         asset_id: T::AssetId,
         amount: Balance,
     ) -> DispatchResult {
-        ensure!(
-            Self::approved_or_owner(who, from, class_id),
-            Error::<T>::NoPermission
-        );
-
         if from == to || amount == Zero::zero() {
             return Ok(());
         }
@@ -669,11 +604,6 @@ impl<T: Config> Pallet<T> {
         asset_ids: Vec<T::AssetId>,
         amounts: Vec<Balance>,
     ) -> DispatchResult {
-        ensure!(
-            Self::approved_or_owner(who, from, class_id),
-            Error::<T>::NoPermission
-        );
-
         if from == to {
             return Ok(());
         }
@@ -703,26 +633,6 @@ impl<T: Config> Pallet<T> {
         });
 
         Ok(())
-    }
-
-    pub fn approved_or_owner(
-        who: &T::AccountId,
-        account: &T::AccountId,
-        class_id: T::ClassId,
-    ) -> bool {
-        *who == *account || Self::is_approved_for_all(account, who, class_id)
-    }
-
-    pub fn is_approved_for_all(
-        owner: &T::AccountId,
-        operator: &T::AccountId,
-        class_id: T::ClassId,
-    ) -> bool {
-        let key = ApprovalKey {
-            owner: owner.clone(),
-            operator: operator.clone(),
-        };
-        Self::operator_approvals(class_id, &key)
     }
 
     pub fn balance_of(owner: &T::AccountId, class_id: T::ClassId, asset_id: T::AssetId) -> Balance {
