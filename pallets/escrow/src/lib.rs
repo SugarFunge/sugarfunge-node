@@ -66,6 +66,11 @@ pub mod pallet {
             operator: T::AccountId,
             owner: T::AccountId,
         },
+        Deposit {
+            escrow: T::AccountId,
+            operator: T::AccountId,
+            owner: T::AccountId,
+        },
         Refund {
             escrow: T::AccountId,
             operator: T::AccountId,
@@ -185,9 +190,9 @@ impl<T: Config> Pallet<T> {
         asset_ids: Vec<T::AssetId>,
         amounts: Vec<Balance>,
     ) -> DispatchResult {
-        let exchange = Escrows::<T>::get(escrow).ok_or(Error::<T>::InvalidEscrowAccount)?;
+        let escrow_info = Escrows::<T>::get(escrow).ok_or(Error::<T>::InvalidEscrowAccount)?;
 
-        ensure!(exchange.owner == *who, Error::<T>::InvalidEscrowOwner);
+        ensure!(escrow_info.owner == *who, Error::<T>::InvalidEscrowOwner);
         ensure!(
             asset_ids.len() == amounts.len(),
             Error::<T>::InvalidArrayLength
@@ -201,6 +206,12 @@ impl<T: Config> Pallet<T> {
             asset_ids.clone(),
             amounts.clone(),
         )?;
+
+        Self::deposit_event(Event::Deposit {
+            escrow: escrow.clone(),
+            operator: escrow_info.operator.clone(),
+            owner: escrow_info.owner.clone(),
+        });
 
         Ok(().into())
     }
