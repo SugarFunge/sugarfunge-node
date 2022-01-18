@@ -364,7 +364,7 @@ impl<T: Config> Pallet<T> {
         for (_, deposit_balance) in &deposit_balances {
             if *deposit_balance < 0 {
                 can_do_deposit = false;
-                continue;
+                break;
             }
         }
 
@@ -594,7 +594,7 @@ impl<T: Config> Pallet<T> {
         for (_, exchange_balance) in &exchange_balances {
             if *exchange_balance < 0 {
                 can_do_exchange = false;
-                continue;
+                break;
             }
         }
 

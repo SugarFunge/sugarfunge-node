@@ -9,8 +9,12 @@ license = "Proprietary"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false, features = ["derive"] }
-scale-info = { version = "1.0", default-features = false, features = ["derive"] }
+codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false, features = [
+	"derive",
+] }
+scale-info = { version = "1.0", default-features = false, features = [
+	"derive",
+] }
 
 pallet-aura = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.15", default-features = false }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.15", default-features = false }
@@ -34,10 +38,16 @@ sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v
 sp-transaction-pool = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.15", default-features = false }
 sp-version = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.15", default-features = false }
 pallet-scheduler = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.15", default-features = false }
+pallet-session = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.15", default-features = false, features = [
+	"historical",
+] }
 
 # Used for the node template's RPCs
 frame-system-rpc-runtime-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.15", default-features = false }
 pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.15", default-features = false }
+
+# Validators
+substrate-validator-set = { default-features = false, git = "https://github.com/SugarFunge/substrate-validator-set.git", branch = "sugarfunge" }
 
 # Contract
 pallet-contracts-primitives = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.15", default-features = false }
@@ -84,6 +94,7 @@ std = [
 	"pallet-timestamp/std",
 	"pallet-transaction-payment/std",
 	"pallet-transaction-payment-rpc-runtime-api/std",
+	"pallet-session/std",
 	"sp-api/std",
 	"sp-block-builder/std",
 	"sp-consensus-aura/std",
@@ -104,6 +115,7 @@ std = [
 	"orml-traits/std",
 	"orml-currencies/std",
 	"orml-tokens/std",
+	"substrate-validator-set/std",
 
 	"sugarfunge-asset/std",
 	"sugarfunge-currency/std",

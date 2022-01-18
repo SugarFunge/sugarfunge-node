@@ -6963,6 +6963,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "substrate-validator-set"
+version = "4.0.0-dev"
+source = "git+https://github.com/SugarFunge/substrate-validator-set.git?branch=sugarfunge#e1a65130f0136e736120c647cb27cf269364c101"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "pallet-session",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-staking",
+ "sp-std",
+]
+
+[[package]]
 name = "substrate-wasm-builder"
 version = "5.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.15#d36550a8da62fc968fac415c3379ad95d85105d1"
@@ -7216,6 +7235,7 @@ dependencies = [
  "pallet-grandpa",
  "pallet-randomness-collective-flip",
  "pallet-scheduler",
+ "pallet-session",
  "pallet-sudo",
  "pallet-timestamp",
  "pallet-transaction-payment",
@@ -7233,6 +7253,7 @@ dependencies = [
  "sp-std",
  "sp-transaction-pool",
  "sp-version",
+ "substrate-validator-set",
  "substrate-wasm-builder",
  "sugarfunge-asset",
  "sugarfunge-bundle",
