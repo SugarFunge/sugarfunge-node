@@ -1,4 +1,4 @@
-use crate::{mock::*, AmountOp, AssetRate, MarketRate, RateAmount, RateTarget};
+use crate::{mock::*, AmountOp, AssetRate, MarketRate, RateAction, RateTarget};
 use frame_support::assert_ok;
 
 fn last_event() -> Event {
@@ -89,14 +89,16 @@ fn create_market_rate_works() {
                 AssetRate {
                     class_id: 2000,
                     asset_id: 1,
-                    amount: RateAmount::Credit(1),
+                    action: RateAction::Credit,
+                    amount: 1,
                     target: RateTarget::Buyer,
                 },
                 // Market will mint 100 assets of class_id: 2000 asset_id: 2 for buyer
                 AssetRate {
                     class_id: 2000,
                     asset_id: 2,
-                    amount: RateAmount::Mint(100),
+                    action: RateAction::Mint,
+                    amount: 100,
                     target: RateTarget::Buyer,
                 },
             ],
@@ -106,21 +108,24 @@ fn create_market_rate_works() {
                 AssetRate {
                     class_id: 0,
                     asset_id: 0,
-                    amount: RateAmount::Has(AmountOp::GreaterEqualThan(5000)),
+                    action: RateAction::Has(AmountOp::GreaterEqualThan),
+                    amount: 5000,
                     target: RateTarget::Buyer,
                 },
                 // Buyer will transfer 5 assets of type class_id: 3000 asset_id: 2 to seller
                 AssetRate {
                     class_id: 3000,
                     asset_id: 2,
-                    amount: RateAmount::Debit(5),
+                    action: RateAction::Debit,
+                    amount: 5,
                     target: RateTarget::Buyer,
                 },
                 // Market will burn 50 assets of class_id: 3000 asset_id: 3 from seller
                 AssetRate {
                     class_id: 3000,
                     asset_id: 3,
-                    amount: RateAmount::Burn(50),
+                    action: RateAction::Burn,
+                    amount: 50,
                     target: RateTarget::Buyer,
                 },
             ],
