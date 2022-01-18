@@ -109,6 +109,8 @@ pub mod pallet {
         Unknown,
         NumOverflow,
         CurrencyAssetNotFound,
+        InvalidAssetClass,
+        InvalidAsset,
     }
 
     #[pallet::hooks]
@@ -125,22 +127,22 @@ pub mod pallet {
             let who = ensure_signed(origin)?;
 
             let CurrencyId(class_id, asset_id) = currency_id;
+            ensure!(
+                sugarfunge_asset::Pallet::<T>::class_exists(class_id.into()),
+                Error::<T>::InvalidAssetClass
+            );
+            ensure!(
+                sugarfunge_asset::Pallet::<T>::asset_exists(class_id.into(), asset_id.into()),
+                Error::<T>::InvalidAsset
+            );
 
             let module_account = Self::account_id();
             <T as Config>::Currency::transfer(currency_id, &who, &module_account, amount)?;
 
             if !CurrencyAssets::<T>::contains_key(currency_id) {
-                sugarfunge_asset::Pallet::<T>::do_create_asset(
-                    &module_account,
-                    class_id.into(),
-                    asset_id.into(),
-                    [].to_vec(),
-                )?;
-
                 let asset_info = AssetInfo {
                     total_supply: Default::default(),
                 };
-
                 CurrencyAssets::<T>::insert(currency_id, asset_info);
             }
 
@@ -180,6 +182,14 @@ pub mod pallet {
             let who = ensure_signed(origin)?;
 
             let CurrencyId(class_id, asset_id) = currency_id;
+            ensure!(
+                sugarfunge_asset::Pallet::<T>::class_exists(class_id.into()),
+                Error::<T>::InvalidAssetClass
+            );
+            ensure!(
+                sugarfunge_asset::Pallet::<T>::asset_exists(class_id.into(), asset_id.into()),
+                Error::<T>::InvalidAsset
+            );
 
             CurrencyAssets::<T>::try_mutate(currency_id, |asset_info| -> DispatchResult {
                 let info = asset_info
@@ -243,6 +253,7 @@ impl<T: Config> Pallet<T> {
             class_id,
             data.clone(),
         )?;
+
         sugarfunge_asset::Pallet::<T>::do_create_asset(
             &module_account,
             class_id,

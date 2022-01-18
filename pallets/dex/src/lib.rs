@@ -124,8 +124,9 @@ pub mod pallet {
     #[pallet::error]
     pub enum Error<T> {
         Overflow,
-        InvalidExchangeId,
-        InvalidClassId,
+        InvalidExchange,
+        InvalidAssetClass,
+        InvalidLiquidityClass,
         InvalidMaxCurrency,
         InsufficientCurrencyAmount,
         InsufficientAssetAmount,
@@ -155,17 +156,17 @@ pub mod pallet {
 
             ensure!(
                 !Exchanges::<T>::contains_key(exchange_id),
-                Error::<T>::InvalidExchangeId
+                Error::<T>::InvalidExchange
             );
 
             ensure!(
                 sugarfunge_asset::Pallet::<T>::class_exists(asset_class_id),
-                Error::<T>::InvalidClassId
+                Error::<T>::InvalidAssetClass
             );
 
             ensure!(
                 !sugarfunge_asset::Pallet::<T>::class_exists(lp_class_id),
-                Error::<T>::InvalidClassId
+                Error::<T>::InvalidLiquidityClass
             );
 
             let fund_account = <T as Config>::PalletId::get().into_sub_account(exchange_id);
@@ -321,7 +322,7 @@ impl<T: Config> Pallet<T> {
         max_currency: Balance,
         to: &T::AccountId,
     ) -> DispatchResult {
-        let exchange = Exchanges::<T>::get(exchange_id).ok_or(Error::<T>::InvalidExchangeId)?;
+        let exchange = Exchanges::<T>::get(exchange_id).ok_or(Error::<T>::InvalidExchange)?;
 
         let n = asset_ids.len();
         let mut total_currency = Balance::from(0u128);
@@ -401,7 +402,7 @@ impl<T: Config> Pallet<T> {
         min_currency: Balance,
         to: &T::AccountId,
     ) -> DispatchResult {
-        let exchange = Exchanges::<T>::get(exchange_id).ok_or(Error::<T>::InvalidExchangeId)?;
+        let exchange = Exchanges::<T>::get(exchange_id).ok_or(Error::<T>::InvalidExchange)?;
 
         let n = asset_ids.len();
         let mut total_currency = Balance::from(0u128);
@@ -485,7 +486,7 @@ impl<T: Config> Pallet<T> {
         asset_amounts: Vec<Balance>,
         max_currencies: Vec<Balance>,
     ) -> DispatchResult {
-        let exchange = Exchanges::<T>::get(exchange_id).ok_or(Error::<T>::InvalidExchangeId)?;
+        let exchange = Exchanges::<T>::get(exchange_id).ok_or(Error::<T>::InvalidExchange)?;
 
         let n = asset_ids.len();
         let mut total_currency = Balance::from(0u128);
@@ -632,7 +633,7 @@ impl<T: Config> Pallet<T> {
         min_currencies: Vec<Balance>,
         min_assets: Vec<Balance>,
     ) -> DispatchResult {
-        let exchange = Exchanges::<T>::get(exchange_id).ok_or(Error::<T>::InvalidExchangeId)?;
+        let exchange = Exchanges::<T>::get(exchange_id).ok_or(Error::<T>::InvalidExchange)?;
 
         let n = asset_ids.len();
         let mut total_currency = Balance::from(0u128);

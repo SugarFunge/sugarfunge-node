@@ -68,6 +68,12 @@ fn before_exchange_works() {
 fn many_currencies_works() {
     new_test_ext().execute_with(|| {
         run_to_block(10);
+        assert_ok!(Asset::do_create_asset(
+            &sugarfunge_currency::Pallet::<Test>::account_id(),
+            ETH.0.into(),
+            ETH.1.into(),
+            vec![]
+        ));
         assert_ok!(mock::Currency::mint(Origin::signed(1), ETH, 500 * DOLLARS));
         assert_eq!(
             last_event(),
@@ -78,6 +84,13 @@ fn many_currencies_works() {
             }),
         );
         assert_eq!(Asset::balance_of(&1, ETH.0, ETH.1), 500 * DOLLARS);
+
+        assert_ok!(Asset::do_create_asset(
+            &sugarfunge_currency::Pallet::<Test>::account_id(),
+            BTC.0.into(),
+            BTC.1.into(),
+            vec![]
+        ));
         assert_ok!(mock::Currency::mint(Origin::signed(1), BTC, 500 * DOLLARS));
         assert_eq!(
             last_event(),

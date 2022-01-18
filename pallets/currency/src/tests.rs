@@ -1,4 +1,4 @@
-use super::{CurrencyAssets, CurrencyId};
+use super::{CurrencyAssets, CurrencyId, Pallet};
 use crate::mock::*;
 use frame_support::assert_ok;
 
@@ -13,6 +13,12 @@ fn last_event() -> Event {
 fn currency_eth_works() {
     new_test_ext().execute_with(|| {
         run_to_block(10);
+        assert_ok!(Asset::do_create_asset(
+            &Pallet::<Test>::account_id(),
+            ETH.0.into(),
+            ETH.1.into(),
+            vec![]
+        ));
         assert_ok!(Currency::mint(Origin::signed(1), ETH, 500 * CENTS));
         assert_eq!(
             last_event(),
@@ -30,6 +36,12 @@ fn currency_eth_works() {
 fn currency_btc_works() {
     new_test_ext().execute_with(|| {
         run_to_block(10);
+        assert_ok!(Asset::do_create_asset(
+            &Pallet::<Test>::account_id(),
+            BTC.0.into(),
+            BTC.1.into(),
+            vec![]
+        ));
         assert_ok!(Currency::mint(Origin::signed(1), BTC, 500 * CENTS));
         assert_eq!(
             last_event(),
@@ -61,6 +73,13 @@ fn issue_and_mint_currency() {
         ));
         assert_eq!(Sudo::key(), 1u64);
         assert_ok!(Sudo::sudo(Origin::signed(1), call));
+
+        assert_ok!(Asset::do_create_asset(
+            &Pallet::<Test>::account_id(),
+            new_currency_id.0.into(),
+            new_currency_id.1.into(),
+            vec![]
+        ));
         assert_ok!(Currency::mint(
             Origin::signed(1),
             new_currency_id,
@@ -78,6 +97,7 @@ fn issue_and_mint_currency() {
             Asset::balance_of(&1, new_currency_id.0, new_currency_id.1),
             500 * CENTS
         );
+
         let asset_info = CurrencyAssets::<Test>::get(new_currency_id).unwrap();
         assert_eq!(asset_info.total_supply, 500 * CENTS);
     })
