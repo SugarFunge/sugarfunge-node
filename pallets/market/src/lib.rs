@@ -162,6 +162,7 @@ pub mod pallet {
         InvalidBurnBalance,
         InvalidTransferPrice,
         InvalidTransferBalance,
+        InvalidBuyer,
     }
 
     // Dispatchable functions allows users to interact with the pallet and invoke state changes.
@@ -611,8 +612,8 @@ impl<T: Config> Pallet<T> {
         let _market_rate = MarketRates::<T>::get((market_id, market_rate_id))
             .ok_or(Error::<T>::InvalidMarketRate)?;
 
-        ensure!(*buyer != market.owner, Error::<T>::InvalidMarketOwner);
-        ensure!(*buyer != market.vault, Error::<T>::InvalidMarketOwner);
+        ensure!(*buyer != market.owner, Error::<T>::InvalidBuyer);
+        ensure!(*buyer != market.vault, Error::<T>::InvalidBuyer);
 
         let (can_do_exchange, exchange_balances) =
             Self::do_compute_exchange(buyer, market_id, market_rate_id, amount)?;

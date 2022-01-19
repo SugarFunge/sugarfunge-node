@@ -85,6 +85,7 @@ pub mod pallet {
     pub struct Pallet<T>(_);
 
     #[pallet::storage]
+    #[pallet::getter(fn currency_assets)]
     pub(super) type CurrencyAssets<T: Config> =
         StorageMap<_, Blake2_128Concat, CurrencyId, AssetInfo<Balance>>;
 
