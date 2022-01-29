@@ -2,7 +2,7 @@
 
 use codec::{Decode, Encode};
 use frame_support::{
-    dispatch::DispatchResult,
+    dispatch::{DispatchResult},
     ensure,
     traits::{Currency, Get, ReservableCurrency},
     BoundedVec, PalletId,
@@ -46,7 +46,8 @@ pub fn argsort<T: Ord>(data: &[T]) -> Vec<usize> {
 #[frame_support::pallet]
 pub mod pallet {
     use super::*;
-    use frame_support::pallet_prelude::*;
+    use frame_support::{dispatch::DispatchResultWithPostInfo, pallet_prelude::*};
+    use frame_system::pallet_prelude::*;
 
     /// Configure the pallet by specifying the parameters and types on which it depends.
     #[pallet::config]
@@ -93,6 +94,12 @@ pub mod pallet {
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
+        Register{
+            bundle_id: BundleId,
+            creator: T::AccountId,
+            class_id: T::ClassId,
+            asset_id: T::AssetId,
+        },
         Mint {
             bundle_id: BundleId,
             who: T::AccountId,
@@ -126,7 +133,53 @@ pub mod pallet {
     // These functions materialize as "extrinsics", which are often compared to transactions.
     // Dispatchable functions must be annotated with a weight and must return a DispatchResult.
     #[pallet::call]
-    impl<T: Config> Pallet<T> {}
+    impl<T: Config> Pallet<T> {
+        #[pallet::weight(10_000)]
+        pub fn register_bundle(
+            origin: OriginFor<T>,
+            creator: T::AccountId,
+            class_id: T::ClassId,
+            asset_id: T::AssetId,
+            bundle_id: BundleId,
+            schema: BundleSchema<T>,
+            metadata: Vec<u8>,
+        ) -> DispatchResultWithPostInfo {
+            //let who = ensure_signed(origin)?;
+
+            Self::do_register_bundle(&creator, class_id, asset_id, bundle_id, &schema, metadata)?;
+
+            Ok(().into())
+        }
+
+        #[pallet::weight(10_000)]
+        pub fn mint_bundle(
+            origin: OriginFor<T>,
+            creator: T::AccountId,
+            bundle_id: BundleId,
+            amount: Balance,
+        ) -> DispatchResultWithPostInfo {
+            //let who = ensure_signed(origin)?;
+
+            Self::do_mint_bundles(&creator, bundle_id, amount)?;
+
+            Ok(().into())
+        }
+
+        #[pallet::weight(10_000)]
+        pub fn burn_bundle(
+            origin: OriginFor<T>,
+            creator: T::AccountId,
+            bundle_id: BundleId,
+            amount: Balance,
+        ) -> DispatchResultWithPostInfo {
+            //let who = ensure_signed(origin)?;
+
+            Self::do_burn_bundles(&creator, bundle_id, amount)?;
+
+            Ok(().into())
+        }
+    }
+    
 }
 
 #[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
@@ -190,6 +243,13 @@ impl<T: Config> Pallet<T> {
         );
 
         AssetBundles::<T>::insert((class_id, asset_id), bundle_id);
+
+        Self::deposit_event(Event::Register {
+            bundle_id,
+            creator: creator.clone(),
+            class_id,
+            asset_id,
+        });
 
         Ok(())
     }
