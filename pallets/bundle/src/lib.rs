@@ -2,7 +2,7 @@
 
 use codec::{Decode, Encode};
 use frame_support::{
-    dispatch::{DispatchResult},
+    dispatch::DispatchResult,
     ensure,
     traits::{Currency, Get, ReservableCurrency},
     BoundedVec, PalletId,
@@ -94,20 +94,24 @@ pub mod pallet {
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
-        Register{
+        Register {
             bundle_id: BundleId,
-            creator: T::AccountId,
+            who: T::AccountId,
             class_id: T::ClassId,
             asset_id: T::AssetId,
         },
         Mint {
             bundle_id: BundleId,
             who: T::AccountId,
+            from: T::AccountId,
+            to: T::AccountId,
             amount: Balance,
         },
         Burn {
             bundle_id: BundleId,
             who: T::AccountId,
+            from: T::AccountId,
+            to: T::AccountId,
             amount: Balance,
         },
     }
@@ -137,16 +141,15 @@ pub mod pallet {
         #[pallet::weight(10_000)]
         pub fn register_bundle(
             origin: OriginFor<T>,
-            creator: T::AccountId,
             class_id: T::ClassId,
             asset_id: T::AssetId,
             bundle_id: BundleId,
             schema: BundleSchema<T>,
             metadata: Vec<u8>,
         ) -> DispatchResultWithPostInfo {
-            //let who = ensure_signed(origin)?;
+            let who = ensure_signed(origin)?;
 
-            Self::do_register_bundle(&creator, class_id, asset_id, bundle_id, &schema, metadata)?;
+            Self::do_register_bundle(&who, class_id, asset_id, bundle_id, &schema, metadata)?;
 
             Ok(().into())
         }
@@ -154,13 +157,14 @@ pub mod pallet {
         #[pallet::weight(10_000)]
         pub fn mint_bundle(
             origin: OriginFor<T>,
-            creator: T::AccountId,
+            from: T::AccountId,
+            to: T::AccountId,
             bundle_id: BundleId,
             amount: Balance,
         ) -> DispatchResultWithPostInfo {
-            //let who = ensure_signed(origin)?;
+            let who = ensure_signed(origin)?;
 
-            Self::do_mint_bundles(&creator, bundle_id, amount)?;
+            Self::do_mint_bundles(&who, &from, &to, bundle_id, amount)?;
 
             Ok(().into())
         }
@@ -168,18 +172,18 @@ pub mod pallet {
         #[pallet::weight(10_000)]
         pub fn burn_bundle(
             origin: OriginFor<T>,
-            creator: T::AccountId,
+            from: T::AccountId,
+            to: T::AccountId,
             bundle_id: BundleId,
             amount: Balance,
         ) -> DispatchResultWithPostInfo {
-            //let who = ensure_signed(origin)?;
+            let who = ensure_signed(origin)?;
 
-            Self::do_burn_bundles(&creator, bundle_id, amount)?;
+            Self::do_burn_bundles(&who, &from, &to, bundle_id, amount)?;
 
             Ok(().into())
         }
     }
-    
 }
 
 #[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
@@ -200,7 +204,7 @@ pub struct Bundle<ClassId, AssetId, BundleSchema, AccountId> {
 
 impl<T: Config> Pallet<T> {
     pub fn do_register_bundle(
-        creator: &T::AccountId,
+        who: &T::AccountId,
         class_id: T::ClassId,
         asset_id: T::AssetId,
         bundle_id: BundleId,
@@ -222,7 +226,7 @@ impl<T: Config> Pallet<T> {
         let operator = <T as Config>::PalletId::get().into_account();
 
         sugarfunge_asset::Pallet::<T>::do_create_class(
-            &creator,
+            &who,
             &operator,
             class_id,
             metadata.clone(),
@@ -233,7 +237,7 @@ impl<T: Config> Pallet<T> {
         Bundles::<T>::insert(
             &bundle_id,
             &Bundle {
-                creator: creator.clone(),
+                creator: who.clone(),
                 class_id,
                 asset_id,
                 schema: schema.clone(),
@@ -246,7 +250,7 @@ impl<T: Config> Pallet<T> {
 
         Self::deposit_event(Event::Register {
             bundle_id,
-            creator: creator.clone(),
+            who: who.clone(),
             class_id,
             asset_id,
         });
@@ -256,6 +260,8 @@ impl<T: Config> Pallet<T> {
 
     pub fn do_mint_bundles(
         who: &T::AccountId,
+        from: &T::AccountId,
+        to: &T::AccountId,
         bundle_id: BundleId,
         amount: Balance,
     ) -> DispatchResult {
@@ -271,10 +277,10 @@ impl<T: Config> Pallet<T> {
             Error::<T>::InvalidArrayLength
         );
 
-        // Ensure creator has enough assets to create bundle
+        // Ensure from has enough assets to create bundle
         for (class_idx, class_id) in class_ids.iter().enumerate() {
             let balances = sugarfunge_asset::Pallet::<T>::balance_of_single_owner_batch(
-                who,
+                from,
                 *class_id,
                 asset_ids[class_idx].to_vec(),
             )?;
@@ -290,11 +296,11 @@ impl<T: Config> Pallet<T> {
             }
         }
 
-        // Transfer creator assets to bundle vault
+        // Transfer from assets to bundle vault
         for (idx, class_id) in class_ids.iter().enumerate() {
             sugarfunge_asset::Pallet::<T>::do_batch_transfer_from(
                 &who,
-                &who,
+                &from,
                 &bundle.vault,
                 *class_id,
                 asset_ids[idx].to_vec(),
@@ -307,10 +313,10 @@ impl<T: Config> Pallet<T> {
 
         let operator: T::AccountId = <T as Config>::PalletId::get().into_account();
 
-        // Mint IOU assets to creator for each bundle created
+        // Mint IOU assets for each bundle created
         sugarfunge_asset::Pallet::<T>::do_mint(
             &operator,
-            who,
+            to,
             bundle.class_id,
             bundle.asset_id,
             amount,
@@ -319,6 +325,8 @@ impl<T: Config> Pallet<T> {
         Self::deposit_event(Event::Mint {
             bundle_id,
             who: who.clone(),
+            from: from.clone(),
+            to: to.clone(),
             amount,
         });
 
@@ -327,6 +335,8 @@ impl<T: Config> Pallet<T> {
 
     pub fn do_burn_bundles(
         who: &T::AccountId,
+        from: &T::AccountId,
+        to: &T::AccountId,
         bundle_id: BundleId,
         amount: Balance,
     ) -> DispatchResult {
@@ -344,7 +354,7 @@ impl<T: Config> Pallet<T> {
 
         // Ensure enough IOU assets to recover bundle assets
         let iou_balance =
-            sugarfunge_asset::Pallet::<T>::balances((who, bundle.class_id, bundle.asset_id));
+            sugarfunge_asset::Pallet::<T>::balances((from, bundle.class_id, bundle.asset_id));
         ensure!(iou_balance >= amount, Error::<T>::InsufficientBalance);
 
         // Ensure enough bundle assets in vault to cover IOU
@@ -373,7 +383,7 @@ impl<T: Config> Pallet<T> {
             sugarfunge_asset::Pallet::<T>::do_batch_transfer_from(
                 &operator,
                 &operator,
-                &who,
+                &to,
                 *class_id,
                 asset_ids[idx].to_vec(),
                 amounts[idx]
@@ -395,6 +405,8 @@ impl<T: Config> Pallet<T> {
         Self::deposit_event(Event::Burn {
             bundle_id,
             who: who.clone(),
+            from: from.clone(),
+            to: to.clone(),
             amount,
         });
 

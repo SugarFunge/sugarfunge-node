@@ -77,7 +77,7 @@ fn mint_bundle_works() {
         ));
         assert_eq!(Bundle::asset_bundles((9000, 0)), Some(bundle_id));
 
-        Bundle::do_mint_bundles(&2, bundle_id, 10).unwrap();
+        Bundle::do_mint_bundles(&2, &2, &2, bundle_id, 10).unwrap();
 
         let bundle = Bundle::bundles(bundle_id).unwrap();
 
@@ -89,6 +89,8 @@ fn mint_bundle_works() {
             Event::Bundle(crate::Event::Mint {
                 bundle_id,
                 who: 2,
+                from: 2,
+                to: 2,
                 amount: 10
             }),
         );
@@ -139,7 +141,7 @@ fn mint_bundle_fails() {
         ));
 
         assert_err!(
-            Bundle::do_mint_bundles(&2, bundle_id, 10),
+            Bundle::do_mint_bundles(&2, &2, &2, bundle_id, 10),
             Error::<Test>::InsufficientBalance
         );
 
@@ -181,8 +183,8 @@ fn add_assets_to_existing_bundle() {
             vec![]
         ));
 
-        Bundle::do_mint_bundles(&2, bundle_id, 10).unwrap();
-        Bundle::do_mint_bundles(&2, bundle_id, 10).unwrap();
+        Bundle::do_mint_bundles(&2, &2, &2, bundle_id, 10).unwrap();
+        Bundle::do_mint_bundles(&2, &2, &2, bundle_id, 10).unwrap();
 
         let bundle = Bundle::bundles(bundle_id).unwrap();
 
@@ -232,8 +234,8 @@ fn burn_bundle_works() {
             vec![]
         ));
 
-        Bundle::do_mint_bundles(&2, bundle_id, 10).unwrap();
-        Bundle::do_mint_bundles(&2, bundle_id, 10).unwrap();
+        Bundle::do_mint_bundles(&2, &2, &2, bundle_id, 10).unwrap();
+        Bundle::do_mint_bundles(&2, &2, &2, bundle_id, 10).unwrap();
 
         let bundle = Bundle::bundles(bundle_id).unwrap();
 
@@ -250,13 +252,15 @@ fn burn_bundle_works() {
             Asset::balance_of_single_owner_batch(&2, 4000, asset_ids.clone()).unwrap()
         );
 
-        assert_ok!(Bundle::do_burn_bundles(&2, bundle_id, 5));
+        assert_ok!(Bundle::do_burn_bundles(&2, &2, &2, bundle_id, 5));
 
         assert_eq!(
             last_event(),
             Event::Bundle(crate::Event::Burn {
                 bundle_id,
                 who: 2,
+                from: 2,
+                to: 2,
                 amount: 5
             }),
         );
