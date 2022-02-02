@@ -13,7 +13,9 @@ use pallet_grandpa::{AuthorityId as GrandpaId, AuthorityList as GrandpaAuthority
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
-use sp_runtime::traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, NumberFor, Zero};
+use sp_runtime::traits::{
+    AccountIdLookup, BlakeTwo256, Block as BlockT, NumberFor, OpaqueKeys, Zero,
+};
 use sp_runtime::{
     create_runtime_str, generic, impl_opaque_keys,
     transaction_validity::{TransactionSource, TransactionValidity},
@@ -23,6 +25,7 @@ use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
+use substrate_validator_set as validator_set;
 
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
@@ -294,6 +297,33 @@ impl pallet_scheduler::Config for Runtime {
     type OriginPrivilegeCmp = EqualPrivilegeOnly;
 }
 
+parameter_types! {
+    pub const MinAuthorities: u32 = 1;
+}
+
+impl validator_set::Config for Runtime {
+    type Event = Event;
+    type AddRemoveOrigin = EnsureRoot<AccountId>;
+    type MinAuthorities = MinAuthorities;
+}
+
+parameter_types! {
+    pub const Period: u32 = 2 * MINUTES;
+    pub const Offset: u32 = 0;
+}
+
+impl pallet_session::Config for Runtime {
+    type ValidatorId = <Self as frame_system::Config>::AccountId;
+    type ValidatorIdOf = validator_set::ValidatorOf<Self>;
+    type ShouldEndSession = pallet_session::PeriodicSessions<Period, Offset>;
+    type NextSessionRotation = pallet_session::PeriodicSessions<Period, Offset>;
+    type SessionManager = ValidatorSet;
+    type SessionHandler = <opaque::SessionKeys as OpaqueKeys>::KeyTypeIdProviders;
+    type Keys = opaque::SessionKeys;
+    type WeightInfo = ();
+    type Event = Event;
+}
+
 parameter_type_with_key! {
     pub ExistentialDeposits: |_currency_id: CurrencyId| -> Balance {
         Zero::zero()
@@ -412,6 +442,10 @@ construct_runtime!(
         TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
         Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
         Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>},
+
+        ValidatorSet: validator_set::{Pallet, Call, Storage, Event<T>, Config<T>},
+        Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>},
+
         OrmlTokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>},
         OrmlCurrencies: orml_currencies::{Pallet, Storage, Call, Event<T>},
 
