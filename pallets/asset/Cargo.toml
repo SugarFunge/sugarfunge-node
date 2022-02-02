@@ -2,7 +2,7 @@
 name = "sugarfunge-asset"
 version = "0.1.0"
 authors = ["SugarFunge Developers"]
-edition = "2018"
+edition = "2021"
 license = "Proprietary"
 
 [dependencies]

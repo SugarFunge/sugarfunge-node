@@ -12,7 +12,7 @@ use sc_transaction_pool_api::TransactionPool;
 use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
-use sugarfunge_runtime::{opaque::Block, AccountId, Balance, Index};
+use sugarfunge_runtime::{opaque::Block, AccountId, AssetId, Balance, ClassId, Index};
 
 /// Full client dependencies.
 pub struct FullDeps<C, P> {
@@ -32,11 +32,19 @@ where
     C: Send + Sync + 'static,
     C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>,
     C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
+    C::Api: sugarfunge_asset_rpc::SugarfungeAssetRuntimeApi<
+        Block,
+        AccountId,
+        ClassId,
+        AssetId,
+        Balance,
+    >,
     C::Api: BlockBuilder<Block>,
     P: TransactionPool + 'static,
 {
     use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
     use substrate_frame_rpc_system::{FullSystem, SystemApi};
+    use sugarfunge_asset_rpc::{SugarfungeAsset, SugarfungeAssetApi};
 
     let mut io = jsonrpc_core::IoHandler::default();
     let FullDeps {
@@ -55,10 +63,9 @@ where
         client.clone(),
     )));
 
-    // Extend this RPC with a custom API by using the following syntax.
-    // `YourRpcStruct` should have a reference to a client, which is needed
-    // to call into the runtime.
-    // `io.extend_with(YourRpcTrait::to_delegate(YourRpcStruct::new(ReferenceToClient, ...)));`
+    io.extend_with(SugarfungeAssetApi::to_delegate(SugarfungeAsset::new(
+        client.clone(),
+    )));
 
     io
 }

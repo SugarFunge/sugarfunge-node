@@ -7019,6 +7019,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "sugarfunge-asset-rpc"
+version = "0.1.0"
+dependencies = [
+ "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
+ "parity-scale-codec",
+ "sp-api",
+ "sp-blockchain",
+ "sp-core",
+ "sp-rpc",
+ "sp-runtime",
+ "sugarfunge-asset-rpc-runtime-api",
+]
+
+[[package]]
+name = "sugarfunge-asset-rpc-runtime-api"
+version = "0.1.0"
+dependencies = [
+ "parity-scale-codec",
+ "sp-api",
+ "sp-runtime",
+ "sp-std",
+ "sugarfunge-asset",
+]
+
+[[package]]
 name = "sugarfunge-bundle"
 version = "0.1.0"
 dependencies = [
@@ -7196,6 +7223,7 @@ dependencies = [
  "structopt",
  "substrate-build-script-utils",
  "substrate-frame-rpc-system",
+ "sugarfunge-asset-rpc",
  "sugarfunge-runtime",
 ]
 
@@ -7256,6 +7284,7 @@ dependencies = [
  "substrate-validator-set",
  "substrate-wasm-builder",
  "sugarfunge-asset",
+ "sugarfunge-asset-rpc-runtime-api",
  "sugarfunge-bundle",
  "sugarfunge-currency",
  "sugarfunge-dao",

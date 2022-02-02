@@ -56,8 +56,8 @@ pub use sugarfunge_market::Call as MarketCall;
 mod constants;
 pub use constants::{currency::*, time::*};
 pub use primitives::{
-    AccountId, AccountIndex, Amount, Balance, BlockNumber, CurrencyId, Hash, Index, Moment,
-    Signature,
+    AccountId, AccountIndex, Amount, AssetId, Balance, BlockNumber, ClassId, CurrencyId, Hash,
+    Index, Moment, Signature,
 };
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
@@ -589,6 +589,14 @@ impl_runtime_apis! {
             len: u32,
         ) -> pallet_transaction_payment::FeeDetails<Balance> {
             TransactionPayment::query_fee_details(uxt, len)
+        }
+    }
+
+    impl sugarfunge_asset_rpc_runtime_api::SugarfungeAssetApi<Block, AccountId, ClassId, AssetId, Balance> for Runtime {
+        fn balances_of_owner(
+            account: AccountId,
+        ) -> Vec<(ClassId, AssetId, Balance)> {
+            Asset::balances_of_owner(&account).unwrap_or(Default::default())
         }
     }
 
