@@ -13,8 +13,6 @@ sp_api::decl_runtime_apis! {
     AssetId: Codec + MaybeDisplay,
     Balance: Codec + MaybeDisplay,
     {
-        // fn balances_of_owner(account: AccountId, class_id: ClassId, asset_id: AssetId) -> Vec<(ClassId, AssetId, Balance)>;
-
         fn balances_of_owner(account: AccountId) -> Vec<(ClassId, AssetId, Balance)>;
     }
 }

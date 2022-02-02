@@ -58,7 +58,7 @@ pub mod pallet {
         #[pallet::constant]
         type PalletId: Get<PalletId>;
 
-        /// Max number of assets in a bundle
+        /// Max number of asset classes and per asset_id in a bundle
         #[pallet::constant]
         type MaxAssets: Get<u32>;
 

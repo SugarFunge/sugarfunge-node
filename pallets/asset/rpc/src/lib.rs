@@ -1,19 +1,17 @@
 //! RPC interface for sugarfunge-asset.
 
 pub use self::gen_client::Client as SugarfungeAssetClient;
-use codec::{Codec, Decode};
+use codec::Codec;
 use jsonrpc_core::{Error as RpcError, ErrorCode, Result};
 use jsonrpc_derive::rpc;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
-use sp_core::Bytes;
 use sp_rpc::number::NumberOrHex;
-use sp_runtime::traits;
 use sp_runtime::{
     generic::BlockId,
     traits::{Block as BlockT, MaybeDisplay},
 };
-use std::{sync::Arc, thread::AccessError};
+use std::sync::Arc;
 pub use sugarfunge_asset_rpc_runtime_api::SugarfungeAssetApi as SugarfungeAssetRuntimeApi;
 
 #[rpc]

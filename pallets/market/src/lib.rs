@@ -181,7 +181,7 @@ pub struct Market<AccountId> {
 }
 
 impl<T: Config> Pallet<T> {
-    pub fn do_create_market(owner: &T::AccountId, market_id: T::MarketId) -> DispatchResult {
+    pub fn do_create_market(who: &T::AccountId, market_id: T::MarketId) -> DispatchResult {
         ensure!(
             !Markets::<T>::contains_key(market_id),
             Error::<T>::MarketExists
@@ -192,14 +192,14 @@ impl<T: Config> Pallet<T> {
         Markets::<T>::insert(
             market_id,
             Market {
-                owner: owner.clone(),
+                owner: who.clone(),
                 vault,
             },
         );
 
         Self::deposit_event(Event::Created {
             market_id,
-            who: owner.clone(),
+            who: who.clone(),
         });
 
         Ok(())
