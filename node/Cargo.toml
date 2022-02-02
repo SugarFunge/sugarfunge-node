@@ -2,7 +2,7 @@
 name = "sugarfunge-node"
 version = "0.1.0"
 authors = ["SugarFunge Developers"]
-edition = "2018"
+edition = "2021"
 license = "Proprietary"
 build = "build.rs"
 
@@ -40,7 +40,7 @@ sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "pol
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.15" }
 sp-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.15" }
 
-# These dependencies are used for the node template's RPCs
+# These dependencies are used for SugarFunge's RPCs
 sc-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.15" }
 sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.15" }
 sc-rpc-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.15" }
@@ -50,6 +50,8 @@ sc-basic-authorship = { git = "https://github.com/paritytech/substrate", branch 
 substrate-frame-rpc-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.15" }
 pallet-transaction-payment-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.15" }
 
+sugarfunge-asset-rpc = { version = "0.1.0", path = "../pallets/asset/rpc" }
+
 pallet-contracts = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.15" }
 pallet-contracts-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.15" }
 
@@ -57,6 +59,7 @@ pallet-contracts-rpc = { git = "https://github.com/paritytech/substrate", branch
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.15" }
 frame-benchmarking-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.15" }
 
+# The node's runtime
 sugarfunge-runtime = { version = "0.1.0", path = "../runtime" }
 
 [build-dependencies]
