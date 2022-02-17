@@ -7,6 +7,7 @@ use frame_support::{
     traits::Get,
     PalletId,
 };
+pub use pallet::*;
 use scale_info::TypeInfo;
 use sp_runtime::{
     traits::{AccountIdConversion, AtLeast32BitUnsigned},
@@ -14,8 +15,6 @@ use sp_runtime::{
 };
 use sp_std::{collections::btree_map::BTreeMap, prelude::*};
 use sugarfunge_primitives::{Amount, Balance};
-
-pub use pallet::*;
 
 #[cfg(test)]
 mod mock;
@@ -78,7 +77,8 @@ type TransactionBalances<AccountId, ClassId, AssetId> =
 #[frame_support::pallet]
 pub mod pallet {
     use super::*;
-    use frame_support::pallet_prelude::*;
+    use frame_support::{dispatch::DispatchResultWithPostInfo, pallet_prelude::*};
+    use frame_system::pallet_prelude::*;
 
     /// Configure the pallet by specifying the parameters and types on which it depends.
     #[pallet::config]
@@ -169,7 +169,61 @@ pub mod pallet {
     // These functions materialize as "extrinsics", which are often compared to transactions.
     // Dispatchable functions must be annotated with a weight and must return a DispatchResult.
     #[pallet::call]
-    impl<T: Config> Pallet<T> {}
+    impl<T: Config> Pallet<T> {
+        #[pallet::weight(10_000)]
+        pub fn create_market(
+            origin: OriginFor<T>,
+            market_id: T::MarketId,
+        ) -> DispatchResultWithPostInfo {
+            let who = ensure_signed(origin)?;
+
+            Self::do_create_market(&who, market_id)?;
+
+            Ok(().into())
+        }
+
+        #[pallet::weight(10_000)]
+        pub fn create_market_rate(
+            origin: OriginFor<T>,
+            market_id: T::MarketId,
+            market_rate_id: T::MarketRateId,
+            market_rate: MarketRate<T::AccountId, T::ClassId, T::AssetId>,
+        ) -> DispatchResultWithPostInfo {
+            let who = ensure_signed(origin)?;
+
+            Self::do_create_market_rate(&who, market_id, market_rate_id, &market_rate)?;
+
+            Ok(().into())
+        }
+
+        #[pallet::weight(10_000)]
+        pub fn deposit_assets(
+            origin: OriginFor<T>,
+            market_id: T::MarketId,
+            market_rate_id: T::MarketRateId,
+            amount: Balance,
+        ) -> DispatchResultWithPostInfo {
+            let who = ensure_signed(origin)?;
+
+            Self::do_deposit_assets(&who, market_id, market_rate_id, amount)?;
+
+            Ok(().into())
+        }
+
+        #[pallet::weight(10_000)]
+        pub fn exchange_assets(
+            origin: OriginFor<T>,
+            market_id: T::MarketId,
+            market_rate_id: T::MarketRateId,
+            amount: Balance,
+        ) -> DispatchResultWithPostInfo {
+            let who = ensure_signed(origin)?;
+
+            Self::do_exchange_assets(&who, market_id, market_rate_id, amount)?;
+
+            Ok(().into())
+        }
+    }
 }
 
 #[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
