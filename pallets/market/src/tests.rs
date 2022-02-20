@@ -1,6 +1,4 @@
-use crate::{
-    mock::*, AmountOp, AssetRate, Error, MarketRate, RateAccount, RateAction,
-};
+use crate::{mock::*, AmountOp, AssetRate, Error, MarketRate, RateAccount, RateAction};
 use frame_support::{assert_noop, assert_ok};
 
 fn last_event() -> Event {
@@ -59,13 +57,13 @@ fn simple_market_rate() -> MarketRate<
                 from: RateAccount::Buyer,
                 to: RateAccount::Market,
             },
-            // Market will burn 50 assets of class_id: 3000 asset_id: 3
+            // Market will burn 50 assets of class_id: 3000 asset_id: 3 from buyer
             AssetRate {
                 class_id: 3000,
                 asset_id: 3,
                 action: RateAction::Burn,
                 amount: 50,
-                from: RateAccount::Market,
+                from: RateAccount::Buyer,
                 to: RateAccount::Market,
             },
             //
@@ -172,6 +170,15 @@ fn create_market_rate_works() {
         let market_rate = simple_market_rate();
 
         assert_ok!(Market::do_create_market_rate(&1, 1000, 2, &market_rate));
+
+        assert_eq!(
+            last_event(),
+            Event::Market(crate::Event::RateCreated {
+                market_id: 1000,
+                market_rate_id: 2,
+                who: 1
+            }),
+        );
     })
 }
 
@@ -210,15 +217,15 @@ fn compute_deposit_fails() {
 
         assert_ok!(Market::do_create_market_rate(&2, 2000, 100, &market_rate));
 
-        let result = Market::do_compute_deposit(&2, 2000, 100, 10);
+        let result = Market::do_compute_deposit(&2, 2000, 100, 100);
         if let Ok((can_deposit, deposits)) = result {
             assert_eq!(can_deposit, false);
-            assert_eq!(deposits.get(&market_rate.rates[0]), Some(&10));
+            assert_eq!(deposits.get(&market_rate.rates[0]), Some(&100));
             assert_eq!(deposits.get(&market_rate.rates[1]), None);
             assert_eq!(deposits.get(&market_rate.rates[2]), None);
             assert_eq!(deposits.get(&market_rate.rates[3]), None);
-            assert_eq!(deposits.get(&market_rate.rates[4]), Some(&-200));
-            assert_eq!(deposits.get(&market_rate.rates[5]), Some(&20));
+            assert_eq!(deposits.get(&market_rate.rates[4]), None);
+            assert_eq!(deposits.get(&market_rate.rates[5]), Some(&-100));
             assert_eq!(deposits.get(&market_rate.rates[6]), None);
         } else {
             result.unwrap();
@@ -244,11 +251,9 @@ fn compute_deposit_works() {
             assert_eq!(deposits.get(&market_rate.rates[1]), None);
             assert_eq!(deposits.get(&market_rate.rates[2]), None);
             assert_eq!(deposits.get(&market_rate.rates[3]), None);
-            assert_eq!(deposits.get(&market_rate.rates[4]), Some(&100));
+            assert_eq!(deposits.get(&market_rate.rates[4]), None);
             assert_eq!(deposits.get(&market_rate.rates[5]), Some(&4));
             assert_eq!(deposits.get(&market_rate.rates[6]), None);
-
-            // assert_eq!(deposits, DepositBalances::default());
         } else {
             result.unwrap();
         };
@@ -262,7 +267,29 @@ fn deposit_assets_works() {
         assert_ok!(Market::do_create_market(&2, 2000));
         let market_rate = simple_market_rate();
         assert_ok!(Market::do_create_market_rate(&2, 2000, 100, &market_rate));
-        assert_ok!(Market::do_deposit_assets(&2, 2000, 100, 2));
+        assert_ok!(Market::do_deposit_assets(&2, 2000, 100, 4));
+
+        if let Event::Market(crate::Event::Deposit {
+            who,
+            market_id,
+            market_rate_id,
+            amount,
+            balances,
+        }) = last_event()
+        {
+            assert_eq!(who, 2);
+            assert_eq!(market_id, 2000);
+            assert_eq!(market_rate_id, 100);
+            assert_eq!(amount, 4);
+            assert_eq!(balances.get(&market_rate.rates[0]), Some(&4));
+            assert_eq!(balances.get(&market_rate.rates[1]), None);
+            assert_eq!(balances.get(&market_rate.rates[2]), None);
+            assert_eq!(balances.get(&market_rate.rates[3]), None);
+            assert_eq!(balances.get(&market_rate.rates[5]), Some(&8));
+            assert_eq!(balances.get(&market_rate.rates[6]), None);
+        } else {
+            unreachable!()
+        }
     })
 }
 
@@ -274,8 +301,84 @@ fn deposit_assets_fails() {
         let market_rate = simple_market_rate();
         assert_ok!(Market::do_create_market_rate(&2, 2000, 100, &market_rate));
         assert_noop!(
-            Market::do_deposit_assets(&2, 2000, 100, 10),
+            Market::do_deposit_assets(&2, 2000, 100, 100),
             Error::<Test>::InsufficientAmount
         );
+    })
+}
+
+#[test]
+fn compute_exchange_insufficient() {
+    new_test_ext().execute_with(|| {
+        before_market();
+        assert_ok!(Market::do_create_market(&2, 2000));
+        let market_rate = simple_market_rate();
+        assert_ok!(Market::do_create_market_rate(&2, 2000, 100, &market_rate));
+        assert_ok!(Market::do_deposit_assets(&2, 2000, 100, 4));
+
+        assert_ok!(Asset::do_batch_mint(
+            &1,
+            &3,
+            2000,
+            vec![1, 2,],
+            vec![100, 100],
+        ));
+
+        let result = Market::do_compute_exchange(&3, 2000, 100, 3);
+        if let Ok((can_do_exchange, balances)) = result {
+            assert_eq!(can_do_exchange, false);
+            assert_eq!(balances.get(&market_rate.rates[0]), Some(&3));
+            assert_eq!(balances.get(&market_rate.rates[1]), Some(&3));
+            assert_eq!(balances.get(&market_rate.rates[2]), Some(&-5000));
+            assert_eq!(balances.get(&market_rate.rates[3]), Some(&-15));
+            assert_eq!(balances.get(&market_rate.rates[4]), Some(&-150));
+            assert_eq!(balances.get(&market_rate.rates[5]), Some(&6));
+            assert_eq!(balances.get(&market_rate.rates[6]), Some(&-3));
+        } else {
+            result.unwrap();
+        };
+    })
+}
+
+#[test]
+fn compute_exchange_sufficient() {
+    new_test_ext().execute_with(|| {
+        before_market();
+        assert_ok!(Market::do_create_market(&2, 2000));
+        let market_rate = simple_market_rate();
+        assert_ok!(Market::do_create_market_rate(&2, 2000, 100, &market_rate));
+        assert_ok!(Market::do_deposit_assets(&2, 2000, 100, 4));
+
+        assert_ok!(Asset::do_batch_mint(
+            &1,
+            &3,
+            2000,
+            vec![1, 2,],
+            vec![100, 100],
+        ));
+
+        assert_ok!(Asset::do_batch_mint(
+            &1,
+            &3,
+            3000,
+            vec![1, 2, 3],
+            vec![10000, 50, 300],
+        ));
+
+        assert_ok!(Asset::do_batch_mint(&1, &3, 4000, vec![1], vec![10],));
+
+        let result = Market::do_compute_exchange(&3, 2000, 100, 3);
+        if let Ok((can_do_exchange, balances)) = result {
+            assert_eq!(can_do_exchange, true);
+            assert_eq!(balances.get(&market_rate.rates[0]), Some(&3));
+            assert_eq!(balances.get(&market_rate.rates[1]), Some(&3));
+            assert_eq!(balances.get(&market_rate.rates[2]), Some(&5000));
+            assert_eq!(balances.get(&market_rate.rates[3]), Some(&15));
+            assert_eq!(balances.get(&market_rate.rates[4]), Some(&150));
+            assert_eq!(balances.get(&market_rate.rates[5]), Some(&6));
+            assert_eq!(balances.get(&market_rate.rates[6]), Some(&3));
+        } else {
+            result.unwrap();
+        };
     })
 }

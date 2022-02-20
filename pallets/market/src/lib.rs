@@ -79,6 +79,7 @@ type TransactionBalances<AccountId, ClassId, AssetId> =
 pub mod pallet {
     use super::*;
     use frame_support::pallet_prelude::*;
+    use frame_system::pallet_prelude::*;
 
     /// Configure the pallet by specifying the parameters and types on which it depends.
     #[pallet::config]
@@ -142,7 +143,28 @@ pub mod pallet {
             market_rate_id: T::MarketRateId,
             who: T::AccountId,
         },
+        Deposit {
+            who: T::AccountId,
+            market_id: T::MarketId,
+            market_rate_id: T::MarketRateId,
+            amount: Balance,
+            balances: ExchangeBalances<T::AccountId, T::ClassId, T::AssetId>,
+        },
+        Exchanged {
+            buyer: T::AccountId,
+            market_id: T::MarketId,
+            market_rate_id: T::MarketRateId,
+            amount: Balance,
+            balances: ExchangeBalances<T::AccountId, T::ClassId, T::AssetId>,
+        },
     }
+
+    // pub fn do_compute_exchange(
+    //     buyer: &T::AccountId,
+    //     market_id: T::MarketId,
+    //     market_rate_id: T::MarketRateId,
+    //     amount: Balance,
+    // ) -> Result<(bool, ExchangeBalances<T::AccountId, T::ClassId, T::AssetId>), DispatchError> {
 
     #[pallet::error]
     pub enum Error<T> {
@@ -169,7 +191,19 @@ pub mod pallet {
     // These functions materialize as "extrinsics", which are often compared to transactions.
     // Dispatchable functions must be annotated with a weight and must return a DispatchResult.
     #[pallet::call]
-    impl<T: Config> Pallet<T> {}
+    impl<T: Config> Pallet<T> {
+        #[pallet::weight(10_000)]
+        pub fn create_market(
+            origin: OriginFor<T>,
+            market_id: T::MarketId,
+        ) -> DispatchResultWithPostInfo {
+            let who = ensure_signed(origin)?;
+
+            Self::do_create_market(&who, market_id)?;
+
+            Ok(().into())
+        }
+    }
 }
 
 #[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
@@ -401,6 +435,14 @@ impl<T: Config> Pallet<T> {
             )?
         }
 
+        Self::deposit_event(Event::Deposit {
+            who: who.clone(),
+            market_id,
+            market_rate_id,
+            amount,
+            balances: deposit_balances,
+        });
+
         Ok(().into())
     }
 
@@ -418,6 +460,8 @@ impl<T: Config> Pallet<T> {
 
         let mut exchange_balances: ExchangeBalances<T::AccountId, T::ClassId, T::AssetId> =
             BTreeMap::new();
+
+        let mut can_do_exchange = true;
 
         // RateAction::Has - Prove parties possess non-transferable assets
 
@@ -438,37 +482,42 @@ impl<T: Config> Pallet<T> {
                 let amount = match op {
                     AmountOp::Equal => {
                         if balance == asset_rate.amount {
-                            balance
+                            asset_rate.amount
                         } else {
-                            -balance
+                            can_do_exchange = false;
+                            balance - asset_rate.amount
                         }
                     }
                     AmountOp::GreaterEqualThan => {
                         if balance >= asset_rate.amount {
-                            balance
+                            asset_rate.amount
                         } else {
-                            -balance
+                            can_do_exchange = false;
+                            balance - asset_rate.amount
                         }
                     }
                     AmountOp::GreaterThan => {
                         if balance > asset_rate.amount {
-                            balance
+                            asset_rate.amount
                         } else {
-                            -balance
+                            can_do_exchange = false;
+                            balance - asset_rate.amount
                         }
                     }
                     AmountOp::LessEqualThan => {
                         if balance <= asset_rate.amount {
-                            balance
+                            asset_rate.amount
                         } else {
-                            -balance
+                            can_do_exchange = false;
+                            asset_rate.amount - balance
                         }
                     }
                     AmountOp::LessThan => {
                         if balance < asset_rate.amount {
-                            balance
+                            asset_rate.amount
                         } else {
-                            -balance
+                            can_do_exchange = false;
+                            asset_rate.amount - balance
                         }
                     }
                 };
@@ -513,26 +562,26 @@ impl<T: Config> Pallet<T> {
                     ),
                     balance,
                 );
-                let amount = asset_rate
-                    .amount
-                    .checked_mul(total_amount)
-                    .ok_or(Error::<T>::Overflow)?;
-                if let Some(price) = prices.get_mut(&(
-                    asset_rate.from.clone(),
-                    asset_rate.class_id,
-                    asset_rate.asset_id,
-                )) {
-                    *price = price.checked_add(amount).ok_or(Error::<T>::Overflow)?;
-                } else {
-                    prices.insert(
-                        (
-                            asset_rate.from.clone(),
-                            asset_rate.class_id,
-                            asset_rate.asset_id,
-                        ),
-                        amount,
-                    );
-                }
+            }
+            let amount = asset_rate
+                .amount
+                .checked_mul(total_amount)
+                .ok_or(Error::<T>::Overflow)?;
+            if let Some(price) = prices.get_mut(&(
+                asset_rate.from.clone(),
+                asset_rate.class_id,
+                asset_rate.asset_id,
+            )) {
+                *price = price.checked_add(amount).ok_or(Error::<T>::Overflow)?;
+            } else {
+                prices.insert(
+                    (
+                        asset_rate.from.clone(),
+                        asset_rate.class_id,
+                        asset_rate.asset_id,
+                    ),
+                    amount,
+                );
             }
         }
 
@@ -556,6 +605,7 @@ impl<T: Config> Pallet<T> {
                     .ok_or(Error::<T>::InvalidBurnBalance)?;
                 *balance = balance.checked_sub(*price).ok_or(Error::<T>::Overflow)?;
                 if *balance < 0 {
+                    can_do_exchange = false;
                     exchange_balances.insert(asset_rate.clone(), *balance);
                 } else {
                     exchange_balances.insert(asset_rate.clone(), *price);
@@ -583,6 +633,7 @@ impl<T: Config> Pallet<T> {
                     .ok_or(Error::<T>::InvalidTransferBalance)?;
                 *balance = balance.checked_sub(*price).ok_or(Error::<T>::Overflow)?;
                 if *balance < 0 {
+                    can_do_exchange = false;
                     exchange_balances.insert(asset_rate.clone(), *balance);
                 } else {
                     exchange_balances.insert(asset_rate.clone(), *price);
@@ -590,12 +641,18 @@ impl<T: Config> Pallet<T> {
             }
         }
 
-        let mut can_do_exchange = true;
+        // RateAction::Mint - Compute total mints
 
-        for (_, exchange_balance) in &exchange_balances {
-            if *exchange_balance < 0 {
-                can_do_exchange = false;
-                break;
+        for asset_rate in market_rate.rates.iter() {
+            if let RateAction::Mint = &asset_rate.action {
+                let price = prices
+                    .get(&(
+                        asset_rate.from.clone(),
+                        asset_rate.class_id,
+                        asset_rate.asset_id,
+                    ))
+                    .ok_or(Error::<T>::InvalidBurnPrice)?;
+                exchange_balances.insert(asset_rate.clone(), *price);
             }
         }
 
@@ -658,6 +715,14 @@ impl<T: Config> Pallet<T> {
                 _ => (),
             }
         }
+
+        Self::deposit_event(Event::Exchanged {
+            buyer: buyer.clone(),
+            market_id,
+            market_rate_id,
+            amount,
+            balances: exchange_balances,
+        });
 
         Ok(().into())
     }
