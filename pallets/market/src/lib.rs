@@ -203,6 +203,48 @@ pub mod pallet {
 
             Ok(().into())
         }
+
+        #[pallet::weight(10_000)]
+        pub fn create_market_rate(
+            origin: OriginFor<T>,
+            market_id: T::MarketId,
+            market_rate_id: T::MarketRateId,
+            market_rate: MarketRate<T::AccountId, T::ClassId, T::AssetId>,
+        ) -> DispatchResultWithPostInfo {
+            let who = ensure_signed(origin)?;
+
+            Self::do_create_market_rate(&who, market_id, market_rate_id, &market_rate)?;
+
+            Ok(().into())
+        }
+
+        #[pallet::weight(10_000)]
+        pub fn deposit_assets(
+            origin: OriginFor<T>,
+            market_id: T::MarketId,
+            market_rate_id: T::MarketRateId,
+            amount: Balance,
+        ) -> DispatchResultWithPostInfo {
+            let who = ensure_signed(origin)?;
+
+            Self::do_deposit_assets(&who, market_id, market_rate_id, amount)?;
+
+            Ok(().into())
+        }
+
+        #[pallet::weight(10_000)]
+        pub fn exchange_assets(
+            origin: OriginFor<T>,
+            market_id: T::MarketId,
+            market_rate_id: T::MarketRateId,
+            amount: Balance,
+        ) -> DispatchResultWithPostInfo {
+            let who = ensure_signed(origin)?;
+
+            Self::do_exchange_assets(&who, market_id, market_rate_id, amount)?;
+
+            Ok(().into())
+        }
     }
 }
 

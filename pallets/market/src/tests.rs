@@ -316,14 +316,6 @@ fn compute_exchange_insufficient() {
         assert_ok!(Market::do_create_market_rate(&2, 2000, 100, &market_rate));
         assert_ok!(Market::do_deposit_assets(&2, 2000, 100, 4));
 
-        assert_ok!(Asset::do_batch_mint(
-            &1,
-            &3,
-            2000,
-            vec![1, 2,],
-            vec![100, 100],
-        ));
-
         let result = Market::do_compute_exchange(&3, 2000, 100, 3);
         if let Ok((can_do_exchange, balances)) = result {
             assert_eq!(can_do_exchange, false);
@@ -365,7 +357,13 @@ fn compute_exchange_sufficient() {
             vec![10000, 50, 300],
         ));
 
-        assert_ok!(Asset::do_batch_mint(&1, &3, 4000, vec![1], vec![10],));
+        assert_ok!(Asset::do_batch_mint(
+            &1,
+            &3,
+            4000,
+            vec![1, 2],
+            vec![100, 100],
+        ));
 
         let result = Market::do_compute_exchange(&3, 2000, 100, 3);
         if let Ok((can_do_exchange, balances)) = result {
