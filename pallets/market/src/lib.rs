@@ -5,7 +5,7 @@ use frame_support::{
     dispatch::{DispatchError, DispatchResult},
     ensure,
     traits::Get,
-    PalletId,
+    BoundedVec, PalletId,
 };
 use scale_info::TypeInfo;
 use sp_runtime::{
@@ -60,16 +60,16 @@ pub struct AssetRate<AccountId, ClassId, AssetId> {
     to: RateAccount<AccountId>,
 }
 
-#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
-pub struct MarketRate<AccountId, ClassId, AssetId> {
-    rates: Vec<AssetRate<AccountId, ClassId, AssetId>>,
-    metadata: Vec<u8>,
-}
+pub type Rates<T> = BoundedVec<
+    AssetRate<
+        <T as frame_system::Config>::AccountId,
+        <T as sugarfunge_asset::Config>::ClassId,
+        <T as sugarfunge_asset::Config>::AssetId,
+    >,
+    <T as Config>::MaxRates,
+>;
 
-type ExchangeBalances<AccountId, ClassId, AssetId> =
-    BTreeMap<AssetRate<AccountId, ClassId, AssetId>, Amount>;
-
-type DepositBalances<AccountId, ClassId, AssetId> =
+pub type RateBalances<AccountId, ClassId, AssetId> =
     BTreeMap<AssetRate<AccountId, ClassId, AssetId>, Amount>;
 
 type TransactionBalances<AccountId, ClassId, AssetId> =
@@ -109,6 +109,14 @@ pub mod pallet {
             + Copy
             + From<u64>
             + Into<u64>;
+
+        /// Max number of rates per market_rate
+        #[pallet::constant]
+        type MaxRates: Get<u32>;
+
+        /// Max metadata size
+        #[pallet::constant]
+        type MaxMetadata: Get<u32>;
     }
 
     #[pallet::pallet]
@@ -128,7 +136,18 @@ pub mod pallet {
             NMapKey<Blake2_128Concat, T::MarketId>,
             NMapKey<Blake2_128Concat, T::MarketRateId>,
         ),
-        MarketRate<T::AccountId, T::ClassId, T::AssetId>,
+        Rates<T>,
+    >;
+
+    #[pallet::storage]
+    #[pallet::getter(fn market_rates_metadata)]
+    pub(super) type MarketRatesMetadata<T: Config> = StorageNMap<
+        _,
+        (
+            NMapKey<Blake2_128Concat, T::MarketId>,
+            NMapKey<Blake2_128Concat, T::MarketRateId>,
+        ),
+        BoundedVec<u8, <T as Config>::MaxMetadata>,
     >;
 
     #[pallet::event]
@@ -148,23 +167,16 @@ pub mod pallet {
             market_id: T::MarketId,
             market_rate_id: T::MarketRateId,
             amount: Balance,
-            balances: ExchangeBalances<T::AccountId, T::ClassId, T::AssetId>,
+            // balances: RateBalances<T::AccountId, T::ClassId, T::AssetId>,
         },
         Exchanged {
             buyer: T::AccountId,
             market_id: T::MarketId,
             market_rate_id: T::MarketRateId,
             amount: Balance,
-            balances: ExchangeBalances<T::AccountId, T::ClassId, T::AssetId>,
+            // balances: RateBalances<T::AccountId, T::ClassId, T::AssetId>,
         },
     }
-
-    // pub fn do_compute_exchange(
-    //     buyer: &T::AccountId,
-    //     market_id: T::MarketId,
-    //     market_rate_id: T::MarketRateId,
-    //     amount: Balance,
-    // ) -> Result<(bool, ExchangeBalances<T::AccountId, T::ClassId, T::AssetId>), DispatchError> {
 
     #[pallet::error]
     pub enum Error<T> {
@@ -209,11 +221,11 @@ pub mod pallet {
             origin: OriginFor<T>,
             market_id: T::MarketId,
             market_rate_id: T::MarketRateId,
-            market_rate: MarketRate<T::AccountId, T::ClassId, T::AssetId>,
+            rates: Rates<T>,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
 
-            Self::do_create_market_rate(&who, market_id, market_rate_id, &market_rate)?;
+            Self::do_create_market_rate(&who, market_id, market_rate_id, &rates)?;
 
             Ok(().into())
         }
@@ -285,7 +297,7 @@ impl<T: Config> Pallet<T> {
         who: &T::AccountId,
         market_id: T::MarketId,
         market_rate_id: T::MarketRateId,
-        market_rate: &MarketRate<T::AccountId, T::ClassId, T::AssetId>,
+        rates: &Rates<T>,
     ) -> DispatchResult {
         let market = Markets::<T>::get(market_id).ok_or(Error::<T>::InvalidMarket)?;
         ensure!(*who == market.owner, Error::<T>::InvalidMarketOwner);
@@ -296,11 +308,11 @@ impl<T: Config> Pallet<T> {
         );
 
         // Ensure rates are valid
-        for asset_rate in market_rate.rates.iter() {
+        for asset_rate in rates.iter() {
             ensure!(asset_rate.amount >= 0, Error::<T>::InvalidRateAmount);
         }
 
-        MarketRates::<T>::insert((market_id, market_rate_id), market_rate);
+        MarketRates::<T>::insert((market_id, market_rate_id), rates);
 
         Self::deposit_event(Event::RateCreated {
             market_id,
@@ -316,15 +328,14 @@ impl<T: Config> Pallet<T> {
         market_id: T::MarketId,
         market_rate_id: T::MarketRateId,
         amount: Balance,
-    ) -> Result<(bool, DepositBalances<T::AccountId, T::ClassId, T::AssetId>), DispatchError> {
+    ) -> Result<(bool, RateBalances<T::AccountId, T::ClassId, T::AssetId>), DispatchError> {
         let market = Markets::<T>::get(market_id).ok_or(Error::<T>::InvalidMarket)?;
-        let market_rate = MarketRates::<T>::get((market_id, market_rate_id))
+        let rates = MarketRates::<T>::get((market_id, market_rate_id))
             .ok_or(Error::<T>::InvalidMarketRate)?;
 
         ensure!(*who == market.owner, Error::<T>::InvalidMarketOwner);
 
-        let mut deposit_balances: DepositBalances<T::AccountId, T::ClassId, T::AssetId> =
-            BTreeMap::new();
+        let mut deposit_balances = BTreeMap::new();
 
         // RateAction::Transfer|Burn - Aggregate transferable prices and balances
 
@@ -335,7 +346,7 @@ impl<T: Config> Pallet<T> {
 
         let total_amount: i128 = amount.try_into().map_err(|_| Error::<T>::Overflow)?;
 
-        let asset_rates = market_rate.rates.into_iter().filter(|asset_rate| {
+        let asset_rates = rates.into_iter().filter(|asset_rate| {
             asset_rate.from == RateAccount::Market
                 && (asset_rate.action == RateAction::Transfer
                     || asset_rate.action == RateAction::Burn)
@@ -482,7 +493,7 @@ impl<T: Config> Pallet<T> {
             market_id,
             market_rate_id,
             amount,
-            balances: deposit_balances,
+            // balances: deposit_balances,
         });
 
         Ok(().into())
@@ -493,21 +504,20 @@ impl<T: Config> Pallet<T> {
         market_id: T::MarketId,
         market_rate_id: T::MarketRateId,
         amount: Balance,
-    ) -> Result<(bool, ExchangeBalances<T::AccountId, T::ClassId, T::AssetId>), DispatchError> {
+    ) -> Result<(bool, RateBalances<T::AccountId, T::ClassId, T::AssetId>), DispatchError> {
         ensure!(amount > 0, Error::<T>::InsufficientAmount);
 
         let market = Markets::<T>::get(market_id).ok_or(Error::<T>::InvalidMarket)?;
-        let market_rate = MarketRates::<T>::get((market_id, market_rate_id))
+        let rates = MarketRates::<T>::get((market_id, market_rate_id))
             .ok_or(Error::<T>::InvalidMarketRate)?;
 
-        let mut exchange_balances: ExchangeBalances<T::AccountId, T::ClassId, T::AssetId> =
-            BTreeMap::new();
+        let mut exchange_balances = BTreeMap::new();
 
         let mut can_do_exchange = true;
 
         // RateAction::Has - Prove parties possess non-transferable assets
 
-        for asset_rate in market_rate.rates.iter() {
+        for asset_rate in rates.iter() {
             if let RateAction::Has(op) = &asset_rate.action {
                 let target_account = match &asset_rate.from {
                     RateAccount::Account(account) => account,
@@ -576,7 +586,7 @@ impl<T: Config> Pallet<T> {
 
         let total_amount: i128 = amount.try_into().map_err(|_| Error::<T>::Overflow)?;
 
-        for asset_rate in market_rate.rates.iter() {
+        for asset_rate in rates.iter() {
             let balance = match &asset_rate.action {
                 RateAction::Transfer | RateAction::Burn => {
                     let target_account = match &asset_rate.from {
@@ -629,7 +639,7 @@ impl<T: Config> Pallet<T> {
 
         // RateAction::Burn - Compute total burns
 
-        for asset_rate in market_rate.rates.iter() {
+        for asset_rate in rates.iter() {
             if let RateAction::Burn = &asset_rate.action {
                 let price = prices
                     .get(&(
@@ -657,7 +667,7 @@ impl<T: Config> Pallet<T> {
 
         // RateAction::Transfer - Compute total transfers
 
-        for asset_rate in market_rate.rates.iter() {
+        for asset_rate in rates.iter() {
             if let RateAction::Transfer = &asset_rate.action {
                 let price = prices
                     .get(&(
@@ -685,7 +695,7 @@ impl<T: Config> Pallet<T> {
 
         // RateAction::Mint - Compute total mints
 
-        for asset_rate in market_rate.rates.iter() {
+        for asset_rate in rates.iter() {
             if let RateAction::Mint = &asset_rate.action {
                 let price = prices
                     .get(&(
@@ -763,7 +773,7 @@ impl<T: Config> Pallet<T> {
             market_id,
             market_rate_id,
             amount,
-            balances: exchange_balances,
+            // balances: exchange_balances,
         });
 
         Ok(().into())

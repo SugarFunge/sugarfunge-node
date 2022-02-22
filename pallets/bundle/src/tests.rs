@@ -1,7 +1,6 @@
 use crate::{mock::*, BundleSchema, Error};
 use frame_support::{assert_err, assert_ok, BoundedVec};
 use sp_runtime::traits::{BlakeTwo256, Hash};
-use sp_std::prelude::*;
 
 fn last_event() -> Event {
     frame_system::Pallet::<Test>::events()
