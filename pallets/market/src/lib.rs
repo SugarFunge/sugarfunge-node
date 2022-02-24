@@ -43,14 +43,14 @@ pub enum RateAction {
     Has(AmountOp),
 }
 
-#[derive(Encode, Decode, Clone, Eq, PartialEq, Ord, PartialOrd, RuntimeDebug, TypeInfo)]
+#[derive(Encode, Decode, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, RuntimeDebug, TypeInfo)]
 pub enum RateAccount<AccountId> {
     Market,
     Account(AccountId),
     Buyer,
 }
 
-#[derive(Encode, Decode, Clone, Eq, PartialEq, Ord, PartialOrd, RuntimeDebug, TypeInfo)]
+#[derive(Encode, Decode, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, RuntimeDebug, TypeInfo)]
 pub struct AssetRate<AccountId, ClassId, AssetId> {
     class_id: ClassId,
     asset_id: AssetId,
@@ -69,11 +69,29 @@ pub type Rates<T> = BoundedVec<
     <T as Config>::MaxRates,
 >;
 
-pub type RateBalances<AccountId, ClassId, AssetId> =
-    BTreeMap<AssetRate<AccountId, ClassId, AssetId>, Amount>;
+pub type RateBalances<T> = BTreeMap<
+    AssetRate<
+        <T as frame_system::Config>::AccountId,
+        <T as sugarfunge_asset::Config>::ClassId,
+        <T as sugarfunge_asset::Config>::AssetId,
+    >,
+    Amount,
+>;
 
-type TransactionBalances<AccountId, ClassId, AssetId> =
-    BTreeMap<(RateAccount<AccountId>, ClassId, AssetId), Amount>;
+type TransactionBalances<T> = BTreeMap<
+    (
+        RateAccount<<T as frame_system::Config>::AccountId>,
+        <T as sugarfunge_asset::Config>::ClassId,
+        <T as sugarfunge_asset::Config>::AssetId,
+    ),
+    Amount,
+>;
+
+#[derive(Encode, Decode, Clone, Eq, PartialEq, Ord, PartialOrd, RuntimeDebug, TypeInfo)]
+pub struct RateBalance<AccountId, ClassId, AssetId> {
+    rate: AssetRate<AccountId, ClassId, AssetId>,
+    balance: Amount,
+}
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -167,14 +185,16 @@ pub mod pallet {
             market_id: T::MarketId,
             market_rate_id: T::MarketRateId,
             amount: Balance,
-            // balances: RateBalances<T::AccountId, T::ClassId, T::AssetId>,
+            balances: Vec<RateBalance<T::AccountId, T::ClassId, T::AssetId>>,
+            success: bool,
         },
         Exchanged {
             buyer: T::AccountId,
             market_id: T::MarketId,
             market_rate_id: T::MarketRateId,
             amount: Balance,
-            // balances: RateBalances<T::AccountId, T::ClassId, T::AssetId>,
+            balances: Vec<RateBalance<T::AccountId, T::ClassId, T::AssetId>>,
+            success: bool,
         },
     }
 
@@ -328,7 +348,7 @@ impl<T: Config> Pallet<T> {
         market_id: T::MarketId,
         market_rate_id: T::MarketRateId,
         amount: Balance,
-    ) -> Result<(bool, RateBalances<T::AccountId, T::ClassId, T::AssetId>), DispatchError> {
+    ) -> Result<(bool, RateBalances<T>), DispatchError> {
         let market = Markets::<T>::get(market_id).ok_or(Error::<T>::InvalidMarket)?;
         let rates = MarketRates::<T>::get((market_id, market_rate_id))
             .ok_or(Error::<T>::InvalidMarketRate)?;
@@ -339,10 +359,9 @@ impl<T: Config> Pallet<T> {
 
         // RateAction::Transfer|Burn - Aggregate transferable prices and balances
 
-        let mut balances: TransactionBalances<T::AccountId, T::ClassId, T::AssetId> =
-            BTreeMap::new();
+        let mut balances: TransactionBalances<T> = BTreeMap::new();
 
-        let mut prices: TransactionBalances<T::AccountId, T::ClassId, T::AssetId> = BTreeMap::new();
+        let mut prices: TransactionBalances<T> = BTreeMap::new();
 
         let total_amount: i128 = amount.try_into().map_err(|_| Error::<T>::Overflow)?;
 
@@ -474,26 +493,35 @@ impl<T: Config> Pallet<T> {
         let (can_do_deposit, deposit_balances) =
             Self::do_compute_deposit(who, market_id, market_rate_id, amount)?;
 
-        ensure!(can_do_deposit, Error::<T>::InsufficientAmount);
-
-        for (asset_rate, amount) in &deposit_balances {
-            let amount: u128 = (*amount).try_into().map_err(|_| Error::<T>::Overflow)?;
-            sugarfunge_asset::Pallet::<T>::do_transfer_from(
-                &market.owner,
-                &market.owner,
-                &market.vault,
-                asset_rate.class_id,
-                asset_rate.asset_id,
-                amount,
-            )?
+        if can_do_deposit {
+            for (asset_rate, amount) in &deposit_balances {
+                let amount: u128 = (*amount).try_into().map_err(|_| Error::<T>::Overflow)?;
+                sugarfunge_asset::Pallet::<T>::do_transfer_from(
+                    &market.owner,
+                    &market.owner,
+                    &market.vault,
+                    asset_rate.class_id,
+                    asset_rate.asset_id,
+                    amount,
+                )?
+            }
         }
+
+        let balances = deposit_balances
+            .iter()
+            .map(|(rate, balance)| RateBalance {
+                rate: rate.clone(),
+                balance: *balance,
+            })
+            .collect();
 
         Self::deposit_event(Event::Deposit {
             who: who.clone(),
             market_id,
             market_rate_id,
             amount,
-            // balances: deposit_balances,
+            balances,
+            success: can_do_deposit,
         });
 
         Ok(().into())
@@ -504,7 +532,7 @@ impl<T: Config> Pallet<T> {
         market_id: T::MarketId,
         market_rate_id: T::MarketRateId,
         amount: Balance,
-    ) -> Result<(bool, RateBalances<T::AccountId, T::ClassId, T::AssetId>), DispatchError> {
+    ) -> Result<(bool, RateBalances<T>), DispatchError> {
         ensure!(amount > 0, Error::<T>::InsufficientAmount);
 
         let market = Markets::<T>::get(market_id).ok_or(Error::<T>::InvalidMarket)?;
@@ -579,10 +607,9 @@ impl<T: Config> Pallet<T> {
 
         // RateAction::Transfer|Burn - Aggregate transferable prices and balances
 
-        let mut balances: TransactionBalances<T::AccountId, T::ClassId, T::AssetId> =
-            BTreeMap::new();
+        let mut balances: TransactionBalances<T> = BTreeMap::new();
 
-        let mut prices: TransactionBalances<T::AccountId, T::ClassId, T::AssetId> = BTreeMap::new();
+        let mut prices: TransactionBalances<T> = BTreeMap::new();
 
         let total_amount: i128 = amount.try_into().map_err(|_| Error::<T>::Overflow)?;
 
@@ -727,53 +754,62 @@ impl<T: Config> Pallet<T> {
         let (can_do_exchange, exchange_balances) =
             Self::do_compute_exchange(buyer, market_id, market_rate_id, amount)?;
 
-        ensure!(can_do_exchange, Error::<T>::InsufficientAmount);
-
-        for (asset_rate, amount) in &exchange_balances {
-            let amount: u128 = (*amount).try_into().map_err(|_| Error::<T>::Overflow)?;
-            let from = match &asset_rate.from {
-                RateAccount::Account(account) => account,
-                RateAccount::Buyer => buyer,
-                RateAccount::Market => &market.vault,
-            };
-            let to = match &asset_rate.to {
-                RateAccount::Account(account) => account,
-                RateAccount::Buyer => buyer,
-                RateAccount::Market => &market.vault,
-            };
-            match asset_rate.action {
-                RateAction::Transfer => sugarfunge_asset::Pallet::<T>::do_transfer_from(
-                    &market.owner,
-                    from,
-                    to,
-                    asset_rate.class_id,
-                    asset_rate.asset_id,
-                    amount,
-                )?,
-                RateAction::Burn => sugarfunge_asset::Pallet::<T>::do_burn(
-                    &market.owner,
-                    from,
-                    asset_rate.class_id,
-                    asset_rate.asset_id,
-                    amount,
-                )?,
-                RateAction::Mint => sugarfunge_asset::Pallet::<T>::do_mint(
-                    &market.owner,
-                    to,
-                    asset_rate.class_id,
-                    asset_rate.asset_id,
-                    amount,
-                )?,
-                _ => (),
+        if can_do_exchange {
+            for (asset_rate, amount) in &exchange_balances {
+                let amount: u128 = (*amount).try_into().map_err(|_| Error::<T>::Overflow)?;
+                let from = match &asset_rate.from {
+                    RateAccount::Account(account) => account,
+                    RateAccount::Buyer => buyer,
+                    RateAccount::Market => &market.vault,
+                };
+                let to = match &asset_rate.to {
+                    RateAccount::Account(account) => account,
+                    RateAccount::Buyer => buyer,
+                    RateAccount::Market => &market.vault,
+                };
+                match asset_rate.action {
+                    RateAction::Transfer => sugarfunge_asset::Pallet::<T>::do_transfer_from(
+                        &market.owner,
+                        from,
+                        to,
+                        asset_rate.class_id,
+                        asset_rate.asset_id,
+                        amount,
+                    )?,
+                    RateAction::Burn => sugarfunge_asset::Pallet::<T>::do_burn(
+                        &market.owner,
+                        from,
+                        asset_rate.class_id,
+                        asset_rate.asset_id,
+                        amount,
+                    )?,
+                    RateAction::Mint => sugarfunge_asset::Pallet::<T>::do_mint(
+                        &market.owner,
+                        to,
+                        asset_rate.class_id,
+                        asset_rate.asset_id,
+                        amount,
+                    )?,
+                    _ => (),
+                }
             }
         }
+
+        let balances = exchange_balances
+            .iter()
+            .map(|(rate, balance)| RateBalance {
+                rate: rate.clone(),
+                balance: *balance,
+            })
+            .collect();
 
         Self::deposit_event(Event::Exchanged {
             buyer: buyer.clone(),
             market_id,
             market_rate_id,
             amount,
-            // balances: exchange_balances,
+            balances,
+            success: can_do_exchange,
         });
 
         Ok(().into())
