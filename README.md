@@ -9,7 +9,7 @@ Read more about [Owned Economies](https://github.com/SugarFunge/OwnedEconomies).
 
 alice:
 ```
-cargo run --release -- --chain=local --alice --base-path=~/tmp/a --port=30334 --ws-port 9944 --ws-external --rpc-cors=all --rpc-methods=Unsafe --rpc-external &
+cargo run --release -- --chain=local --alice --base-path=~/tmp/a --port=30334 --ws-port 9944 --ws-external --rpc-cors=all --rpc-methods=Unsafe --rpc-external
 ```
 
 bob:

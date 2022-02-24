@@ -400,6 +400,8 @@ impl sugarfunge_dao::Config for Runtime {
 
 parameter_types! {
     pub const MaxAssets: u32 = 20;
+    pub const MaxRates: u32 = 20;
+    pub const MaxMetadata: u32 = 256;
 }
 
 impl sugarfunge_bundle::Config for Runtime {
@@ -425,6 +427,8 @@ impl sugarfunge_market::Config for Runtime {
     type PalletId = MarketModuleId;
     type MarketId = u64;
     type MarketRateId = u64;
+    type MaxRates = MaxRates;
+    type MaxMetadata = MaxMetadata;
 }
 
 construct_runtime!(
