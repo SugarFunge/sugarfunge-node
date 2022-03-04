@@ -87,7 +87,7 @@ type TransactionBalances<T> = BTreeMap<
     Amount,
 >;
 
-#[derive(Encode, Decode, Clone, Eq, PartialEq, Ord, PartialOrd, RuntimeDebug, TypeInfo)]
+#[derive(Encode, Decode, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, RuntimeDebug, TypeInfo)]
 pub struct RateBalance<AccountId, ClassId, AssetId> {
     rate: AssetRate<AccountId, ClassId, AssetId>,
     balance: Amount,
