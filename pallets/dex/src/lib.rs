@@ -1,6 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use codec::{Decode, Encode};
+use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{
     dispatch::{DispatchError, DispatchResult},
     ensure,
@@ -178,7 +178,7 @@ pub mod pallet {
                 &fund_account,
                 &fund_account,
                 lp_class_id,
-                [].to_vec(),
+                vec![].try_into().unwrap(),
             )?;
 
             let (currency_class_id, currency_asset_id) =
@@ -296,7 +296,7 @@ pub mod pallet {
     }
 }
 
-#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
+#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 pub struct Exchange<ClassId, AssetId, AccountId> {
     /// The creator of Exchange
     pub creator: AccountId,

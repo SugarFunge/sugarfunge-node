@@ -1,6 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use codec::{Decode, Encode};
+use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{
     dispatch::DispatchResult,
     ensure,
@@ -65,18 +65,23 @@ pub mod pallet {
         type Currency: Currency<Self::AccountId> + ReservableCurrency<Self::AccountId>;
     }
 
+    pub type BundleMetadataOf<T> =
+        BoundedVec<u8, <T as sugarfunge_asset::Config>::MaxClassMetadata>;
+    pub type BundleOf<T> = Bundle<
+        <T as sugarfunge_asset::Config>::ClassId,
+        <T as sugarfunge_asset::Config>::AssetId,
+        BundleSchema<T>,
+        <T as frame_system::Config>::AccountId,
+        BundleMetadataOf<T>,
+    >;
+
     #[pallet::pallet]
     #[pallet::generate_store(pub(super) trait Store)]
     pub struct Pallet<T>(_);
 
     #[pallet::storage]
     #[pallet::getter(fn bundles)]
-    pub(super) type Bundles<T: Config> = StorageMap<
-        _,
-        Blake2_128Concat,
-        BundleId,
-        Bundle<T::ClassId, T::AssetId, BundleSchema<T>, T::AccountId>,
-    >;
+    pub(super) type Bundles<T: Config> = StorageMap<_, Blake2_128Concat, BundleId, BundleOf<T>>;
 
     #[pallet::storage]
     #[pallet::getter(fn asset_bundles)]
@@ -145,7 +150,7 @@ pub mod pallet {
             asset_id: T::AssetId,
             bundle_id: BundleId,
             schema: BundleSchema<T>,
-            metadata: Vec<u8>,
+            metadata: BundleMetadataOf<T>,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
 
@@ -186,8 +191,8 @@ pub mod pallet {
     }
 }
 
-#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
-pub struct Bundle<ClassId, AssetId, BundleSchema, AccountId> {
+#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+pub struct Bundle<ClassId, AssetId, BundleSchema, AccountId, BundleMetadataOf> {
     /// Creator
     creator: AccountId,
     /// IOU asset class
@@ -195,7 +200,7 @@ pub struct Bundle<ClassId, AssetId, BundleSchema, AccountId> {
     /// IOU asset id
     asset_id: AssetId,
     /// Bundle metadata
-    metadata: Vec<u8>,
+    metadata: BundleMetadataOf,
     /// Schema
     schema: BundleSchema,
     /// Vault
@@ -209,7 +214,7 @@ impl<T: Config> Pallet<T> {
         asset_id: T::AssetId,
         bundle_id: BundleId,
         schema: &BundleSchema<T>,
-        metadata: Vec<u8>,
+        metadata: BundleMetadataOf<T>,
     ) -> DispatchResult {
         ensure!(
             BlakeTwo256::hash_of(&schema) == bundle_id,
@@ -236,7 +241,7 @@ impl<T: Config> Pallet<T> {
 
         Bundles::<T>::insert(
             &bundle_id,
-            &Bundle {
+            &BundleOf::<T> {
                 creator: who.clone(),
                 class_id,
                 asset_id,

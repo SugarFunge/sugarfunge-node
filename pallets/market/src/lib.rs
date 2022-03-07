@@ -1,6 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use codec::{Decode, Encode, HasCompact};
+use codec::{Decode, Encode, HasCompact, MaxEncodedLen};
 use frame_support::{
     dispatch::{DispatchError, DispatchResult},
     ensure,
@@ -25,7 +25,19 @@ mod tests;
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
-#[derive(Encode, Decode, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, RuntimeDebug, TypeInfo)]
+#[derive(
+    Encode,
+    Decode,
+    Clone,
+    Copy,
+    Eq,
+    PartialEq,
+    Ord,
+    PartialOrd,
+    RuntimeDebug,
+    TypeInfo,
+    MaxEncodedLen,
+)]
 pub enum AmountOp {
     Equal,
     LessThan,
@@ -34,7 +46,19 @@ pub enum AmountOp {
     GreaterEqualThan,
 }
 
-#[derive(Encode, Decode, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, RuntimeDebug, TypeInfo)]
+#[derive(
+    Encode,
+    Decode,
+    Clone,
+    Copy,
+    Eq,
+    PartialEq,
+    Ord,
+    PartialOrd,
+    RuntimeDebug,
+    TypeInfo,
+    MaxEncodedLen,
+)]
 pub enum RateAction {
     Transfer,
     Mint,
@@ -42,14 +66,38 @@ pub enum RateAction {
     Has(AmountOp),
 }
 
-#[derive(Encode, Decode, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, RuntimeDebug, TypeInfo)]
+#[derive(
+    Encode,
+    Decode,
+    Clone,
+    Copy,
+    Eq,
+    PartialEq,
+    Ord,
+    PartialOrd,
+    RuntimeDebug,
+    TypeInfo,
+    MaxEncodedLen,
+)]
 pub enum RateAccount<AccountId> {
     Market,
     Account(AccountId),
     Buyer,
 }
 
-#[derive(Encode, Decode, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, RuntimeDebug, TypeInfo)]
+#[derive(
+    Encode,
+    Decode,
+    Clone,
+    Copy,
+    Eq,
+    PartialEq,
+    Ord,
+    PartialOrd,
+    RuntimeDebug,
+    TypeInfo,
+    MaxEncodedLen,
+)]
 pub struct AssetRate<AccountId, ClassId, AssetId> {
     class_id: ClassId,
     asset_id: AssetId,
@@ -86,7 +134,7 @@ type TransactionBalances<T> = BTreeMap<
     Amount,
 >;
 
-#[derive(Encode, Decode, Clone, Eq, PartialEq, Ord, PartialOrd, RuntimeDebug, TypeInfo)]
+#[derive(Encode, Decode, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, RuntimeDebug, TypeInfo)]
 pub struct RateBalance<AccountId, ClassId, AssetId> {
     rate: AssetRate<AccountId, ClassId, AssetId>,
     balance: Amount,
@@ -115,7 +163,8 @@ pub mod pallet {
             + Default
             + Copy
             + From<u64>
-            + Into<u64>;
+            + Into<u64>
+            + MaxEncodedLen;
 
         type MarketRateId: Member
             + Parameter
@@ -125,7 +174,8 @@ pub mod pallet {
             + Default
             + Copy
             + From<u64>
-            + Into<u64>;
+            + Into<u64>
+            + MaxEncodedLen;
 
         /// Max number of rates per market_rate
         #[pallet::constant]
@@ -279,7 +329,7 @@ pub mod pallet {
     }
 }
 
-#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
+#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 pub struct Market<AccountId> {
     /// The owner of the market
     pub owner: AccountId,

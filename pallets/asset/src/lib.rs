@@ -1,10 +1,11 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use codec::{Decode, Encode, HasCompact};
+use codec::{Decode, Encode, HasCompact, MaxEncodedLen};
 use frame_support::{
     dispatch::{DispatchError, DispatchResult},
     ensure,
     traits::{Currency, Get, ReservableCurrency},
+    BoundedVec,
 };
 use scale_info::TypeInfo;
 use sp_runtime::{
@@ -25,17 +26,17 @@ mod tests;
 type BalanceOf<T> =
     <<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
-#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
-pub struct Class<AccountId> {
+#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+pub struct Class<AccountId, ClassMetadataOf> {
     owner: AccountId,
-    metadata: Vec<u8>,
+    metadata: ClassMetadataOf,
 }
 
-#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
-pub struct Asset<ClassId, AccountId> {
+#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+pub struct Asset<ClassId, AccountId, AssetMetadataOf> {
     class_id: ClassId,
     creator: AccountId,
-    metadata: Vec<u8>,
+    metadata: AssetMetadataOf,
 }
 
 #[frame_support::pallet]
@@ -62,7 +63,8 @@ pub mod pallet {
             + Default
             + Copy
             + From<u64>
-            + Into<u64>;
+            + Into<u64>
+            + MaxEncodedLen;
 
         type AssetId: Member
             + Parameter
@@ -72,26 +74,33 @@ pub mod pallet {
             + Default
             + Copy
             + From<u64>
-            + Into<u64>;
+            + Into<u64>
+            + MaxEncodedLen;
+
+        #[pallet::constant]
+        type MaxClassMetadata: Get<u32>;
+
+        #[pallet::constant]
+        type MaxAssetMetadata: Get<u32>;
     }
+
+    pub type ClassMetadataOf<T> = BoundedVec<u8, <T as Config>::MaxClassMetadata>;
+    pub type ClassOf<T> = Class<<T as frame_system::Config>::AccountId, ClassMetadataOf<T>>;
+
+    pub type AssetMetadataOf<T> = BoundedVec<u8, <T as Config>::MaxAssetMetadata>;
+    pub type AssetOf<T> =
+        Asset<<T as Config>::ClassId, <T as frame_system::Config>::AccountId, AssetMetadataOf<T>>;
 
     #[pallet::pallet]
     #[pallet::generate_store(pub(super) trait Store)]
     pub struct Pallet<T>(_);
 
     #[pallet::storage]
-    pub(super) type Classes<T: Config> =
-        StorageMap<_, Blake2_128Concat, T::ClassId, Class<T::AccountId>>;
+    pub(super) type Classes<T: Config> = StorageMap<_, Blake2_128Concat, T::ClassId, ClassOf<T>>;
 
     #[pallet::storage]
-    pub(super) type Assets<T: Config> = StorageDoubleMap<
-        _,
-        Blake2_128Concat,
-        T::ClassId,
-        Blake2_128,
-        T::AssetId,
-        Asset<T::ClassId, T::AccountId>,
-    >;
+    pub(super) type Assets<T: Config> =
+        StorageDoubleMap<_, Blake2_128Concat, T::ClassId, Blake2_128, T::AssetId, AssetOf<T>>;
 
     #[pallet::storage]
     #[pallet::getter(fn asset_count)]
@@ -200,7 +209,7 @@ pub mod pallet {
             origin: OriginFor<T>,
             owner: T::AccountId,
             class_id: T::ClassId,
-            metadata: Vec<u8>,
+            metadata: ClassMetadataOf<T>,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
 
@@ -214,7 +223,7 @@ pub mod pallet {
             origin: OriginFor<T>,
             class_id: T::ClassId,
             asset_id: T::AssetId,
-            metadata: Vec<u8>,
+            metadata: AssetMetadataOf<T>,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
             Self::maybe_check_owner(&who, class_id)?;
@@ -326,7 +335,7 @@ pub mod pallet {
         pub fn update_class_metadata(
             origin: OriginFor<T>,
             class_id: T::ClassId,
-            metadata: Vec<u8>,
+            metadata: ClassMetadataOf<T>,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
 
@@ -340,7 +349,7 @@ pub mod pallet {
             origin: OriginFor<T>,
             class_id: T::ClassId,
             asset_id: T::AssetId,
-            metadata: Vec<u8>,
+            metadata: AssetMetadataOf<T>,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
 
@@ -356,7 +365,7 @@ impl<T: Config> Pallet<T> {
         who: &T::AccountId,
         owner: &T::AccountId,
         class_id: T::ClassId,
-        metadata: Vec<u8>,
+        metadata: ClassMetadataOf<T>,
     ) -> DispatchResult {
         ensure!(
             !Classes::<T>::contains_key(class_id),
@@ -366,7 +375,7 @@ impl<T: Config> Pallet<T> {
         let deposit = T::CreateAssetClassDeposit::get();
         T::Currency::reserve(&who, deposit.clone())?;
 
-        let class = Class {
+        let class = ClassOf::<T> {
             owner: owner.clone(),
             metadata,
         };
@@ -385,7 +394,7 @@ impl<T: Config> Pallet<T> {
         who: &T::AccountId,
         class_id: T::ClassId,
         asset_id: T::AssetId,
-        metadata: Vec<u8>,
+        metadata: AssetMetadataOf<T>,
     ) -> DispatchResult {
         Self::maybe_check_owner(who, class_id)?;
 
@@ -397,7 +406,7 @@ impl<T: Config> Pallet<T> {
         Assets::<T>::insert(
             class_id,
             asset_id,
-            Asset {
+            AssetOf::<T> {
                 class_id,
                 creator: who.clone(),
                 metadata,
@@ -423,7 +432,7 @@ impl<T: Config> Pallet<T> {
     pub fn do_update_class_metadata(
         who: &T::AccountId,
         class_id: T::ClassId,
-        metadata: Vec<u8>,
+        metadata: ClassMetadataOf<T>,
     ) -> DispatchResult {
         Self::maybe_check_owner(who, class_id)?;
         ensure!(
@@ -443,7 +452,7 @@ impl<T: Config> Pallet<T> {
         who: &T::AccountId,
         class_id: T::ClassId,
         asset_id: T::AssetId,
-        metadata: Vec<u8>,
+        metadata: AssetMetadataOf<T>,
     ) -> DispatchResult {
         Self::maybe_check_owner(who, class_id)?;
         ensure!(
