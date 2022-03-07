@@ -1,6 +1,6 @@
 use super::{CurrencyAssets, CurrencyId, Pallet};
 use crate::{mock::*, AssetInfo};
-use frame_support::assert_ok;
+use frame_support::{assert_ok, bounded_vec};
 
 fn last_event() -> Event {
     frame_system::Pallet::<Test>::events()
@@ -17,7 +17,7 @@ fn currency_eth_works() {
             &Pallet::<Test>::account_id(),
             ETH.0.into(),
             ETH.1.into(),
-            vec![]
+            bounded_vec![]
         ));
         assert_ok!(Currency::mint(Origin::signed(1), ETH, 500 * CENTS));
         assert_eq!(
@@ -40,7 +40,7 @@ fn currency_btc_works() {
             &Pallet::<Test>::account_id(),
             BTC.0.into(),
             BTC.1.into(),
-            vec![]
+            bounded_vec![]
         ));
         assert_ok!(Currency::mint(Origin::signed(1), BTC, 500 * CENTS));
         assert_eq!(
@@ -71,14 +71,14 @@ fn issue_and_mint_currency() {
                 amount: 1000000 * DOLLARS as i128,
             },
         ));
-        assert_eq!(Sudo::key(), 1u64);
+        assert_eq!(Sudo::key(), Some(1u64));
         assert_ok!(Sudo::sudo(Origin::signed(1), call));
 
         assert_ok!(Asset::do_create_asset(
             &Pallet::<Test>::account_id(),
             new_currency_id.0.into(),
             new_currency_id.1.into(),
-            vec![]
+            bounded_vec![]
         ));
         assert_ok!(Currency::mint(
             Origin::signed(1),
@@ -150,12 +150,17 @@ fn currency_burn_assets_works() {
         let currency_id = CurrencyId(1000, 0);
 
         // Create asset for new currency
-        assert_ok!(Asset::do_create_class(&1, &1, currency_id.0.into(), vec![]));
+        assert_ok!(Asset::do_create_class(
+            &1,
+            &1,
+            currency_id.0.into(),
+            bounded_vec![]
+        ));
         assert_ok!(Asset::do_create_asset(
             &1,
             currency_id.0.into(),
             currency_id.1.into(),
-            vec![]
+            bounded_vec![]
         ));
 
         // Issue currency
@@ -166,7 +171,7 @@ fn currency_burn_assets_works() {
                 amount: 1000000 * DOLLARS as i128,
             },
         ));
-        assert_eq!(Sudo::key(), 1u64);
+        assert_eq!(Sudo::key(), Some(1u64));
         assert_ok!(Sudo::sudo(Origin::signed(1), call));
 
         // Mint asset and currency

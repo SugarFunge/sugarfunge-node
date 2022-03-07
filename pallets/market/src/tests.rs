@@ -1,5 +1,5 @@
 use crate::{mock::*, AmountOp, AssetRate, Error, RateAccount, RateAction, RateBalance, Rates};
-use frame_support::{assert_noop, assert_ok};
+use frame_support::{assert_noop, assert_ok, bounded_vec};
 use sp_std::prelude::*;
 
 fn last_event() -> Event {
@@ -91,9 +91,9 @@ fn simple_market_rates() -> Rates<Test> {
 pub fn before_market() {
     run_to_block(10);
 
-    assert_ok!(Asset::do_create_class(&1, &1, 2000, [0].to_vec()));
-    assert_ok!(Asset::do_create_class(&1, &1, 3000, [0].to_vec()));
-    assert_ok!(Asset::do_create_class(&1, &1, 4000, [0].to_vec()));
+    assert_ok!(Asset::do_create_class(&1, &1, 2000, bounded_vec![]));
+    assert_ok!(Asset::do_create_class(&1, &1, 3000, bounded_vec![]));
+    assert_ok!(Asset::do_create_class(&1, &1, 4000, bounded_vec![]));
 
     let asset_ids = [1, 2, 3, 4, 5].to_vec();
     let amounts = [100, 200, 300, 400, 500].to_vec();

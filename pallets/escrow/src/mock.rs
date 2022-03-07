@@ -53,6 +53,7 @@ impl frame_system::Config for Test {
     type SystemWeightInfo = ();
     type SS58Prefix = SS58Prefix;
     type OnSetCode = ();
+    type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
 parameter_types! {
@@ -108,6 +109,8 @@ parameter_types! {
     pub const CreateAssetClassDeposit: Balance = 1;
     pub const CreateEscrowDeposit: Balance = 1;
     pub const CreateCurrencyClassDeposit: Balance = 1;
+    pub const MaxClassMetadata: u32 = 1;
+    pub const MaxAssetMetadata: u32 = 1;
 }
 
 impl sugarfunge_asset::Config for Test {
@@ -116,6 +119,8 @@ impl sugarfunge_asset::Config for Test {
     type Currency = Balances;
     type AssetId = u64;
     type ClassId = u64;
+    type MaxClassMetadata = MaxClassMetadata;
+    type MaxAssetMetadata = MaxAssetMetadata;
 }
 
 parameter_types! {
@@ -174,7 +179,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     .assimilate_storage(&mut t)
     .unwrap();
     sugarfunge_currency::GenesisConfig::<Test> {
-        class: (1, 0, 0, [].to_vec()),
+        class: (1, 0, 0, vec![], vec![]),
     }
     .assimilate_storage(&mut t)
     .unwrap();

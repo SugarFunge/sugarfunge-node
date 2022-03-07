@@ -68,6 +68,8 @@ impl orml_tokens::Config for Test {
 
 parameter_types! {
     pub const GetNativeCurrencyId: CurrencyId = SUGAR;
+    pub const MaxClassMetadata: u32 = 1;
+    pub const MaxAssetMetadata: u32 = 1;
 }
 
 impl orml_currencies::Config for Test {
@@ -85,6 +87,8 @@ impl sugarfunge_asset::Config for Test {
     type Currency = Balances;
     type AssetId = u64;
     type ClassId = u64;
+    type MaxClassMetadata = MaxClassMetadata;
+    type MaxAssetMetadata = MaxAssetMetadata;
 }
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
@@ -136,6 +140,7 @@ impl system::Config for Test {
     type SystemWeightInfo = ();
     type SS58Prefix = SS58Prefix;
     type OnSetCode = ();
+    type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
 parameter_types! {
@@ -160,7 +165,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     }
     .assimilate_storage(&mut t)
     .unwrap();
-    pallet_sudo::GenesisConfig::<Test> { key: 1 }
+    pallet_sudo::GenesisConfig::<Test> { key: Some(1) }
         .assimilate_storage(&mut t)
         .unwrap();
     orml_tokens::GenesisConfig::<Test> {
@@ -173,7 +178,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     .assimilate_storage(&mut t)
     .unwrap();
     sugarfunge_currency::GenesisConfig::<Test> {
-        class: (1, 0, 0, [].to_vec()),
+        class: (1, 0, 0, vec![], vec![]),
     }
     .assimilate_storage(&mut t)
     .unwrap();

@@ -95,6 +95,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
     impl_version: 1,
     apis: RUNTIME_API_VERSIONS,
     transaction_version: 1,
+    state_version: 1,
 };
 
 /// The version information used to identify this runtime when compiled natively.
@@ -192,6 +193,7 @@ impl frame_system::Config for Runtime {
     type SS58Prefix = SS58Prefix;
     /// The set code logic, just the default since we're not a parachain.
     type OnSetCode = ();
+    type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
 impl pallet_randomness_collective_flip::Config for Runtime {}
@@ -283,6 +285,7 @@ parameter_types! {
     pub MaximumSchedulerWeight: Weight = Perbill::from_percent(80) *
         RuntimeBlockWeights::get().max_block;
     pub const MaxScheduledPerBlock: u32 = 50;
+    pub const NoPreimagePostponement: Option<u32> = Some(10);
 }
 
 impl pallet_scheduler::Config for Runtime {
@@ -295,6 +298,8 @@ impl pallet_scheduler::Config for Runtime {
     type MaxScheduledPerBlock = MaxScheduledPerBlock;
     type WeightInfo = pallet_scheduler::weights::SubstrateWeight<Runtime>;
     type OriginPrivilegeCmp = EqualPrivilegeOnly;
+    type PreimageProvider = ();
+    type NoPreimagePostponement = NoPreimagePostponement;
 }
 
 parameter_types! {
@@ -305,6 +310,7 @@ impl validator_set::Config for Runtime {
     type Event = Event;
     type AddRemoveOrigin = EnsureRoot<AccountId>;
     type MinAuthorities = MinAuthorities;
+    type MaxAuthorities = MaxAuthorities;
 }
 
 parameter_types! {
@@ -363,12 +369,19 @@ parameter_types! {
     pub const CreateCurrencyClassDeposit: Balance = 500 * MILLICENTS;
 }
 
+parameter_types! {
+    pub const MaxClassMetadata: u32 = 128;
+    pub const MaxAssetMetadata: u32 = 32;
+}
+
 impl sugarfunge_asset::Config for Runtime {
     type Event = Event;
     type CreateAssetClassDeposit = CreateAssetClassDeposit;
     type Currency = Balances;
     type AssetId = u64;
     type ClassId = u64;
+    type MaxClassMetadata = MaxClassMetadata;
+    type MaxAssetMetadata = MaxAssetMetadata;
 }
 
 parameter_types! {

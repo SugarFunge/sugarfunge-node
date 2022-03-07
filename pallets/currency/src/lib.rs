@@ -1,6 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use codec::{Decode, Encode};
+use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{
     dispatch::{DispatchError, DispatchResult},
     traits::Get,
@@ -10,6 +10,7 @@ use orml_traits::{MultiCurrency, MultiCurrencyExtended};
 use scale_info::TypeInfo;
 use sp_runtime::{traits::AccountIdConversion, RuntimeDebug};
 use sp_std::{fmt::Debug, prelude::*};
+use sugarfunge_asset::{AssetMetadataOf, ClassMetadataOf};
 use sugarfunge_primitives::{Balance, CurrencyId};
 
 pub use pallet::*;
@@ -51,6 +52,7 @@ pub mod pallet {
         <T as sugarfunge_asset::Config>::ClassId,
         <T as sugarfunge_asset::Config>::AssetId,
         Vec<u8>,
+        Vec<u8>,
     );
 
     #[pallet::genesis_config]
@@ -61,8 +63,15 @@ pub mod pallet {
     #[cfg(feature = "std")]
     impl<T: Config> Default for GenesisConfig<T> {
         fn default() -> Self {
+            let account = <T as Config>::PalletId::get().into_sub_account(0);
             Self {
-                class: Default::default(),
+                class: (
+                    account,
+                    0u32.into(),
+                    0u32.into(),
+                    vec![0].try_into().unwrap(),
+                    vec![0].try_into().unwrap(),
+                ),
             }
         }
     }
@@ -74,7 +83,8 @@ pub mod pallet {
                 &self.class.0,
                 self.class.1,
                 self.class.2,
-                self.class.3.to_vec(),
+                self.class.3.to_vec().try_into().unwrap(),
+                self.class.4.to_vec().try_into().unwrap(),
             )
             .expect("Create class cannot fail while building genesis");
         }
@@ -226,7 +236,7 @@ pub mod pallet {
     }
 }
 
-#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo)]
+#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 pub struct AssetInfo<Balance: Encode + Decode + Clone + Debug + Eq + PartialEq> {
     total_supply: Balance,
 }
@@ -240,7 +250,8 @@ impl<T: Config> Pallet<T> {
         who: &T::AccountId,
         class_id: T::ClassId,
         asset_id: T::AssetId,
-        data: Vec<u8>,
+        class_metadata: ClassMetadataOf<T>,
+        asset_metadata: AssetMetadataOf<T>,
     ) -> DispatchResult {
         let module_account = Self::account_id();
         let native_currency_id = T::GetNativeCurrencyId::get();
@@ -252,14 +263,14 @@ impl<T: Config> Pallet<T> {
             &module_account,
             &module_account,
             class_id,
-            data.clone(),
+            class_metadata,
         )?;
 
         sugarfunge_asset::Pallet::<T>::do_create_asset(
             &module_account,
             class_id,
             asset_id,
-            data.clone(),
+            asset_metadata,
         )?;
 
         let currency_id = CurrencyId(class_id.into(), asset_id.into());

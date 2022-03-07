@@ -86,6 +86,7 @@ pub fn development_config() -> Result<ChainSpec, String> {
         None,
         // Protocol ID
         None,
+        None,
         // Properties
         Some(
             json!({
@@ -143,6 +144,7 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
         // Telemetry
         None,
         // Protocol ID
+        None,
         None,
         // Properties
         Some(
@@ -202,15 +204,15 @@ fn testnet_genesis(
         },
         // Because the validators are provided by the session pallet,
         // we do not initialize them explicitly for Aura and Grandpa pallets
-		aura: AuraConfig {
-			authorities: vec![],
-		},
-		grandpa: GrandpaConfig {
-			authorities: vec![],
-		},
+        aura: AuraConfig {
+            authorities: vec![],
+        },
+        grandpa: GrandpaConfig {
+            authorities: vec![],
+        },
         sudo: SudoConfig {
             // Assign network admin rights.
-            key: root_key,
+            key: Some(root_key),
         },
         orml_tokens: OrmlTokensConfig {
             balances: endowed_accounts
@@ -229,7 +231,8 @@ fn testnet_genesis(
                 get_account_id_from_seed::<sr25519::Public>("Alice"),
                 0,
                 0,
-                "currency asset class".as_bytes().to_vec(),
+                "native currency class".as_bytes().to_vec(),
+                "native currency asset class".as_bytes().to_vec(),
             ),
         },
     }

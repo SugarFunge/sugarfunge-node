@@ -69,10 +69,13 @@ impl system::Config for Test {
     type SystemWeightInfo = ();
     type SS58Prefix = SS58Prefix;
     type OnSetCode = ();
+    type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
 parameter_types! {
     pub const CreateAssetClassDeposit: Balance = 0;
+    pub const MaxClassMetadata: u32 = 128;
+    pub const MaxAssetMetadata: u32 = 128;
 }
 
 impl sugarfunge_asset::Config for Test {
@@ -81,6 +84,8 @@ impl sugarfunge_asset::Config for Test {
     type Currency = Balances;
     type AssetId = u64;
     type ClassId = u64;
+    type MaxClassMetadata = MaxClassMetadata;
+    type MaxAssetMetadata = MaxAssetMetadata;
 }
 
 // Build genesis storage according to the mock runtime.
