@@ -8,6 +8,7 @@ use frame_support::{
     PalletId,
 };
 use scale_info::TypeInfo;
+use sp_arithmetic::traits::UniqueSaturatedInto;
 use sp_runtime::{traits::AccountIdConversion, RuntimeDebug};
 use sp_std::prelude::*;
 use sugarfunge_primitives::Balance;
@@ -56,7 +57,8 @@ pub mod pallet {
         StorageMap<_, Blake2_128, T::AccountId, Escrow<T::AccountId>>;
 
     #[pallet::storage]
-    pub(super) type NextEscrowId<T: Config> = StorageValue<_, u32, ValueQuery>;
+    pub(super) type NextEscrowId<T: Config> =
+        StorageMap<_, Blake2_128, (T::ClassId, T::AssetId), u32, ValueQuery>;
 
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -99,10 +101,12 @@ pub mod pallet {
         pub fn create_escrow(
             origin: OriginFor<T>,
             owner: T::AccountId,
+            class_id: T::ClassId,
+            asset_id: T::AssetId,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
 
-            Self::do_create_escrow(&who, &owner)?;
+            Self::do_create_escrow(&who, &owner, class_id, asset_id)?;
 
             Ok(().into())
         }
@@ -111,13 +115,13 @@ pub mod pallet {
         pub fn deposit_assets(
             origin: OriginFor<T>,
             escrow: T::AccountId,
-            class_id: T::ClassId,
-            asset_ids: Vec<T::AssetId>,
-            amounts: Vec<Balance>,
+            class_ids: Vec<T::ClassId>,
+            asset_ids: Vec<Vec<T::AssetId>>,
+            amounts: Vec<Vec<Balance>>,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
 
-            Self::do_deposit_assets(&who, &escrow, class_id, asset_ids, amounts)?;
+            Self::do_deposit_assets(&who, &escrow, class_ids, asset_ids, amounts)?;
 
             Ok(().into())
         }
@@ -148,15 +152,20 @@ impl<T: Config> Pallet<T> {
     pub fn do_create_escrow(
         operator: &T::AccountId,
         owner: &T::AccountId,
+        class_id: T::ClassId,
+        asset_id: T::AssetId,
     ) -> Result<T::AccountId, DispatchError> {
-        let next_id = NextEscrowId::<T>::try_mutate(|id| -> Result<u32, DispatchError> {
-            let current_id = *id;
-            *id = *id + 1;
-            Ok(current_id)
-        })?;
+        let next_id = NextEscrowId::<T>::try_mutate(
+            (class_id, asset_id),
+            |id| -> Result<u32, DispatchError> {
+                let current_id = *id;
+                *id = *id + 1;
+                Ok(current_id)
+            },
+        )?;
 
-        let block_number = <frame_system::Pallet<T>>::block_number();
-        let sub = (block_number * 10000u32.into()) + (next_id % 10000).into();
+        let block_number: u32 = <frame_system::Pallet<T>>::block_number().unique_saturated_into();
+        let sub = vec![block_number as u64, class_id.into(), next_id as u64];
         let escrow = <T as Config>::PalletId::get().into_sub_account(sub);
 
         ensure!(
@@ -186,26 +195,37 @@ impl<T: Config> Pallet<T> {
     pub fn do_deposit_assets(
         who: &T::AccountId,
         escrow: &T::AccountId,
-        class_id: T::ClassId,
-        asset_ids: Vec<T::AssetId>,
-        amounts: Vec<Balance>,
+        class_ids: Vec<T::ClassId>,
+        asset_ids: Vec<Vec<T::AssetId>>,
+        amounts: Vec<Vec<Balance>>,
     ) -> DispatchResult {
         let escrow_info = Escrows::<T>::get(escrow).ok_or(Error::<T>::InvalidEscrowAccount)?;
 
         ensure!(escrow_info.owner == *who, Error::<T>::InvalidEscrowOwner);
         ensure!(
+            class_ids.len() == amounts.len(),
+            Error::<T>::InvalidArrayLength
+        );
+        ensure!(
             asset_ids.len() == amounts.len(),
             Error::<T>::InvalidArrayLength
         );
 
-        sugarfunge_asset::Pallet::<T>::do_batch_transfer_from(
-            &who,
-            &who,
-            &escrow,
-            class_id,
-            asset_ids.clone(),
-            amounts.clone(),
-        )?;
+        for (idx, class_id) in class_ids.iter().enumerate() {
+            ensure!(
+                asset_ids[idx].len() == amounts[idx].len(),
+                Error::<T>::InvalidArrayLength
+            );
+
+            sugarfunge_asset::Pallet::<T>::do_batch_transfer_from(
+                &who,
+                &who,
+                &escrow,
+                *class_id,
+                asset_ids[idx].clone(),
+                amounts[idx].clone(),
+            )?;
+        }
 
         Self::deposit_event(Event::Deposit {
             escrow: escrow.clone(),

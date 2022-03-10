@@ -69,7 +69,7 @@ fn deposit_assets() {
             amounts.clone(),
         ));
 
-        assert_ok!(Escrow::create_escrow(Origin::signed(1), 2));
+        assert_ok!(Escrow::create_escrow(Origin::signed(1), 2, 1000, 0));
         if let Event::Escrow(crate::Event::Created {
             escrow,
             operator,
@@ -82,23 +82,9 @@ fn deposit_assets() {
             assert_ok!(Escrow::deposit_assets(
                 Origin::signed(2),
                 escrow,
-                2,
-                asset_ids.clone(),
-                amounts.clone(),
-            ));
-            assert_ok!(Escrow::deposit_assets(
-                Origin::signed(2),
-                escrow,
-                3,
-                asset_ids.clone(),
-                amounts.clone(),
-            ));
-            assert_ok!(Escrow::deposit_assets(
-                Origin::signed(2),
-                escrow,
-                4,
-                asset_ids.clone(),
-                amounts.clone(),
+                vec![2, 3, 4],
+                vec![asset_ids.clone(), asset_ids.clone(), asset_ids.clone()],
+                vec![amounts.clone(), amounts.clone(), amounts.clone()],
             ));
 
             let mut balances = Asset::balances_of_owner(&escrow).unwrap();
@@ -171,7 +157,7 @@ fn refund_assets() {
             amounts.clone(),
         ));
 
-        assert_ok!(Escrow::create_escrow(Origin::signed(1), 2));
+        assert_ok!(Escrow::create_escrow(Origin::signed(1), 2, 1000, 0));
         if let Event::Escrow(crate::Event::Created {
             escrow,
             operator,
@@ -184,23 +170,9 @@ fn refund_assets() {
             assert_ok!(Escrow::deposit_assets(
                 Origin::signed(2),
                 escrow,
-                2,
-                asset_ids.clone(),
-                amounts.clone(),
-            ));
-            assert_ok!(Escrow::deposit_assets(
-                Origin::signed(2),
-                escrow,
-                3,
-                asset_ids.clone(),
-                amounts.clone(),
-            ));
-            assert_ok!(Escrow::deposit_assets(
-                Origin::signed(2),
-                escrow,
-                4,
-                asset_ids.clone(),
-                amounts.clone(),
+                vec![2, 3, 4],
+                vec![asset_ids.clone(), asset_ids.clone(), asset_ids.clone()],
+                vec![amounts.clone(), amounts.clone(), amounts.clone()],
             ));
 
             let mut balances = Asset::balances_of_owner(&escrow).unwrap();
