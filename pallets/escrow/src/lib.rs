@@ -41,6 +41,10 @@ pub mod pallet {
 
         type PalletId: Get<PalletId>;
 
+        /// Max number of owners
+        #[pallet::constant]
+        type MaxOwners: Get<u32>;
+
         /// The minimum balance to create escrow
         #[pallet::constant]
         type CreateEscrowDeposit: Get<BalanceOf<Self>>;
@@ -54,42 +58,56 @@ pub mod pallet {
 
     #[pallet::storage]
     pub(super) type Escrows<T: Config> =
-        StorageMap<_, Blake2_128, T::AccountId, Escrow<T::AccountId>>;
+        StorageMap<_, Blake2_128, T::ClassId, Escrow<T::AccountId, T::ClassId>>;
+
+    #[pallet::storage]
+    pub(super) type EscrowAccounts<T: Config> = StorageMap<
+        _,
+        Blake2_128,
+        T::AccountId,
+        EscrowAccount<T::AccountId, T::ClassId, T::AssetId>,
+    >;
 
     #[pallet::storage]
     pub(super) type NextEscrowId<T: Config> =
-        StorageMap<_, Blake2_128, (T::ClassId, T::AssetId), u32, ValueQuery>;
+        StorageMap<_, Blake2_128, T::ClassId, u64, ValueQuery>;
 
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
-        Created {
+        Register {
+            who: T::AccountId,
+            class_id: T::ClassId,
+        },
+        AccountCreated {
             escrow: T::AccountId,
-            operator: T::AccountId,
-            owner: T::AccountId,
+            who: T::AccountId,
+            class_id: T::ClassId,
+            asset_id: T::AssetId,
+            owners: Vec<T::AccountId>,
         },
         Deposit {
             escrow: T::AccountId,
-            operator: T::AccountId,
-            owner: T::AccountId,
+            who: T::AccountId,
         },
-        Refund {
+        Sweep {
             escrow: T::AccountId,
-            operator: T::AccountId,
-            owner: T::AccountId,
+            who: T::AccountId,
+            to: T::AccountId,
         },
     }
 
     // Errors inform users that something went wrong.
     #[pallet::error]
     pub enum Error<T> {
-        NoneValue,
-        StorageOverflow,
+        EscrowClassExists,
         EscrowAccountExists,
+        InvalidEscrowClass,
         InvalidEscrowAccount,
         InvalidEscrowOperator,
         InvalidEscrowOwner,
         InvalidArrayLength,
+        InsufficientShares,
     }
 
     // Dispatchable functions allows users to interact with the pallet and invoke state changes.
@@ -98,15 +116,15 @@ pub mod pallet {
     #[pallet::call]
     impl<T: Config> Pallet<T> {
         #[pallet::weight(10_000)]
-        pub fn create_escrow(
+        pub fn create_account(
             origin: OriginFor<T>,
-            owner: T::AccountId,
             class_id: T::ClassId,
-            asset_id: T::AssetId,
+            owners: Vec<T::AccountId>,
+            shares: Vec<Balance>,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
 
-            Self::do_create_escrow(&who, &owner, class_id, asset_id)?;
+            Self::do_create_account(&who, class_id, &owners, &shares)?;
 
             Ok(().into())
         }
@@ -127,13 +145,14 @@ pub mod pallet {
         }
 
         #[pallet::weight(10_000)]
-        pub fn refund_assets(
+        pub fn sweep_assets(
             origin: OriginFor<T>,
+            to: T::AccountId,
             escrow: T::AccountId,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
 
-            Self::do_refund_assets(&who, &escrow)?;
+            Self::do_sweep_assets(&who, &to, &escrow)?;
 
             Ok(().into())
         }
@@ -141,52 +160,116 @@ pub mod pallet {
 }
 
 #[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
-pub struct Escrow<AccountId> {
+pub struct Escrow<AccountId, ClassId> {
     /// The operator of the escrow
     pub operator: AccountId,
-    /// The owner of the assets
-    pub owner: AccountId,
+    /// The class_id for minting claims
+    pub class_id: ClassId,
+}
+
+#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+pub struct EscrowAccount<AccountId, ClassId, AssetId> {
+    /// The operator of the escrow
+    pub operator: AccountId,
+    /// The class_id for minting shares
+    pub class_id: ClassId,
+    /// The asset_id for minting shares
+    pub asset_id: AssetId,
+    /// Total number of shares
+    pub total_shares: Balance,
 }
 
 impl<T: Config> Pallet<T> {
-    pub fn do_create_escrow(
-        operator: &T::AccountId,
-        owner: &T::AccountId,
+    pub fn do_register_escrow(
+        who: &T::AccountId,
         class_id: T::ClassId,
-        asset_id: T::AssetId,
+        metadata: sugarfunge_asset::ClassMetadataOf<T>,
+    ) -> DispatchResult {
+        ensure!(
+            !Escrows::<T>::contains_key(&class_id),
+            Error::<T>::EscrowClassExists
+        );
+
+        let owner = <T as Config>::PalletId::get().into_account();
+        sugarfunge_asset::Pallet::<T>::do_create_class(&owner, &owner, class_id, metadata.clone())?;
+
+        let escrow = Escrow {
+            operator: who.clone(),
+            class_id,
+        };
+
+        Escrows::<T>::insert(class_id, &escrow);
+
+        Self::deposit_event(Event::Register {
+            who: who.clone(),
+            class_id,
+        });
+
+        Ok(())
+    }
+
+    pub fn do_create_account(
+        who: &T::AccountId,
+        class_id: T::ClassId,
+        owners: &Vec<T::AccountId>,
+        shares: &Vec<Balance>,
     ) -> Result<T::AccountId, DispatchError> {
-        let next_id = NextEscrowId::<T>::try_mutate(
-            (class_id, asset_id),
-            |id| -> Result<u32, DispatchError> {
+        ensure!(
+            Escrows::<T>::contains_key(&class_id),
+            Error::<T>::InvalidEscrowClass
+        );
+
+        ensure!(owners.len() == shares.len(), Error::<T>::InvalidArrayLength);
+
+        let next_id =
+            NextEscrowId::<T>::try_mutate(&class_id, |id| -> Result<u64, DispatchError> {
                 let current_id = *id;
                 *id = *id + 1;
                 Ok(current_id)
-            },
-        )?;
+            })?;
 
         let block_number: u32 = <frame_system::Pallet<T>>::block_number().unique_saturated_into();
-        let sub = vec![block_number as u64, class_id.into(), next_id as u64];
+        let sub = vec![block_number as u64, class_id.into(), next_id];
         let escrow = <T as Config>::PalletId::get().into_sub_account(sub);
 
         ensure!(
-            !Escrows::<T>::contains_key(&escrow),
+            !EscrowAccounts::<T>::contains_key(&escrow),
             Error::<T>::EscrowAccountExists
         );
 
         let deposit = T::CreateEscrowDeposit::get();
-        <T as Config>::Currency::transfer(operator, &escrow, deposit, AllowDeath)?;
+        <T as Config>::Currency::transfer(who, &escrow, deposit, AllowDeath)?;
 
-        let new_escrow = Escrow {
+        let asset_id: T::AssetId = next_id.into();
+
+        let operator: T::AccountId = <T as Config>::PalletId::get().into_account();
+
+        // Mint shares for each owner
+        for (idx, owner) in owners.iter().enumerate() {
+            sugarfunge_asset::Pallet::<T>::do_mint(
+                &operator,
+                &owner,
+                class_id,
+                asset_id,
+                shares[idx],
+            )?;
+        }
+
+        let new_escrow = EscrowAccount {
             operator: operator.clone(),
-            owner: owner.clone(),
+            class_id,
+            asset_id,
+            total_shares: shares.iter().sum(),
         };
 
-        Escrows::<T>::insert(&escrow, new_escrow);
+        EscrowAccounts::<T>::insert(&escrow, &new_escrow);
 
-        Self::deposit_event(Event::Created {
+        Self::deposit_event(Event::AccountCreated {
             escrow: escrow.clone(),
-            operator: operator.clone(),
-            owner: owner.clone(),
+            who: who.clone(),
+            class_id,
+            asset_id,
+            owners: owners.clone(),
         });
 
         Ok(escrow.clone())
@@ -199,9 +282,9 @@ impl<T: Config> Pallet<T> {
         asset_ids: Vec<Vec<T::AssetId>>,
         amounts: Vec<Vec<Balance>>,
     ) -> DispatchResult {
-        let escrow_info = Escrows::<T>::get(escrow).ok_or(Error::<T>::InvalidEscrowAccount)?;
+        let escrow_info =
+            EscrowAccounts::<T>::get(escrow).ok_or(Error::<T>::InvalidEscrowAccount)?;
 
-        ensure!(escrow_info.owner == *who, Error::<T>::InvalidEscrowOwner);
         ensure!(
             class_ids.len() == amounts.len(),
             Error::<T>::InvalidArrayLength
@@ -229,23 +312,40 @@ impl<T: Config> Pallet<T> {
 
         Self::deposit_event(Event::Deposit {
             escrow: escrow.clone(),
-            operator: escrow_info.operator.clone(),
-            owner: escrow_info.owner.clone(),
+            who: escrow_info.operator.clone(),
         });
 
         Ok(().into())
     }
 
-    pub fn do_refund_assets(
+    pub fn do_sweep_assets(
         who: &T::AccountId,
+        to: &T::AccountId,
         escrow: &T::AccountId,
     ) -> Result<(Vec<T::ClassId>, Vec<Vec<T::AssetId>>, Vec<Vec<Balance>>), DispatchError> {
-        let escrow_info = Escrows::<T>::get(escrow).ok_or(Error::<T>::InvalidEscrowAccount)?;
+        let escrow_info =
+            EscrowAccounts::<T>::get(escrow).ok_or(Error::<T>::InvalidEscrowAccount)?;
 
-        ensure!(
-            escrow_info.operator == *who,
-            Error::<T>::InvalidEscrowOperator
+        let shares = sugarfunge_asset::Pallet::<T>::balance_of(
+            who,
+            escrow_info.class_id,
+            escrow_info.asset_id,
         );
+        ensure!(
+            shares == escrow_info.total_shares,
+            Error::<T>::InsufficientShares
+        );
+
+        let operator: T::AccountId = <T as Config>::PalletId::get().into_account();
+
+        // Burn escrow shares
+        sugarfunge_asset::Pallet::<T>::do_burn(
+            &operator,
+            who,
+            escrow_info.class_id,
+            escrow_info.asset_id,
+            escrow_info.total_shares,
+        )?;
 
         let balances = sugarfunge_asset::Pallet::<T>::balances_of_owner(&escrow)?;
         let balances = balances.iter().fold(
@@ -280,17 +380,17 @@ impl<T: Config> Pallet<T> {
             sugarfunge_asset::Pallet::<T>::do_batch_transfer_from(
                 &escrow,
                 &escrow,
-                &escrow_info.owner,
+                to,
                 *class_id,
                 balances.1[idx].clone(),
                 balances.2[idx].clone(),
             )?;
         }
 
-        Self::deposit_event(Event::Refund {
+        Self::deposit_event(Event::Sweep {
             escrow: escrow.clone(),
-            operator: escrow_info.operator.clone(),
-            owner: escrow_info.owner.clone(),
+            who: who.clone(),
+            to: to.clone(),
         });
 
         Ok(balances)

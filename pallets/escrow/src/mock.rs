@@ -126,6 +126,7 @@ impl sugarfunge_asset::Config for Test {
 parameter_types! {
     pub const CurrencyModuleId: PalletId = PalletId(*b"sug/curr");
     pub const EscrowModuleId: PalletId = PalletId(*b"sug/crow");
+    pub const MaxOwners: u32 = 20;
 }
 
 impl sugarfunge_currency::Config for Test {
@@ -141,6 +142,7 @@ impl sugarfunge_escrow::Config for Test {
     type PalletId = EscrowModuleId;
     type CreateEscrowDeposit = CreateEscrowDeposit;
     type Currency = Balances;
+    type MaxOwners = MaxOwners;
 }
 
 // Configure a mock runtime to test the pallet.

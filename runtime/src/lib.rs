@@ -424,11 +424,16 @@ impl sugarfunge_bundle::Config for Runtime {
     type MaxAssets = MaxAssets;
 }
 
+parameter_types! {
+    pub const MaxOwners: u32 = 20;
+}
+
 impl sugarfunge_escrow::Config for Runtime {
     type Event = Event;
     type PalletId = EscrowModuleId;
     type CreateEscrowDeposit = CreateEscrowDeposit;
     type Currency = Balances;
+    type MaxOwners = MaxOwners;
 }
 
 impl sugarfunge_exgine::Config for Runtime {

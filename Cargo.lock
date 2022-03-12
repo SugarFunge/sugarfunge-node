@@ -7117,7 +7117,6 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "sugarfunge-asset",
- "sugarfunge-escrow",
  "sugarfunge-primitives",
 ]
 
