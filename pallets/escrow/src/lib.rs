@@ -116,6 +116,19 @@ pub mod pallet {
     #[pallet::call]
     impl<T: Config> Pallet<T> {
         #[pallet::weight(10_000)]
+        pub fn register_escrow(
+            origin: OriginFor<T>,
+            class_id: T::ClassId,
+            metadata: sugarfunge_asset::ClassMetadataOf<T>,
+        ) -> DispatchResultWithPostInfo {
+            let who = ensure_signed(origin)?;
+
+            Self::do_register_escrow(&who, class_id, metadata)?;
+
+            Ok(().into())
+        }
+
+        #[pallet::weight(10_000)]
         pub fn create_account(
             origin: OriginFor<T>,
             class_id: T::ClassId,
