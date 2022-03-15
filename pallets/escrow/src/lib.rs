@@ -204,7 +204,7 @@ impl<T: Config> Pallet<T> {
         );
 
         let owner = <T as Config>::PalletId::get().into_account();
-        sugarfunge_asset::Pallet::<T>::do_create_class(&owner, &owner, class_id, metadata.clone())?;
+        sugarfunge_asset::Pallet::<T>::do_create_class(&who, &owner, class_id, metadata.clone())?;
 
         let escrow = Escrow {
             operator: who.clone(),
