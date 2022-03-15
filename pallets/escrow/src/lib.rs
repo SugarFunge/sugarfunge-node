@@ -234,7 +234,7 @@ impl<T: Config> Pallet<T> {
 
         ensure!(owners.len() == shares.len(), Error::<T>::InvalidArrayLength);
 
-        let next_id =
+        let escrow_id =
             NextEscrowId::<T>::try_mutate(&class_id, |id| -> Result<u64, DispatchError> {
                 let current_id = *id;
                 *id = *id + 1;
@@ -242,7 +242,7 @@ impl<T: Config> Pallet<T> {
             })?;
 
         let block_number: u32 = <frame_system::Pallet<T>>::block_number().unique_saturated_into();
-        let sub = vec![block_number as u64, class_id.into(), next_id];
+        let sub = vec![block_number as u64, class_id.into(), escrow_id];
         let escrow = <T as Config>::PalletId::get().into_sub_account(sub);
 
         ensure!(
@@ -253,7 +253,7 @@ impl<T: Config> Pallet<T> {
         let deposit = T::CreateEscrowDeposit::get();
         <T as Config>::Currency::transfer(who, &escrow, deposit, AllowDeath)?;
 
-        let asset_id: T::AssetId = next_id.into();
+        let asset_id: T::AssetId = escrow_id.into();
 
         let operator: T::AccountId = <T as Config>::PalletId::get().into_account();
 
