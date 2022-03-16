@@ -664,7 +664,6 @@ impl<T: Config> Pallet<T> {
         for i in 0..n {
             let owner = &owners[i];
             let asset_id = asset_ids[i];
-
             batch_balances[i] = Self::balances((owner, class_id, asset_id));
         }
 

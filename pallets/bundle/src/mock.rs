@@ -51,15 +51,7 @@ impl sugarfunge_asset::Config for Test {
 }
 
 parameter_types! {
-    pub const EscrowModuleId: PalletId = PalletId(*b"sug/crow");
     pub const BundleModuleId: PalletId = PalletId(*b"sug/bndl");
-}
-
-impl sugarfunge_escrow::Config for Test {
-    type Event = Event;
-    type PalletId = EscrowModuleId;
-    type CreateEscrowDeposit = CreateEscrowDeposit;
-    type Currency = Balances;
 }
 
 parameter_types! {
@@ -87,7 +79,6 @@ frame_support::construct_runtime!(
         Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
         Asset: sugarfunge_asset::{Pallet, Call, Storage, Event<T>},
         Bundle: sugarfunge_bundle::{Pallet, Call, Storage, Event<T>},
-        Escrow: sugarfunge_escrow::{Pallet, Call, Storage, Event<T>},
     }
 );
 

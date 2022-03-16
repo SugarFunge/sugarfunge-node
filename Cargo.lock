@@ -7117,7 +7117,6 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "sugarfunge-asset",
- "sugarfunge-escrow",
  "sugarfunge-primitives",
 ]
 
@@ -7195,6 +7194,7 @@ dependencies = [
  "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
+ "sp-arithmetic",
  "sp-core",
  "sp-io",
  "sp-runtime",
