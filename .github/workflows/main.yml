@@ -21,3 +21,28 @@ jobs:
             docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/node:${{ github.sha }}
             docker tag ${{ secrets.REGISTRY_LOGIN_SERVER }}/node:${{ github.sha }} ${{ secrets.REGISTRY_LOGIN_SERVER }}/node:latest
             docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/node:latest
+        - uses: slackapi/slack-github-action@v1.18.0
+          with:
+            channel-id: ${{ secrets.SUGARFUNGE_SLACK_CHANNEL_ID }}
+            payload: |
+              {
+                "text": "sugarfunge-node Image Updated",
+                "blocks": [
+                  {
+                    "type": "section",
+                    "text": {
+                      "type": "mrkdwn",
+                      "text": "<https://github.com/SugarFunge/sugarfunge-node | sugarfunge-node> Image Updated :white_check_mark:\n Remember to run `docker-compose pull` to update the image if you're using the `latest` tag!"
+                    }
+                  },
+                  {
+                    "type": "section",
+                    "text": {
+                      "type": "mrkdwn",
+                      "text": "*Commit:* <${{ github.event.pull_request.html_url || github.event.head_commit.url }} | ${{ github.sha }}>"
+                    }
+                  }
+                ]
+              }
+          env:
+            SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
