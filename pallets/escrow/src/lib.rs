@@ -295,8 +295,10 @@ impl<T: Config> Pallet<T> {
         asset_ids: Vec<Vec<T::AssetId>>,
         amounts: Vec<Vec<Balance>>,
     ) -> DispatchResult {
-        let escrow_info =
-            EscrowAccounts::<T>::get(escrow).ok_or(Error::<T>::InvalidEscrowAccount)?;
+        ensure!(
+            EscrowAccounts::<T>::contains_key(&escrow),
+            Error::<T>::InvalidEscrowAccount
+        );
 
         ensure!(
             class_ids.len() == amounts.len(),
@@ -325,7 +327,7 @@ impl<T: Config> Pallet<T> {
 
         Self::deposit_event(Event::Deposit {
             escrow: escrow.clone(),
-            who: escrow_info.operator.clone(),
+            who: who.clone(),
         });
 
         Ok(().into())
