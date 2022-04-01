@@ -25,7 +25,7 @@ use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
-use substrate_validator_set as validator_set;
+use sugarfunge_validator_set as validator_set;
 
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
