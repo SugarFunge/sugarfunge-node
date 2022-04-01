@@ -67,6 +67,7 @@ orml-tokens = { branch = "polkadot-v0.9.17", default-features = false, git = "ht
 primitives = { package = "sugarfunge-primitives", path = "../primitives", default-features = false }
 
 # local pallets
+sugarfunge-bridge = { default-features = false, path = "../pallets/bridge" }
 sugarfunge-asset = { default-features = false, path = "../pallets/asset" }
 sugarfunge-currency = { default-features = false, path = "../pallets/currency" }
 sugarfunge-dex = { default-features = false, path = "../pallets/dex" }

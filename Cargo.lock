@@ -7052,6 +7052,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "substrate-wasm-builder-runner"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "54cab12167e32b38a62c5ea5825aa0874cde315f907a46aad2b05aa8ef3d862f"
+
+[[package]]
 name = "subtle"
 version = "2.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7100,6 +7106,25 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "sugarfunge-asset",
+]
+
+[[package]]
+name = "sugarfunge-bridge"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "substrate-wasm-builder-runner",
+ "sugarfunge-asset",
+ "sugarfunge-primitives",
 ]
 
 [[package]]
@@ -7343,6 +7368,7 @@ dependencies = [
  "substrate-wasm-builder",
  "sugarfunge-asset",
  "sugarfunge-asset-rpc-runtime-api",
+ "sugarfunge-bridge",
  "sugarfunge-bundle",
  "sugarfunge-currency",
  "sugarfunge-dao",

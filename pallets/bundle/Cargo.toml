@@ -33,13 +33,13 @@ pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "p
 [features]
 default = ['std']
 std = [
-	'codec/std',
-	'scale-info/std',
-	'sp-std/std',
-	'sp-runtime/std',
-	'frame-support/std',
-	'frame-system/std',
-	'frame-benchmarking/std',
+	"codec/std",
+	"scale-info/std",
+	"sp-std/std",
+	"sp-runtime/std",
+	"frame-support/std",
+	"frame-system/std",
+	"frame-benchmarking/std",
     "sugarfunge-primitives/std",
     "sugarfunge-asset/std",
 ]
