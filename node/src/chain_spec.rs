@@ -5,9 +5,9 @@ use sp_core::{sr25519, Pair, Public};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{IdentifyAccount, Verify};
 use sugarfunge_runtime::{
-    opaque::SessionKeys, AccountId, AuraConfig, Balance, BalancesConfig, CurrencyConfig,
-    CurrencyId, GenesisConfig, GrandpaConfig, OrmlTokensConfig, SessionConfig, Signature,
-    SudoConfig, SystemConfig, ValidatorSetConfig, DOLLARS, WASM_BINARY,
+    opaque::SessionKeys, AccountId, AuraConfig, Balance, BalancesConfig, CouncilConfig,
+    CurrencyConfig, CurrencyId, GenesisConfig, GrandpaConfig, OrmlTokensConfig, SessionConfig,
+    Signature, SudoConfig, SystemConfig, ValidatorSetConfig, DOLLARS, WASM_BINARY,
 };
 
 // The URL for the telemetry server.
@@ -201,6 +201,13 @@ fn testnet_genesis(
                     )
                 })
                 .collect::<Vec<_>>(),
+        },
+        council: CouncilConfig {
+            members: initial_authorities
+                .iter()
+                .map(|x| x.0.clone())
+                .collect::<Vec<_>>(),
+            phantom: Default::default(),
         },
         // Because the validators are provided by the session pallet,
         // we do not initialize them explicitly for Aura and Grandpa pallets
