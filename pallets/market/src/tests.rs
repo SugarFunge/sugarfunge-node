@@ -183,7 +183,7 @@ fn invalid_market_fails() {
         before_market();
 
         assert_noop!(
-            Market::do_compute_deposit(&1, 1001, 1, 2),
+            Market::do_quote_deposit(&1, 1001, 1, 2),
             Error::<Test>::InvalidMarket
         );
     })
@@ -195,14 +195,14 @@ fn invalid_market_rate_fails() {
         before_market();
 
         assert_noop!(
-            Market::do_compute_deposit(&1, 1000, 1000, 2),
+            Market::do_quote_deposit(&1, 1000, 1000, 2),
             Error::<Test>::InvalidMarketRate
         );
     })
 }
 
 #[test]
-fn compute_deposit_fails() {
+fn quote_deposit_fails() {
     new_test_ext().execute_with(|| {
         before_market();
 
@@ -212,7 +212,7 @@ fn compute_deposit_fails() {
 
         assert_ok!(Market::do_create_market_rate(&2, 2000, 100, &rates));
 
-        let result = Market::do_compute_deposit(&2, 2000, 100, 100);
+        let result = Market::do_quote_deposit(&2, 2000, 100, 100);
         if let Ok((can_deposit, deposits)) = result {
             assert_eq!(can_deposit, false);
             assert_eq!(deposits.get(&rates[0]), Some(&100));
@@ -229,7 +229,7 @@ fn compute_deposit_fails() {
 }
 
 #[test]
-fn compute_deposit_works() {
+fn quote_deposit_works() {
     new_test_ext().execute_with(|| {
         before_market();
 
@@ -239,7 +239,7 @@ fn compute_deposit_works() {
 
         assert_ok!(Market::do_create_market_rate(&2, 2000, 100, &rates));
 
-        let result = Market::do_compute_deposit(&2, 2000, 100, 2);
+        let result = Market::do_quote_deposit(&2, 2000, 100, 2);
         if let Ok((can_deposit, deposits)) = result {
             assert_eq!(can_deposit, true);
             assert_eq!(deposits.get(&rates[0]), Some(&2));
@@ -256,15 +256,15 @@ fn compute_deposit_works() {
 }
 
 #[test]
-fn deposit_assets_works() {
+fn add_liquidity_works() {
     new_test_ext().execute_with(|| {
         before_market();
         assert_ok!(Market::do_create_market(&2, 2000));
         let rates = simple_market_rates();
         assert_ok!(Market::do_create_market_rate(&2, 2000, 100, &rates));
-        assert_ok!(Market::do_deposit_assets(&2, 2000, 100, 4));
+        assert_ok!(Market::do_add_liquidity(&2, 2000, 100, 4));
 
-        if let Event::Market(crate::Event::Deposit {
+        if let Event::Market(crate::Event::LiquidityAdded {
             who,
             market_id,
             market_rate_id,
@@ -302,15 +302,15 @@ fn deposit_assets_works() {
 }
 
 #[test]
-fn deposit_assets_fails() {
+fn add_liquidity_fails() {
     new_test_ext().execute_with(|| {
         before_market();
         assert_ok!(Market::do_create_market(&2, 2000));
         let rates = simple_market_rates();
         assert_ok!(Market::do_create_market_rate(&2, 2000, 100, &rates));
-        assert_ok!(Market::do_deposit_assets(&2, 2000, 100, 100));
+        assert_ok!(Market::do_add_liquidity(&2, 2000, 100, 100));
 
-        if let Event::Market(crate::Event::Deposit {
+        if let Event::Market(crate::Event::LiquidityAdded {
             who,
             market_id,
             market_rate_id,
@@ -348,15 +348,15 @@ fn deposit_assets_fails() {
 }
 
 #[test]
-fn compute_exchange_insufficient() {
+fn quote_exchange_insufficient() {
     new_test_ext().execute_with(|| {
         before_market();
         assert_ok!(Market::do_create_market(&2, 2000));
         let rates = simple_market_rates();
         assert_ok!(Market::do_create_market_rate(&2, 2000, 100, &rates));
-        assert_ok!(Market::do_deposit_assets(&2, 2000, 100, 4));
+        assert_ok!(Market::do_add_liquidity(&2, 2000, 100, 4));
 
-        let result = Market::do_compute_exchange(&3, 2000, 100, 3);
+        let result = Market::do_quote_exchange(&3, 2000, 100, 3);
         if let Ok((can_do_exchange, balances)) = result {
             assert_eq!(can_do_exchange, false);
             assert_eq!(balances.get(&rates[0]), Some(&3));
@@ -373,13 +373,13 @@ fn compute_exchange_insufficient() {
 }
 
 #[test]
-fn compute_exchange_sufficient() {
+fn quote_exchange_sufficient() {
     new_test_ext().execute_with(|| {
         before_market();
         assert_ok!(Market::do_create_market(&2, 2000));
         let rates = simple_market_rates();
         assert_ok!(Market::do_create_market_rate(&2, 2000, 100, &rates));
-        assert_ok!(Market::do_deposit_assets(&2, 2000, 100, 4));
+        assert_ok!(Market::do_add_liquidity(&2, 2000, 100, 4));
 
         assert_ok!(Asset::do_batch_mint(
             &1,
@@ -405,7 +405,7 @@ fn compute_exchange_sufficient() {
             vec![100, 100],
         ));
 
-        let result = Market::do_compute_exchange(&3, 2000, 100, 3);
+        let result = Market::do_quote_exchange(&3, 2000, 100, 3);
         if let Ok((can_do_exchange, balances)) = result {
             assert_eq!(can_do_exchange, true);
             assert_eq!(balances.get(&rates[0]), Some(&3));
@@ -428,7 +428,7 @@ fn exchange_assets_works() {
         assert_ok!(Market::do_create_market(&2, 2000));
         let rates = simple_market_rates();
         assert_ok!(Market::do_create_market_rate(&2, 2000, 100, &rates));
-        assert_ok!(Market::do_deposit_assets(&2, 2000, 100, 4));
+        assert_ok!(Market::do_add_liquidity(&2, 2000, 100, 4));
 
         assert_ok!(Asset::do_batch_mint(
             &1,
@@ -500,7 +500,7 @@ fn exchange_assets_fails() {
         assert_ok!(Market::do_create_market(&2, 2000));
         let rates = simple_market_rates();
         assert_ok!(Market::do_create_market_rate(&2, 2000, 100, &rates));
-        assert_ok!(Market::do_deposit_assets(&2, 2000, 100, 4));
+        assert_ok!(Market::do_add_liquidity(&2, 2000, 100, 4));
 
         assert_ok!(Asset::do_batch_mint(
             &1,

@@ -17,6 +17,7 @@ frame-system = { git = "https://github.com/paritytech/substrate", branch = "polk
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23", default-features = false, optional = true }
 sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23", default-features = false }
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23", default-features = false }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23", default-features = false }
 
 sugarfunge-primitives = { package = "sugarfunge-primitives", path = "../../primitives", default-features = false }
 sugarfunge-asset = { package = "sugarfunge-asset", path = "../asset", default-features = false }
@@ -36,6 +37,7 @@ std = [
 	'codec/std',
 	'scale-info/std',
 	'sp-std/std',
+	'sp-core/std',
 	'sp-runtime/std',
 	'frame-support/std',
 	'frame-system/std',

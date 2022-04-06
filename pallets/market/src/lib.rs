@@ -8,8 +8,9 @@ use frame_support::{
     BoundedVec, PalletId,
 };
 use scale_info::TypeInfo;
+use sp_core::U256;
 use sp_runtime::{
-    traits::{AccountIdConversion, AtLeast32BitUnsigned},
+    traits::{AccountIdConversion, AtLeast32BitUnsigned, Zero},
     RuntimeDebug,
 };
 use sp_std::{collections::btree_map::BTreeMap, prelude::*};
@@ -230,7 +231,7 @@ pub mod pallet {
             market_rate_id: T::MarketRateId,
             who: T::AccountId,
         },
-        Deposit {
+        LiquidityAdded {
             who: T::AccountId,
             market_id: T::MarketId,
             market_rate_id: T::MarketRateId,
@@ -252,6 +253,7 @@ pub mod pallet {
     pub enum Error<T> {
         Overflow,
         InsufficientAmount,
+        InsufficientLiquidity,
         InvalidMarket,
         InvalidMarketRate,
         InvalidMarketOwner,
@@ -301,7 +303,7 @@ pub mod pallet {
         }
 
         #[pallet::weight(10_000)]
-        pub fn deposit_assets(
+        pub fn add_liquidity(
             origin: OriginFor<T>,
             market_id: T::MarketId,
             market_rate_id: T::MarketRateId,
@@ -309,7 +311,7 @@ pub mod pallet {
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
 
-            Self::do_deposit_assets(&who, market_id, market_rate_id, amount)?;
+            Self::do_add_liquidity(&who, market_id, market_rate_id, amount)?;
 
             Ok(().into())
         }
@@ -393,7 +395,7 @@ impl<T: Config> Pallet<T> {
         Ok(())
     }
 
-    pub fn do_compute_deposit(
+    pub fn do_quote_deposit(
         who: &T::AccountId,
         market_id: T::MarketId,
         market_rate_id: T::MarketRateId,
@@ -528,7 +530,7 @@ impl<T: Config> Pallet<T> {
         Ok((can_do_deposit, deposit_balances))
     }
 
-    pub fn do_deposit_assets(
+    pub fn do_add_liquidity(
         who: &T::AccountId,
         market_id: T::MarketId,
         market_rate_id: T::MarketRateId,
@@ -541,7 +543,7 @@ impl<T: Config> Pallet<T> {
         ensure!(*who == market.owner, Error::<T>::InvalidMarketOwner);
 
         let (can_do_deposit, deposit_balances) =
-            Self::do_compute_deposit(who, market_id, market_rate_id, amount)?;
+            Self::do_quote_deposit(who, market_id, market_rate_id, amount)?;
 
         if can_do_deposit {
             for (asset_rate, amount) in &deposit_balances {
@@ -565,7 +567,7 @@ impl<T: Config> Pallet<T> {
             })
             .collect();
 
-        Self::deposit_event(Event::Deposit {
+        Self::deposit_event(Event::LiquidityAdded {
             who: who.clone(),
             market_id,
             market_rate_id,
@@ -577,7 +579,46 @@ impl<T: Config> Pallet<T> {
         Ok(().into())
     }
 
-    pub fn do_compute_exchange(
+    pub fn get_liquidity(
+        market: &Market<T::AccountId>,
+        class_id: T::ClassId,
+        asset_id: T::AssetId,
+    ) -> Balance {
+        sugarfunge_asset::Pallet::<T>::balance_of(&market.vault, class_id, asset_id)
+    }
+
+    /// Pricing function used for converting between outgoing asset to incomming asset.
+    ///
+    /// - `amount_out`: Amount of outgoing asset being bought.
+    /// - `reserve_in`: Amount of incomming asset in reserves.
+    /// - `reserve_out`: Amount of outgoing asset in reserves.
+    /// Return the price Amount of incomming asset to send to pool.
+    pub fn get_buy_price(
+        amount_out: Balance,
+        reserve_in: Balance,
+        reserve_out: Balance,
+    ) -> Result<Balance, DispatchError> {
+        ensure!(
+            reserve_in > Zero::zero() && reserve_out > Zero::zero(),
+            Error::<T>::InsufficientLiquidity
+        );
+
+        let numerator: U256 = U256::from(reserve_in)
+            .saturating_mul(U256::from(amount_out))
+            .saturating_mul(U256::from(1000u128));
+        let denominator: U256 = (U256::from(reserve_out).saturating_sub(U256::from(amount_out)))
+            .saturating_mul(U256::from(995u128));
+
+        let amount_in = numerator
+            .checked_div(denominator)
+            .and_then(|r| r.checked_add(U256::one())) // add 1 to correct possible losses caused by remainder discard
+            .and_then(|n| TryInto::<Balance>::try_into(n).ok())
+            .unwrap_or_else(Zero::zero);
+
+        Ok(amount_in)
+    }
+
+    pub fn do_quote_exchange(
         buyer: &T::AccountId,
         market_id: T::MarketId,
         market_rate_id: T::MarketRateId,
@@ -802,7 +843,7 @@ impl<T: Config> Pallet<T> {
         ensure!(*buyer != market.vault, Error::<T>::InvalidBuyer);
 
         let (can_do_exchange, exchange_balances) =
-            Self::do_compute_exchange(buyer, market_id, market_rate_id, amount)?;
+            Self::do_quote_exchange(buyer, market_id, market_rate_id, amount)?;
 
         if can_do_exchange {
             for (asset_rate, amount) in &exchange_balances {
