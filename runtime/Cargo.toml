@@ -46,8 +46,8 @@ pallet-session = { git = "https://github.com/paritytech/substrate", branch = "po
 frame-system-rpc-runtime-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17", default-features = false }
 pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17", default-features = false }
 
-# Validators
-substrate-validator-set = { default-features = false, git = "https://github.com/SugarFunge/substrate-validator-set.git", branch = "sugarfunge" }
+# Collective
+pallet-collective = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17", default-features = false }
 
 # Contract
 pallet-contracts-primitives = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17", default-features = false }
@@ -67,6 +67,8 @@ orml-tokens = { branch = "polkadot-v0.9.17", default-features = false, git = "ht
 primitives = { package = "sugarfunge-primitives", path = "../primitives", default-features = false }
 
 # local pallets
+sugarfunge-validator-set = { default-features = false, path = "../pallets/validator-set" }
+sugarfunge-bridge = { default-features = false, path = "../pallets/bridge" }
 sugarfunge-asset = { default-features = false, path = "../pallets/asset" }
 sugarfunge-currency = { default-features = false, path = "../pallets/currency" }
 sugarfunge-dex = { default-features = false, path = "../pallets/dex" }
@@ -115,10 +117,11 @@ std = [
 	"pallet-contracts/std",
 	"pallet-contracts-primitives/std",
 	"pallet-contracts-rpc-runtime-api/std",
+	"pallet-collective/std",
 	"orml-traits/std",
 	"orml-currencies/std",
 	"orml-tokens/std",
-	"substrate-validator-set/std",
+	"sugarfunge-validator-set/std",
 
 	"sugarfunge-asset/std",
 	"sugarfunge-currency/std",

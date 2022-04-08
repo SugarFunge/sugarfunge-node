@@ -12,7 +12,11 @@ use pallet_grandpa::fg_primitives;
 use pallet_grandpa::{AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
+use sp_core::{
+    crypto::KeyTypeId,
+    u32_trait::{_1, _2},
+    OpaqueMetadata,
+};
 use sp_runtime::traits::{
     AccountIdLookup, BlakeTwo256, Block as BlockT, NumberFor, OpaqueKeys, Zero,
 };
@@ -25,12 +29,15 @@ use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
-use substrate_validator_set as validator_set;
+use sugarfunge_validator_set as validator_set;
 
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
     construct_runtime, parameter_types,
-    traits::{Contains, EqualPrivilegeOnly, FindAuthor, KeyOwnerProofSystem, Nothing, Randomness},
+    traits::{
+        Contains, EnsureOneOf, EqualPrivilegeOnly, FindAuthor, KeyOwnerProofSystem, Nothing,
+        Randomness,
+    },
     weights::{
         constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
         DispatchClass, IdentityFee, Weight,
@@ -303,12 +310,35 @@ impl pallet_scheduler::Config for Runtime {
 }
 
 parameter_types! {
+    pub const CouncilMotionDuration: BlockNumber = 3 * MINUTES;
+    pub const CouncilMaxProposals: u32 = 100;
+    pub const CouncilMaxMembers: u32 = 100;
+}
+
+type CouncilCollective = pallet_collective::Instance1;
+impl pallet_collective::Config<CouncilCollective> for Runtime {
+    type Origin = Origin;
+    type Proposal = Call;
+    type Event = Event;
+    type MotionDuration = CouncilMotionDuration;
+    type MaxProposals = CouncilMaxProposals;
+    type MaxMembers = CouncilMaxMembers;
+    type DefaultVote = pallet_collective::PrimeDefaultVote;
+    type WeightInfo = pallet_collective::weights::SubstrateWeight<Runtime>;
+}
+
+type EnsureRootOrHalfCouncil = EnsureOneOf<
+    EnsureRoot<AccountId>,
+    pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>,
+>;
+
+parameter_types! {
     pub const MinAuthorities: u32 = 1;
 }
 
 impl validator_set::Config for Runtime {
     type Event = Event;
-    type AddRemoveOrigin = EnsureRoot<AccountId>;
+    type AddRemoveOrigin = EnsureRootOrHalfCouncil;
     type MinAuthorities = MinAuthorities;
     type MaxAuthorities = MaxAuthorities;
 }
@@ -464,6 +494,7 @@ construct_runtime!(
         TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
         Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
         Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>},
+        Council: pallet_collective::<Instance1>,
 
         ValidatorSet: validator_set::{Pallet, Call, Storage, Event<T>, Config<T>},
         Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>},
