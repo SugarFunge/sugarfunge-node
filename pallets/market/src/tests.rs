@@ -1,4 +1,6 @@
-use crate::{mock::*, AmountOp, AssetRate, Error, RateAccount, RateAction, RateBalance, Rates};
+use crate::{
+    mock::*, AmountOp, AssetRate, Error, RateAccount, RateAction, RateBalance, Rates, AMM,
+};
 use frame_support::{assert_noop, assert_ok, bounded_vec};
 use sp_std::prelude::*;
 
@@ -18,8 +20,7 @@ fn simple_market_rates() -> Rates<Test> {
         AssetRate {
             class_id: 2000,
             asset_id: 1,
-            action: RateAction::Transfer,
-            amount: 1,
+            action: RateAction::Transfer(1),
             from: RateAccount::Market,
             to: RateAccount::Buyer,
         },
@@ -27,8 +28,7 @@ fn simple_market_rates() -> Rates<Test> {
         AssetRate {
             class_id: 2000,
             asset_id: 2,
-            action: RateAction::Mint,
-            amount: 1,
+            action: RateAction::Mint(1),
             from: RateAccount::Market,
             to: RateAccount::Buyer,
         },
@@ -39,8 +39,7 @@ fn simple_market_rates() -> Rates<Test> {
         AssetRate {
             class_id: 3000,
             asset_id: 1,
-            action: RateAction::Has(AmountOp::GreaterEqualThan),
-            amount: 5000,
+            action: RateAction::Has(AmountOp::GreaterEqualThan, 5000),
             from: RateAccount::Buyer,
             to: RateAccount::Market,
         },
@@ -48,8 +47,7 @@ fn simple_market_rates() -> Rates<Test> {
         AssetRate {
             class_id: 3000,
             asset_id: 2,
-            action: RateAction::Transfer,
-            amount: 5,
+            action: RateAction::Transfer(5),
             from: RateAccount::Buyer,
             to: RateAccount::Market,
         },
@@ -57,8 +55,7 @@ fn simple_market_rates() -> Rates<Test> {
         AssetRate {
             class_id: 3000,
             asset_id: 3,
-            action: RateAction::Burn,
-            amount: 50,
+            action: RateAction::Burn(50),
             from: RateAccount::Buyer,
             to: RateAccount::Market,
         },
@@ -69,8 +66,7 @@ fn simple_market_rates() -> Rates<Test> {
         AssetRate {
             class_id: 4000,
             asset_id: 1,
-            action: RateAction::Transfer,
-            amount: 2,
+            action: RateAction::Transfer(2),
             from: RateAccount::Market,
             to: RateAccount::Account(0),
         },
@@ -78,10 +74,35 @@ fn simple_market_rates() -> Rates<Test> {
         AssetRate {
             class_id: 4000,
             asset_id: 1,
-            action: RateAction::Transfer,
-            amount: 1,
+            action: RateAction::Transfer(1),
             from: RateAccount::Buyer,
             to: RateAccount::Account(0),
+        },
+    ]
+    .try_into()
+    .unwrap()
+}
+
+fn swap_market_rates() -> Rates<Test> {
+    vec![
+        //
+        // Buyer wants these goods
+        //
+        // Market will transfer 1 asset of class_id: 2000 asset_id: 1 to buyer
+        AssetRate {
+            class_id: 2000,
+            asset_id: 1,
+            action: RateAction::Transfer(1),
+            from: RateAccount::Market,
+            to: RateAccount::Buyer,
+        },
+        // Buyer will market transfer assets of class_id: 2000 asset_id: 2 to market
+        AssetRate {
+            class_id: 2000,
+            asset_id: 2,
+            action: RateAction::MarketTransfer(AMM::Constant, 2000, 1),
+            from: RateAccount::Buyer,
+            to: RateAccount::Market,
         },
     ]
     .try_into()
@@ -554,5 +575,48 @@ fn exchange_assets_fails() {
         } else {
             unreachable!()
         }
+    })
+}
+
+#[test]
+fn dex_price_works() {
+    new_test_ext().execute_with(|| {
+        before_market();
+
+        assert_ok!(Market::do_create_market(&2, 9000));
+
+        assert_ok!(Asset::do_batch_mint(&1, &2, 2000, vec![1,], vec![10000],));
+
+        assert_ok!(Asset::do_batch_mint(&1, &3, 2000, vec![2,], vec![10000],));
+
+        let rates = swap_market_rates();
+
+        assert_ok!(Market::do_create_market_rate(&2, 9000, 100, &rates));
+
+        assert_ok!(Market::do_add_liquidity(&2, 9000, 100, 10000));
+
+        let market_vault = Market::get_vault(9000).unwrap();
+
+        let market_balances = Asset::balances_of_owner(&market_vault).unwrap();
+
+        assert_eq!(vec![(2000, 1, 10000)], market_balances);
+
+        // Markets::<T>::get(market_id)
+
+        // panic!("wassaaaap");
+
+        // let result = Market::do_quote_deposit(&2, 2000, 100, 100);
+        // if let Ok((can_deposit, deposits)) = result {
+        //     assert_eq!(can_deposit, false);
+        //     assert_eq!(deposits.get(&rates[0]), Some(&100));
+        //     assert_eq!(deposits.get(&rates[1]), None);
+        //     assert_eq!(deposits.get(&rates[2]), None);
+        //     assert_eq!(deposits.get(&rates[3]), None);
+        //     assert_eq!(deposits.get(&rates[4]), None);
+        //     assert_eq!(deposits.get(&rates[5]), Some(&-100));
+        //     assert_eq!(deposits.get(&rates[6]), None);
+        // } else {
+        //     result.unwrap();
+        // };
     })
 }

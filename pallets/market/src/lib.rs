@@ -61,11 +61,40 @@ pub enum AmountOp {
     TypeInfo,
     MaxEncodedLen,
 )]
-pub enum RateAction {
-    Transfer,
-    Mint,
-    Burn,
-    Has(AmountOp),
+pub enum AMM {
+    Constant,
+}
+
+#[derive(
+    Encode,
+    Decode,
+    Clone,
+    Copy,
+    Eq,
+    PartialEq,
+    Ord,
+    PartialOrd,
+    RuntimeDebug,
+    TypeInfo,
+    MaxEncodedLen,
+)]
+pub enum RateAction<ClassId, AssetId> {
+    Transfer(Amount),
+    MarketTransfer(AMM, ClassId, AssetId),
+    Mint(Amount),
+    Burn(Amount),
+    Has(AmountOp, Amount),
+}
+
+impl<ClassId, AssetId> RateAction<ClassId, AssetId> {
+    fn get_amount(&self) -> Amount {
+        match *self {
+            RateAction::Burn(amount) => amount,
+            RateAction::Mint(amount) => amount,
+            RateAction::Transfer(amount) => amount,
+            _ => 0 as Amount,
+        }
+    }
 }
 
 #[derive(
@@ -103,8 +132,7 @@ pub enum RateAccount<AccountId> {
 pub struct AssetRate<AccountId, ClassId, AssetId> {
     class_id: ClassId,
     asset_id: AssetId,
-    action: RateAction,
-    amount: Amount,
+    action: RateAction<ClassId, AssetId>,
     from: RateAccount<AccountId>,
     to: RateAccount<AccountId>,
 }
@@ -381,7 +409,13 @@ impl<T: Config> Pallet<T> {
 
         // Ensure rates are valid
         for asset_rate in rates.iter() {
-            ensure!(asset_rate.amount >= 0, Error::<T>::InvalidRateAmount);
+            let amount = match asset_rate.action {
+                RateAction::Burn(amount) => amount,
+                RateAction::Mint(amount) => amount,
+                RateAction::Transfer(amount) => amount,
+                _ => 0 as Amount,
+            };
+            ensure!(amount >= 0, Error::<T>::InvalidRateAmount);
         }
 
         MarketRates::<T>::insert((market_id, market_rate_id), rates);
@@ -418,9 +452,11 @@ impl<T: Config> Pallet<T> {
         let total_amount: i128 = amount.try_into().map_err(|_| Error::<T>::Overflow)?;
 
         let asset_rates = rates.into_iter().filter(|asset_rate| {
-            asset_rate.from == RateAccount::Market
-                && (asset_rate.action == RateAction::Transfer
-                    || asset_rate.action == RateAction::Burn)
+            let quotable = match asset_rate.action {
+                RateAction::Transfer(_) | RateAction::Burn(_) => true,
+                _ => false,
+            };
+            asset_rate.from == RateAccount::Market && quotable
         });
 
         let asset_rates: Vec<AssetRate<T::AccountId, T::ClassId, T::AssetId>> =
@@ -443,7 +479,8 @@ impl<T: Config> Pallet<T> {
                 balance,
             );
             let amount = asset_rate
-                .amount
+                .action
+                .get_amount()
                 .checked_mul(total_amount)
                 .ok_or(Error::<T>::Overflow)?;
             if let Some(price) = prices.get_mut(&(
@@ -467,7 +504,7 @@ impl<T: Config> Pallet<T> {
         // RateAction::Burn - Compute total burns
 
         for asset_rate in &asset_rates {
-            if let RateAction::Burn = asset_rate.action {
+            if let RateAction::Burn(_) = asset_rate.action {
                 let price = prices
                     .get(&(
                         asset_rate.from.clone(),
@@ -494,7 +531,7 @@ impl<T: Config> Pallet<T> {
         // RateAction::Transfer - Compute total transfers
 
         for asset_rate in &asset_rates {
-            if let RateAction::Transfer = asset_rate.action {
+            if let RateAction::Transfer(_) = asset_rate.action {
                 let price = prices
                     .get(&(
                         asset_rate.from.clone(),
@@ -579,6 +616,10 @@ impl<T: Config> Pallet<T> {
         Ok(().into())
     }
 
+    pub fn get_vault(market_id: T::MarketId) -> Option<T::AccountId> {
+        Markets::<T>::get(market_id).and_then(|market| Some(market.vault))
+    }
+
     pub fn get_liquidity(
         market: &Market<T::AccountId>,
         class_id: T::ClassId,
@@ -592,7 +633,7 @@ impl<T: Config> Pallet<T> {
     /// - `amount_out`: Amount of outgoing asset being bought.
     /// - `reserve_in`: Amount of incomming asset in reserves.
     /// - `reserve_out`: Amount of outgoing asset in reserves.
-    /// Return the price Amount of incomming asset to send to pool.
+    /// Return the price Amount of incomming asset to send to vault.
     pub fn get_buy_price(
         amount_out: Balance,
         reserve_in: Balance,
@@ -637,7 +678,7 @@ impl<T: Config> Pallet<T> {
         // RateAction::Has - Prove parties possess non-transferable assets
 
         for asset_rate in rates.iter() {
-            if let RateAction::Has(op) = &asset_rate.action {
+            if let RateAction::Has(op, amount) = asset_rate.action {
                 let target_account = match &asset_rate.from {
                     RateAccount::Account(account) => account,
                     RateAccount::Buyer => buyer,
@@ -652,43 +693,43 @@ impl<T: Config> Pallet<T> {
                 .map_err(|_| Error::<T>::Overflow)?;
                 let amount = match op {
                     AmountOp::Equal => {
-                        if balance == asset_rate.amount {
-                            asset_rate.amount
+                        if balance == amount {
+                            amount
                         } else {
                             can_do_exchange = false;
-                            balance - asset_rate.amount
+                            balance - amount
                         }
                     }
                     AmountOp::GreaterEqualThan => {
-                        if balance >= asset_rate.amount {
-                            asset_rate.amount
+                        if balance >= amount {
+                            amount
                         } else {
                             can_do_exchange = false;
-                            balance - asset_rate.amount
+                            balance - amount
                         }
                     }
                     AmountOp::GreaterThan => {
-                        if balance > asset_rate.amount {
-                            asset_rate.amount
+                        if balance > amount {
+                            amount
                         } else {
                             can_do_exchange = false;
-                            balance - asset_rate.amount
+                            balance - amount
                         }
                     }
                     AmountOp::LessEqualThan => {
-                        if balance <= asset_rate.amount {
-                            asset_rate.amount
+                        if balance <= amount {
+                            amount
                         } else {
                             can_do_exchange = false;
-                            asset_rate.amount - balance
+                            amount - balance
                         }
                     }
                     AmountOp::LessThan => {
-                        if balance < asset_rate.amount {
-                            asset_rate.amount
+                        if balance < amount {
+                            amount
                         } else {
                             can_do_exchange = false;
-                            asset_rate.amount - balance
+                            amount - balance
                         }
                     }
                 };
@@ -706,7 +747,7 @@ impl<T: Config> Pallet<T> {
 
         for asset_rate in rates.iter() {
             let balance = match &asset_rate.action {
-                RateAction::Transfer | RateAction::Burn => {
+                RateAction::Transfer(_) | RateAction::Burn(_) => {
                     let target_account = match &asset_rate.from {
                         RateAccount::Account(account) => account,
                         RateAccount::Buyer => buyer,
@@ -734,7 +775,8 @@ impl<T: Config> Pallet<T> {
                 );
             }
             let amount = asset_rate
-                .amount
+                .action
+                .get_amount()
                 .checked_mul(total_amount)
                 .ok_or(Error::<T>::Overflow)?;
             if let Some(price) = prices.get_mut(&(
@@ -758,7 +800,7 @@ impl<T: Config> Pallet<T> {
         // RateAction::Burn - Compute total burns
 
         for asset_rate in rates.iter() {
-            if let RateAction::Burn = &asset_rate.action {
+            if let RateAction::Burn(_) = &asset_rate.action {
                 let price = prices
                     .get(&(
                         asset_rate.from.clone(),
@@ -786,7 +828,7 @@ impl<T: Config> Pallet<T> {
         // RateAction::Transfer - Compute total transfers
 
         for asset_rate in rates.iter() {
-            if let RateAction::Transfer = &asset_rate.action {
+            if let RateAction::Transfer(_) = &asset_rate.action {
                 let price = prices
                     .get(&(
                         asset_rate.from.clone(),
@@ -814,7 +856,7 @@ impl<T: Config> Pallet<T> {
         // RateAction::Mint - Compute total mints
 
         for asset_rate in rates.iter() {
-            if let RateAction::Mint = &asset_rate.action {
+            if let RateAction::Mint(_) = &asset_rate.action {
                 let price = prices
                     .get(&(
                         asset_rate.from.clone(),
@@ -859,7 +901,7 @@ impl<T: Config> Pallet<T> {
                     RateAccount::Market => &market.vault,
                 };
                 match asset_rate.action {
-                    RateAction::Transfer => sugarfunge_asset::Pallet::<T>::do_transfer_from(
+                    RateAction::Transfer(_) => sugarfunge_asset::Pallet::<T>::do_transfer_from(
                         &market.owner,
                         from,
                         to,
@@ -867,14 +909,14 @@ impl<T: Config> Pallet<T> {
                         asset_rate.asset_id,
                         amount,
                     )?,
-                    RateAction::Burn => sugarfunge_asset::Pallet::<T>::do_burn(
+                    RateAction::Burn(_) => sugarfunge_asset::Pallet::<T>::do_burn(
                         &market.owner,
                         from,
                         asset_rate.class_id,
                         asset_rate.asset_id,
                         amount,
                     )?,
-                    RateAction::Mint => sugarfunge_asset::Pallet::<T>::do_mint(
+                    RateAction::Mint(_) => sugarfunge_asset::Pallet::<T>::do_mint(
                         &market.owner,
                         to,
                         asset_rate.class_id,
