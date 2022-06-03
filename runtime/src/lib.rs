@@ -1,5 +1,3 @@
-//! The Substrate Node Template runtime. This can be compiled with `#[no_std]`, ready for Wasm.
-
 #![cfg_attr(not(feature = "std"), no_std)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
@@ -10,20 +8,17 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 use pallet_grandpa::fg_primitives;
 use pallet_grandpa::{AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
+use pallet_transaction_payment::CurrencyAdapter;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use sp_core::{
-    crypto::KeyTypeId,
-    u32_trait::{_1, _2},
-    OpaqueMetadata,
-};
+use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::traits::{
     AccountIdLookup, BlakeTwo256, Block as BlockT, NumberFor, OpaqueKeys, Zero,
 };
 use sp_runtime::{
     create_runtime_str, generic, impl_opaque_keys,
     transaction_validity::{TransactionSource, TransactionValidity},
-    ApplyExtrinsicResult,
+    ApplyExtrinsicResult, Perbill, Permill,
 };
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
@@ -40,7 +35,7 @@ pub use frame_support::{
     },
     weights::{
         constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
-        DispatchClass, IdentityFee, Weight,
+        ConstantMultiplier, DispatchClass, IdentityFee, Weight,
     },
     ConsensusEngineId, PalletId, StorageValue,
 };
@@ -49,22 +44,27 @@ use frame_system::{
     EnsureRoot,
 };
 
+#[cfg(any(feature = "std", test))]
+pub use frame_system::Call as SystemCall;
+#[cfg(any(feature = "std", test))]
 pub use pallet_balances::Call as BalancesCall;
+#[cfg(any(feature = "std", test))]
 pub use pallet_timestamp::Call as TimestampCall;
-use pallet_transaction_payment::CurrencyAdapter;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
-pub use sp_runtime::{Perbill, Permill};
+#[cfg(any(feature = "std", test))]
 pub use sugarfunge_bundle::Call as BundleCall;
+#[cfg(any(feature = "std", test))]
 pub use sugarfunge_exgine::Call as ExgineCall;
+#[cfg(any(feature = "std", test))]
 pub use sugarfunge_market::Call as MarketCall;
 
 /// Constant values used within the runtime.
 mod constants;
 pub use constants::{currency::*, time::*};
 pub use primitives::{
-    AccountId, AccountIndex, Amount, AssetId, Balance, BlockNumber, ClassId, Hash,
-    Index, Moment, Signature,
+    AccountId, AccountIndex, Amount, AssetId, Balance, BlockNumber, ClassId, Hash, Index, Moment,
+    Signature,
 };
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
@@ -270,15 +270,15 @@ impl pallet_balances::Config for Runtime {
 }
 
 parameter_types! {
-    pub const TransactionByteFee: Balance = 1;
+    pub const TransactionByteFee: Balance = 10 * MILLICENTS;
     pub OperationalFeeMultiplier: u8 = 5;
 }
 
 impl pallet_transaction_payment::Config for Runtime {
     type OnChargeTransaction = CurrencyAdapter<Balances, ()>;
-    type TransactionByteFee = TransactionByteFee;
     type OperationalFeeMultiplier = OperationalFeeMultiplier;
     type WeightToFee = IdentityFee<Balance>;
+    type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
     type FeeMultiplierUpdate = ();
 }
 
@@ -328,7 +328,7 @@ impl pallet_collective::Config<CouncilCollective> for Runtime {
 
 type EnsureRootOrHalfCouncil = EnsureOneOf<
     EnsureRoot<AccountId>,
-    pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>,
+    pallet_collective::EnsureProportionMoreThan<AccountId, CouncilCollective, 1, 2>,
 >;
 
 parameter_types! {
@@ -471,6 +471,7 @@ pub type SignedBlock = generic::SignedBlock<Block>;
 pub type BlockId = generic::BlockId<Block>;
 /// The SignedExtension to the basic transaction logic.
 pub type SignedExtra = (
+    frame_system::CheckNonZeroSender<Runtime>,
     frame_system::CheckSpecVersion<Runtime>,
     frame_system::CheckTxVersion<Runtime>,
     frame_system::CheckGenesis<Runtime>,
@@ -481,8 +482,8 @@ pub type SignedExtra = (
 );
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
-/// Extrinsic type that has already been checked.
-pub type CheckedExtrinsic = generic::CheckedExtrinsic<AccountId, Call, SignedExtra>;
+/// The payload being signed in transactions.
+pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
 /// Executive: handles dispatch to the various modules.
 pub type Executive = frame_executive::Executive<
     Runtime,
@@ -621,14 +622,6 @@ impl_runtime_apis! {
             len: u32,
         ) -> pallet_transaction_payment::FeeDetails<Balance> {
             TransactionPayment::query_fee_details(uxt, len)
-        }
-    }
-
-    impl sugarfunge_asset_rpc_runtime_api::SugarfungeAssetApi<Block, AccountId, ClassId, AssetId, Balance> for Runtime {
-        fn balances_of_owner(
-            account: AccountId,
-        ) -> Vec<(ClassId, AssetId, Balance)> {
-            Asset::balances_of_owner(&account).unwrap_or(Default::default())
         }
     }
 

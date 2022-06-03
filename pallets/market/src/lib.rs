@@ -345,7 +345,7 @@ impl<T: Config> Pallet<T> {
             Error::<T>::MarketExists
         );
 
-        let vault: T::AccountId = <T as Config>::PalletId::get().into_sub_account(market_id);
+        let vault: T::AccountId = <T as Config>::PalletId::get().into_sub_account_truncating(market_id);
 
         Markets::<T>::insert(
             market_id,

@@ -203,7 +203,7 @@ impl<T: Config> Pallet<T> {
             Error::<T>::EscrowClassExists
         );
 
-        let owner = <T as Config>::PalletId::get().into_account();
+        let owner = <T as Config>::PalletId::get().into_account_truncating();
         sugarfunge_asset::Pallet::<T>::do_create_class(&who, &owner, class_id, metadata.clone())?;
 
         let escrow = Escrow {
@@ -243,7 +243,7 @@ impl<T: Config> Pallet<T> {
 
         let block_number: u32 = <frame_system::Pallet<T>>::block_number().unique_saturated_into();
         let sub = vec![block_number as u64, class_id.into(), escrow_id];
-        let escrow = <T as Config>::PalletId::get().into_sub_account(sub);
+        let escrow = <T as Config>::PalletId::get().into_sub_account_truncating(sub);
 
         ensure!(
             !EscrowAccounts::<T>::contains_key(&escrow),
@@ -255,7 +255,7 @@ impl<T: Config> Pallet<T> {
 
         let asset_id: T::AssetId = escrow_id.into();
 
-        let operator: T::AccountId = <T as Config>::PalletId::get().into_account();
+        let operator: T::AccountId = <T as Config>::PalletId::get().into_account_truncating();
 
         // Mint shares for each owner
         for (idx, owner) in owners.iter().enumerate() {
@@ -351,7 +351,7 @@ impl<T: Config> Pallet<T> {
             Error::<T>::InsufficientShares
         );
 
-        let operator: T::AccountId = <T as Config>::PalletId::get().into_account();
+        let operator: T::AccountId = <T as Config>::PalletId::get().into_account_truncating();
 
         // Burn escrow shares
         sugarfunge_asset::Pallet::<T>::do_burn(
