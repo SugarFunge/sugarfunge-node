@@ -259,7 +259,7 @@ pub mod pallet {
             market_rate_id: T::MarketRateId,
             who: T::AccountId,
         },
-        LiquidityAdded {
+        Deposit {
             who: T::AccountId,
             market_id: T::MarketId,
             market_rate_id: T::MarketRateId,
@@ -331,7 +331,7 @@ pub mod pallet {
         }
 
         #[pallet::weight(10_000)]
-        pub fn add_liquidity(
+        pub fn deposit(
             origin: OriginFor<T>,
             market_id: T::MarketId,
             market_rate_id: T::MarketRateId,
@@ -339,7 +339,7 @@ pub mod pallet {
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
 
-            Self::do_add_liquidity(&who, market_id, market_rate_id, amount)?;
+            Self::do_deposit(&who, market_id, market_rate_id, amount)?;
 
             Ok(().into())
         }
@@ -375,7 +375,8 @@ impl<T: Config> Pallet<T> {
             Error::<T>::MarketExists
         );
 
-        let vault: T::AccountId = <T as Config>::PalletId::get().into_sub_account_truncating(market_id);
+        let vault: T::AccountId =
+            <T as Config>::PalletId::get().into_sub_account_truncating(market_id);
 
         Markets::<T>::insert(
             market_id,
@@ -567,7 +568,7 @@ impl<T: Config> Pallet<T> {
         Ok((can_do_deposit, deposit_balances))
     }
 
-    pub fn do_add_liquidity(
+    pub fn do_deposit(
         who: &T::AccountId,
         market_id: T::MarketId,
         market_rate_id: T::MarketRateId,
@@ -604,7 +605,7 @@ impl<T: Config> Pallet<T> {
             })
             .collect();
 
-        Self::deposit_event(Event::LiquidityAdded {
+        Self::deposit_event(Event::Deposit {
             who: who.clone(),
             market_id,
             market_rate_id,
@@ -620,7 +621,7 @@ impl<T: Config> Pallet<T> {
         Markets::<T>::get(market_id).and_then(|market| Some(market.vault))
     }
 
-    pub fn get_liquidity(
+    pub fn balance(
         market: &Market<T::AccountId>,
         class_id: T::ClassId,
         asset_id: T::AssetId,
