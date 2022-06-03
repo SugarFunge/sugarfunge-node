@@ -1133,17 +1133,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "derivative"
-version = "2.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fcc3dd5e9e9c0b295d6e1e4d811fb6f157d5ffd784b8d202fc62eac8035a770b"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
 name = "derive_more"
 version = "0.99.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3738,70 +3727,6 @@ name = "openssl-probe"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ff011a302c396a5197692431fc1948019154afc178baf7d8e37367442a4601cf"
-
-[[package]]
-name = "orml-currencies"
-version = "0.4.1-dev"
-source = "git+https://github.com/SugarFunge/open-runtime-module-library.git?branch=polkadot-v0.9.17#0a5a2df3b796f1fcfec3c4c32cc853716fa6c3da"
-dependencies = [
- "frame-support",
- "frame-system",
- "orml-traits",
- "orml-utilities",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "orml-tokens"
-version = "0.4.1-dev"
-source = "git+https://github.com/SugarFunge/open-runtime-module-library.git?branch=polkadot-v0.9.17#0a5a2df3b796f1fcfec3c4c32cc853716fa6c3da"
-dependencies = [
- "frame-support",
- "frame-system",
- "orml-traits",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "orml-traits"
-version = "0.4.1-dev"
-source = "git+https://github.com/SugarFunge/open-runtime-module-library.git?branch=polkadot-v0.9.17#0a5a2df3b796f1fcfec3c4c32cc853716fa6c3da"
-dependencies = [
- "frame-support",
- "impl-trait-for-tuples",
- "num-traits",
- "orml-utilities",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-io",
- "sp-runtime",
- "sp-std",
- "xcm",
-]
-
-[[package]]
-name = "orml-utilities"
-version = "0.4.1-dev"
-source = "git+https://github.com/SugarFunge/open-runtime-module-library.git?branch=polkadot-v0.9.17#0a5a2df3b796f1fcfec3c4c32cc853716fa6c3da"
-dependencies = [
- "frame-support",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
 
 [[package]]
 name = "os_str_bytes"
@@ -7144,27 +7069,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "sugarfunge-currency"
-version = "0.1.0"
-dependencies = [
- "frame-support",
- "frame-system",
- "orml-currencies",
- "orml-tokens",
- "orml-traits",
- "pallet-balances",
- "pallet-sudo",
- "parity-scale-codec",
- "scale-info",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
- "sugarfunge-asset",
- "sugarfunge-primitives",
-]
-
-[[package]]
 name = "sugarfunge-dao"
 version = "0.1.0"
 dependencies = [
@@ -7180,29 +7084,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "sugarfunge-dex"
-version = "0.1.0"
-dependencies = [
- "frame-support",
- "frame-system",
- "integer-sqrt",
- "orml-currencies",
- "orml-tokens",
- "orml-traits",
- "pallet-balances",
- "pallet-timestamp",
- "parity-scale-codec",
- "scale-info",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
- "sugarfunge-asset",
- "sugarfunge-currency",
- "sugarfunge-primitives",
-]
-
-[[package]]
 name = "sugarfunge-escrow"
 version = "0.1.0"
 dependencies = [
@@ -7210,9 +7091,6 @@ dependencies = [
  "frame-support",
  "frame-system",
  "integer-sqrt",
- "orml-currencies",
- "orml-tokens",
- "orml-traits",
  "pallet-balances",
  "pallet-timestamp",
  "parity-scale-codec",
@@ -7223,7 +7101,6 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "sugarfunge-asset",
- "sugarfunge-currency",
  "sugarfunge-primitives",
 ]
 
@@ -7333,9 +7210,6 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "hex-literal",
- "orml-currencies",
- "orml-tokens",
- "orml-traits",
  "pallet-aura",
  "pallet-balances",
  "pallet-collective",
@@ -7368,9 +7242,7 @@ dependencies = [
  "sugarfunge-asset-rpc-runtime-api",
  "sugarfunge-bridge",
  "sugarfunge-bundle",
- "sugarfunge-currency",
  "sugarfunge-dao",
- "sugarfunge-dex",
  "sugarfunge-escrow",
  "sugarfunge-exgine",
  "sugarfunge-market",
@@ -8437,30 +8309,6 @@ dependencies = [
  "curve25519-dalek 3.2.0",
  "rand_core 0.5.1",
  "zeroize",
-]
-
-[[package]]
-name = "xcm"
-version = "0.9.17"
-source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.17#de0ecd4760b146ecf33f5e867d707d789e21e060"
-dependencies = [
- "derivative",
- "impl-trait-for-tuples",
- "log",
- "parity-scale-codec",
- "scale-info",
- "xcm-procedural",
-]
-
-[[package]]
-name = "xcm-procedural"
-version = "0.1.0"
-source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.17#de0ecd4760b146ecf33f5e867d707d789e21e060"
-dependencies = [
- "Inflector",
- "proc-macro2",
- "quote",
- "syn",
 ]
 
 [[package]]

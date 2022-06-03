@@ -59,19 +59,12 @@ frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch =
 frame-system-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17", default-features = false, optional = true }
 hex-literal = { version = "0.3.1", optional = true }
 
-# Orml packages
-orml-traits = { branch = "polkadot-v0.9.17", default-features = false, git = "https://github.com/SugarFunge/open-runtime-module-library.git" }
-orml-currencies = { branch = "polkadot-v0.9.17", default-features = false, git = "https://github.com/SugarFunge/open-runtime-module-library.git" }
-orml-tokens = { branch = "polkadot-v0.9.17", default-features = false, git = "https://github.com/SugarFunge/open-runtime-module-library.git" }
-
 primitives = { package = "sugarfunge-primitives", path = "../primitives", default-features = false }
 
 # local pallets
 sugarfunge-validator-set = { default-features = false, path = "../pallets/validator-set" }
 sugarfunge-bridge = { default-features = false, path = "../pallets/bridge" }
 sugarfunge-asset = { default-features = false, path = "../pallets/asset" }
-sugarfunge-currency = { default-features = false, path = "../pallets/currency" }
-sugarfunge-dex = { default-features = false, path = "../pallets/dex" }
 sugarfunge-dao = { default-features = false, path = "../pallets/dao" }
 sugarfunge-bundle = { default-features = false, path = "../pallets/bundle" }
 sugarfunge-escrow = { default-features = false, path = "../pallets/escrow" }
@@ -118,14 +111,9 @@ std = [
 	"pallet-contracts-primitives/std",
 	"pallet-contracts-rpc-runtime-api/std",
 	"pallet-collective/std",
-	"orml-traits/std",
-	"orml-currencies/std",
-	"orml-tokens/std",
 	"sugarfunge-validator-set/std",
 
 	"sugarfunge-asset/std",
-	"sugarfunge-currency/std",
-	"sugarfunge-dex/std",
 	"sugarfunge-bundle/std",
 	"sugarfunge-exgine/std",
 	"sugarfunge-market/std",

@@ -56,19 +56,3 @@ pub type Amount = i128;
 
 pub type ClassId = u64;
 pub type AssetId = u64;
-
-#[derive(
-    Encode,
-    Decode,
-    Eq,
-    PartialEq,
-    Copy,
-    Clone,
-    RuntimeDebug,
-    PartialOrd,
-    Ord,
-    TypeInfo,
-    MaxEncodedLen,
-)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub struct CurrencyId(pub ClassId, pub AssetId);

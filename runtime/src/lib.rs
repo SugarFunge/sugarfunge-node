@@ -48,9 +48,7 @@ use frame_system::{
     limits::{BlockLength, BlockWeights},
     EnsureRoot,
 };
-use orml_currencies::BasicCurrencyAdapter;
-pub use orml_currencies::Call as OrmlCurrencyCall;
-use orml_traits::parameter_type_with_key;
+
 pub use pallet_balances::Call as BalancesCall;
 pub use pallet_timestamp::Call as TimestampCall;
 use pallet_transaction_payment::CurrencyAdapter;
@@ -58,7 +56,6 @@ use pallet_transaction_payment::CurrencyAdapter;
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 pub use sugarfunge_bundle::Call as BundleCall;
-pub use sugarfunge_currency::Call as CurrencyCall;
 pub use sugarfunge_exgine::Call as ExgineCall;
 pub use sugarfunge_market::Call as MarketCall;
 
@@ -66,7 +63,7 @@ pub use sugarfunge_market::Call as MarketCall;
 mod constants;
 pub use constants::{currency::*, time::*};
 pub use primitives::{
-    AccountId, AccountIndex, Amount, AssetId, Balance, BlockNumber, ClassId, CurrencyId, Hash,
+    AccountId, AccountIndex, Amount, AssetId, Balance, BlockNumber, ClassId, Hash,
     Index, Moment, Signature,
 };
 
@@ -362,38 +359,6 @@ impl pallet_session::Config for Runtime {
     type Event = Event;
 }
 
-parameter_type_with_key! {
-    pub ExistentialDeposits: |_currency_id: CurrencyId| -> Balance {
-        Zero::zero()
-    };
-}
-
-impl orml_tokens::Config for Runtime {
-    type Event = Event;
-    type Balance = Balance;
-    type Amount = Amount;
-    type CurrencyId = CurrencyId;
-    type WeightInfo = ();
-    type ExistentialDeposits = ExistentialDeposits;
-    type OnDust = ();
-    type MaxLocks = MaxLocks;
-    type DustRemovalWhitelist = Nothing;
-}
-
-pub const SUGAR: CurrencyId = CurrencyId(0, 0);
-
-parameter_types! {
-    pub const GetNativeCurrencyId: CurrencyId = SUGAR;
-}
-
-impl orml_currencies::Config for Runtime {
-    type Event = Event;
-    type MultiCurrency = OrmlTokens;
-    type NativeCurrency = BasicCurrencyAdapter<Runtime, Balances, Amount, BlockNumber>;
-    type GetNativeCurrencyId = GetNativeCurrencyId;
-    type WeightInfo = ();
-}
-
 parameter_types! {
     pub const CreateAssetClassDeposit: Balance = 500 * MILLICENTS;
     pub const CreateExchangeDeposit: Balance = 500 * MILLICENTS;
@@ -417,26 +382,9 @@ impl sugarfunge_asset::Config for Runtime {
 }
 
 parameter_types! {
-    pub const CurrencyModuleId: PalletId = PalletId(*b"sug/curr");
-    pub const DexModuleId: PalletId = PalletId(*b"sug/dexm");
     pub const BundleModuleId: PalletId = PalletId(*b"sug/bndl");
     pub const EscrowModuleId: PalletId = PalletId(*b"sug/crow");
     pub const MarketModuleId: PalletId = PalletId(*b"sug/mrkt");
-}
-
-impl sugarfunge_currency::Config for Runtime {
-    type Event = Event;
-    type PalletId = CurrencyModuleId;
-    type Currency = OrmlCurrencies;
-    type CreateCurrencyClassDeposit = CreateCurrencyClassDeposit;
-    type GetNativeCurrencyId = GetNativeCurrencyId;
-}
-
-impl sugarfunge_dex::Config for Runtime {
-    type Event = Event;
-    type PalletId = DexModuleId;
-    type CreateExchangeDeposit = CreateExchangeDeposit;
-    type Currency = Balances;
 }
 
 impl sugarfunge_dao::Config for Runtime {
@@ -501,13 +449,8 @@ construct_runtime!(
         ValidatorSet: validator_set::{Pallet, Call, Storage, Event<T>, Config<T>},
         Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>},
 
-        OrmlTokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>},
-        OrmlCurrencies: orml_currencies::{Pallet, Storage, Call, Event<T>},
-
         // SugarFunge pallets
         Asset: sugarfunge_asset::{Pallet, Call, Storage, Event<T>},
-        Currency: sugarfunge_currency::{Pallet, Call, Storage, Event<T>, Config<T>},
-        Dex: sugarfunge_dex::{Pallet, Call, Storage, Event<T>},
         Dao: sugarfunge_dao::{Pallet, Call, Storage, Event<T>},
         Bundle: sugarfunge_bundle::{Pallet, Call, Storage, Event<T>},
         Escrow: sugarfunge_escrow::{Pallet, Call, Storage, Event<T>},

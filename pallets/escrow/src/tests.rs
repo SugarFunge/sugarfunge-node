@@ -10,16 +10,8 @@ fn last_event() -> Event {
 
 pub fn before_escrow() {
     run_to_block(10);
-    assert_ok!(Currency::mint(Origin::signed(1), SUGAR, 500 * DOLLARS));
-    assert_eq!(
-        last_event(),
-        Event::Currency(sugarfunge_currency::Event::Mint {
-            currency_id: SUGAR,
-            amount: 500 * DOLLARS,
-            who: 1
-        }),
-    );
-    assert_eq!(Asset::balance_of(&1, SUGAR.0, SUGAR.1), 500 * DOLLARS);
+    assert_ok!(Asset::do_mint(&1, &1, 0, 0, 500 * DOLLARS));
+    assert_eq!(Asset::balance_of(&1, 0, 0), 500 * DOLLARS);
     assert_ok!(Asset::create_class(Origin::signed(1), 1, 1, bounded_vec![]));
     assert_ok!(Asset::create_asset(Origin::signed(1), 1, 1, bounded_vec![]));
     assert_ok!(Asset::do_mint(&1, &1, 1, 1, 50000 * DOLLARS));

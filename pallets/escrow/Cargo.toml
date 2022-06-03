@@ -24,7 +24,6 @@ sp-arithmetic = { git = "https://github.com/paritytech/substrate", branch = "pol
 
 sugarfunge-primitives = { package = "sugarfunge-primitives", path = "../../primitives", default-features = false }
 sugarfunge-asset = { package = "sugarfunge-asset", path = "../asset", default-features = false }
-sugarfunge-currency = { package = "sugarfunge-currency", path = "../currency", default-features = false }
 
 [dev-dependencies]
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17", default-features = false }
@@ -32,9 +31,6 @@ sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0
 sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17", default-features = false }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17", default-features = false }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
-orml-traits = { branch = "polkadot-v0.9.17", default-features = false, git = "https://github.com/SugarFunge/open-runtime-module-library.git" }
-orml-currencies = { branch = "polkadot-v0.9.17", default-features = false, git = "https://github.com/SugarFunge/open-runtime-module-library.git" }
-orml-tokens = { branch = "polkadot-v0.9.17", default-features = false, git = "https://github.com/SugarFunge/open-runtime-module-library.git" }
 
 [features]
 default = ['std']
@@ -52,7 +48,6 @@ std = [
     "sp-core/std",
     "sugarfunge-primitives/std",
     "sugarfunge-asset/std",
-    "sugarfunge-currency/std",
 ]
 
 runtime-benchmarks = ["frame-benchmarking"]
