@@ -76,7 +76,7 @@ sugarfunge-bridge = { default-features = false, path = "../pallets/bridge" }
 sugarfunge-asset = { default-features = false, path = "../pallets/asset" }
 sugarfunge-dao = { default-features = false, path = "../pallets/dao" }
 sugarfunge-bundle = { default-features = false, path = "../pallets/bundle" }
-sugarfunge-escrow = { default-features = false, path = "../pallets/escrow" }
+sugarfunge-bag = { default-features = false, path = "../pallets/bag" }
 sugarfunge-exgine = { default-features = false, path = "../pallets/exgine" }
 sugarfunge-market = { default-features = false, path = "../pallets/market" }
 

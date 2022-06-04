@@ -7139,6 +7139,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "sugarfunge-bag"
+version = "0.1.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "integer-sqrt",
+ "pallet-balances",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "sugarfunge-asset",
+ "sugarfunge-primitives",
+]
+
+[[package]]
 name = "sugarfunge-bridge"
 version = "0.1.0"
 dependencies = [
@@ -7188,27 +7209,6 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
-]
-
-[[package]]
-name = "sugarfunge-escrow"
-version = "0.1.0"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "integer-sqrt",
- "pallet-balances",
- "pallet-timestamp",
- "parity-scale-codec",
- "scale-info",
- "sp-arithmetic",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
- "sugarfunge-asset",
- "sugarfunge-primitives",
 ]
 
 [[package]]
@@ -7346,10 +7346,10 @@ dependencies = [
  "sp-version",
  "substrate-wasm-builder",
  "sugarfunge-asset",
+ "sugarfunge-bag",
  "sugarfunge-bridge",
  "sugarfunge-bundle",
  "sugarfunge-dao",
- "sugarfunge-escrow",
  "sugarfunge-exgine",
  "sugarfunge-market",
  "sugarfunge-primitives",

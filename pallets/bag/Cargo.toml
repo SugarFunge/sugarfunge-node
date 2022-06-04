@@ -1,5 +1,5 @@
 [package]
-name = 'sugarfunge-escrow'
+name = 'sugarfunge-bag'
 version = "0.1.0"
 authors = ["SugarFunge Developers"]
 edition = "2021"

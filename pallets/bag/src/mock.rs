@@ -1,4 +1,4 @@
-use crate as sugarfunge_escrow;
+use crate as sugarfunge_bag;
 use frame_support::{
     construct_runtime, parameter_types,
     traits::{OnFinalize, OnInitialize},
@@ -68,7 +68,7 @@ impl pallet_balances::Config for Test {
 
 parameter_types! {
     pub const CreateAssetClassDeposit: Balance = 1;
-    pub const CreateEscrowDeposit: Balance = 1;
+    pub const CreateBagDeposit: Balance = 1;
     pub const CreateCurrencyClassDeposit: Balance = 1;
     pub const MaxClassMetadata: u32 = 1;
     pub const MaxAssetMetadata: u32 = 1;
@@ -86,14 +86,14 @@ impl sugarfunge_asset::Config for Test {
 
 parameter_types! {
     pub const CurrencyModuleId: PalletId = PalletId(*b"sug/curr");
-    pub const EscrowModuleId: PalletId = PalletId(*b"sug/crow");
+    pub const BagModuleId: PalletId = PalletId(*b"sug/crow");
     pub const MaxOwners: u32 = 20;
 }
 
-impl sugarfunge_escrow::Config for Test {
+impl sugarfunge_bag::Config for Test {
     type Event = Event;
-    type PalletId = EscrowModuleId;
-    type CreateEscrowDeposit = CreateEscrowDeposit;
+    type PalletId = BagModuleId;
+    type CreateBagDeposit = CreateBagDeposit;
     type Currency = Balances;
     type MaxOwners = MaxOwners;
 }
@@ -108,7 +108,7 @@ construct_runtime!(
         System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
         Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
         Asset: sugarfunge_asset::{Pallet, Call, Storage, Event<T>},
-        Escrow: sugarfunge_escrow::{Pallet, Call, Storage, Event<T>},
+        Bag: sugarfunge_bag::{Pallet, Call, Storage, Event<T>},
     }
 );
 
@@ -126,12 +126,12 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 
 pub fn run_to_block(n: u64) {
     while System::block_number() < n {
-        Escrow::on_finalize(System::block_number());
+        Bag::on_finalize(System::block_number());
         Balances::on_finalize(System::block_number());
         System::on_finalize(System::block_number());
         System::set_block_number(System::block_number() + 1);
         System::on_initialize(System::block_number());
         Balances::on_initialize(System::block_number());
-        Escrow::on_initialize(System::block_number());
+        Bag::on_initialize(System::block_number());
     }
 }

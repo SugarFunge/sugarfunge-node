@@ -568,6 +568,56 @@ impl<T: Config> Pallet<T> {
         Ok((can_do_deposit, deposit_balances))
     }
 
+    pub fn add_liquidity(
+        who: &T::AccountId,
+        market_id: T::MarketId,
+        market_rate_id: T::MarketRateId,
+        class_id: T::ClassId,
+        asset_id: T::AssetId,
+    ) -> DispatchResult {
+        let market = Markets::<T>::get(market_id).ok_or(Error::<T>::InvalidMarket)?;
+        let _market_rate = MarketRates::<T>::get((market_id, market_rate_id))
+            .ok_or(Error::<T>::InvalidMarketRate)?;
+
+        ensure!(*who == market.owner, Error::<T>::InvalidMarketOwner);
+
+        // let (can_do_deposit, deposit_balances) =
+        //     Self::do_quote_deposit(who, market_id, market_rate_id, amount)?;
+
+        // if can_do_deposit {
+        //     for (asset_rate, amount) in &deposit_balances {
+        //         let amount: u128 = (*amount).try_into().map_err(|_| Error::<T>::Overflow)?;
+        //         sugarfunge_asset::Pallet::<T>::do_transfer_from(
+        //             &market.owner,
+        //             &market.owner,
+        //             &market.vault,
+        //             asset_rate.class_id,
+        //             asset_rate.asset_id,
+        //             amount,
+        //         )?
+        //     }
+        // }
+
+        // let balances = deposit_balances
+        //     .iter()
+        //     .map(|(rate, balance)| RateBalance {
+        //         rate: rate.clone(),
+        //         balance: *balance,
+        //     })
+        //     .collect();
+
+        // Self::deposit_event(Event::Deposit {
+        //     who: who.clone(),
+        //     market_id,
+        //     market_rate_id,
+        //     amount,
+        //     balances,
+        //     success: can_do_deposit,
+        // });
+
+        Ok(().into())
+    }
+
     pub fn do_deposit(
         who: &T::AccountId,
         market_id: T::MarketId,

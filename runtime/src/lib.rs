@@ -362,7 +362,7 @@ impl pallet_session::Config for Runtime {
 parameter_types! {
     pub const CreateAssetClassDeposit: Balance = 500 * MILLICENTS;
     pub const CreateExchangeDeposit: Balance = 500 * MILLICENTS;
-    pub const CreateEscrowDeposit: Balance = 500 * MILLICENTS;
+    pub const CreateBagDeposit: Balance = 500 * MILLICENTS;
     pub const CreateCurrencyClassDeposit: Balance = 500 * MILLICENTS;
 }
 
@@ -383,7 +383,7 @@ impl sugarfunge_asset::Config for Runtime {
 
 parameter_types! {
     pub const BundleModuleId: PalletId = PalletId(*b"sug/bndl");
-    pub const EscrowModuleId: PalletId = PalletId(*b"sug/crow");
+    pub const BagModuleId: PalletId = PalletId(*b"sug/crow");
     pub const MarketModuleId: PalletId = PalletId(*b"sug/mrkt");
 }
 
@@ -408,10 +408,10 @@ parameter_types! {
     pub const MaxOwners: u32 = 20;
 }
 
-impl sugarfunge_escrow::Config for Runtime {
+impl sugarfunge_bag::Config for Runtime {
     type Event = Event;
-    type PalletId = EscrowModuleId;
-    type CreateEscrowDeposit = CreateEscrowDeposit;
+    type PalletId = BagModuleId;
+    type CreateBagDeposit = CreateBagDeposit;
     type Currency = Balances;
     type MaxOwners = MaxOwners;
 }
@@ -453,7 +453,7 @@ construct_runtime!(
         Asset: sugarfunge_asset::{Pallet, Call, Storage, Event<T>},
         Dao: sugarfunge_dao::{Pallet, Call, Storage, Event<T>},
         Bundle: sugarfunge_bundle::{Pallet, Call, Storage, Event<T>},
-        Escrow: sugarfunge_escrow::{Pallet, Call, Storage, Event<T>},
+        Bag: sugarfunge_bag::{Pallet, Call, Storage, Event<T>},
         Exgine: sugarfunge_exgine::{Pallet, Call, Storage, Event<T>},
         Market: sugarfunge_market::{Pallet, Call, Storage, Event<T>},
     }
