@@ -57,12 +57,12 @@ pub mod pallet {
     pub struct Pallet<T>(_);
 
     #[pallet::storage]
-    pub(super) type Bags<T: Config> =
-        StorageMap<_, Blake2_128, T::ClassId, Bag<T::AccountId, T::ClassId>>;
+    pub(super) type BagClasses<T: Config> =
+        StorageMap<_, Blake2_128, T::ClassId, BagClass<T::AccountId, T::ClassId>>;
 
     #[pallet::storage]
-    pub(super) type BagAccounts<T: Config> =
-        StorageMap<_, Blake2_128, T::AccountId, BagAccount<T::AccountId, T::ClassId, T::AssetId>>;
+    pub(super) type Bags<T: Config> =
+        StorageMap<_, Blake2_128, T::AccountId, Bag<T::AccountId, T::ClassId, T::AssetId>>;
 
     #[pallet::storage]
     pub(super) type NextBagId<T: Config> = StorageMap<_, Blake2_128, T::ClassId, u64, ValueQuery>;
@@ -96,9 +96,9 @@ pub mod pallet {
     #[pallet::error]
     pub enum Error<T> {
         BagClassExists,
-        BagAccountExists,
+        BagExists,
         InvalidBagClass,
-        InvalidBagAccount,
+        InvalidBag,
         InvalidBagOperator,
         InvalidBagOwner,
         InvalidArrayLength,
@@ -168,7 +168,7 @@ pub mod pallet {
 }
 
 #[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
-pub struct Bag<AccountId, ClassId> {
+pub struct BagClass<AccountId, ClassId> {
     /// The operator of the bag
     pub operator: AccountId,
     /// The class_id for minting claims
@@ -176,7 +176,7 @@ pub struct Bag<AccountId, ClassId> {
 }
 
 #[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
-pub struct BagAccount<AccountId, ClassId, AssetId> {
+pub struct Bag<AccountId, ClassId, AssetId> {
     /// The operator of the bag
     pub operator: AccountId,
     /// The class_id for minting shares
@@ -194,19 +194,19 @@ impl<T: Config> Pallet<T> {
         metadata: sugarfunge_asset::ClassMetadataOf<T>,
     ) -> DispatchResult {
         ensure!(
-            !Bags::<T>::contains_key(&class_id),
+            !BagClasses::<T>::contains_key(&class_id),
             Error::<T>::BagClassExists
         );
 
         let owner = <T as Config>::PalletId::get().into_account_truncating();
         sugarfunge_asset::Pallet::<T>::do_create_class(&who, &owner, class_id, metadata.clone())?;
 
-        let bag = Bag {
+        let bag_class = BagClass {
             operator: who.clone(),
             class_id,
         };
 
-        Bags::<T>::insert(class_id, &bag);
+        BagClasses::<T>::insert(class_id, &bag_class);
 
         Self::deposit_event(Event::Register {
             who: who.clone(),
@@ -223,7 +223,7 @@ impl<T: Config> Pallet<T> {
         shares: &Vec<Balance>,
     ) -> Result<T::AccountId, DispatchError> {
         ensure!(
-            Bags::<T>::contains_key(&class_id),
+            BagClasses::<T>::contains_key(&class_id),
             Error::<T>::InvalidBagClass
         );
 
@@ -239,10 +239,7 @@ impl<T: Config> Pallet<T> {
         let sub = vec![block_number as u64, class_id.into(), bag_id];
         let bag = <T as Config>::PalletId::get().into_sub_account_truncating(sub);
 
-        ensure!(
-            !BagAccounts::<T>::contains_key(&bag),
-            Error::<T>::BagAccountExists
-        );
+        ensure!(!Bags::<T>::contains_key(&bag), Error::<T>::BagExists);
 
         let deposit = T::CreateBagDeposit::get();
         <T as Config>::Currency::transfer(who, &bag, deposit, AllowDeath)?;
@@ -262,14 +259,14 @@ impl<T: Config> Pallet<T> {
             )?;
         }
 
-        let new_bag = BagAccount {
+        let new_bag = Bag {
             operator: operator.clone(),
             class_id,
             asset_id,
             total_shares: shares.iter().sum(),
         };
 
-        BagAccounts::<T>::insert(&bag, &new_bag);
+        Bags::<T>::insert(&bag, &new_bag);
 
         Self::deposit_event(Event::Created {
             bag: bag.clone(),
@@ -289,10 +286,7 @@ impl<T: Config> Pallet<T> {
         asset_ids: Vec<Vec<T::AssetId>>,
         amounts: Vec<Vec<Balance>>,
     ) -> DispatchResult {
-        ensure!(
-            BagAccounts::<T>::contains_key(&bag),
-            Error::<T>::InvalidBagAccount
-        );
+        ensure!(Bags::<T>::contains_key(&bag), Error::<T>::InvalidBag);
 
         ensure!(
             class_ids.len() == amounts.len(),
@@ -332,7 +326,7 @@ impl<T: Config> Pallet<T> {
         to: &T::AccountId,
         bag: &T::AccountId,
     ) -> Result<(Vec<T::ClassId>, Vec<Vec<T::AssetId>>, Vec<Vec<Balance>>), DispatchError> {
-        let bag_info = BagAccounts::<T>::get(bag).ok_or(Error::<T>::InvalidBagAccount)?;
+        let bag_info = Bags::<T>::get(bag).ok_or(Error::<T>::InvalidBag)?;
 
         let shares =
             sugarfunge_asset::Pallet::<T>::balance_of(who, bag_info.class_id, bag_info.asset_id);

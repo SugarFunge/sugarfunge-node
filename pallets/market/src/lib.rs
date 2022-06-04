@@ -259,6 +259,22 @@ pub mod pallet {
             market_rate_id: T::MarketRateId,
             who: T::AccountId,
         },
+        LiquidityAdded {
+            who: T::AccountId,
+            market_id: T::MarketId,
+            market_rate_id: T::MarketRateId,
+            class_ids: Vec<T::ClassId>,
+            asset_ids: Vec<Vec<T::AssetId>>,
+            amounts: Vec<Vec<Balance>>,
+        },
+        LiquidityRemoved {
+            who: T::AccountId,
+            market_id: T::MarketId,
+            market_rate_id: T::MarketRateId,
+            class_ids: Vec<T::ClassId>,
+            asset_ids: Vec<Vec<T::AssetId>>,
+            amounts: Vec<Vec<Balance>>,
+        },
         Deposit {
             who: T::AccountId,
             market_id: T::MarketId,
@@ -297,6 +313,7 @@ pub mod pallet {
         InvalidTransferPrice,
         InvalidTransferBalance,
         InvalidBuyer,
+        InvalidArrayLength,
     }
 
     // Dispatchable functions allows users to interact with the pallet and invoke state changes.
@@ -428,6 +445,108 @@ impl<T: Config> Pallet<T> {
         });
 
         Ok(())
+    }
+
+    pub fn add_liquidity(
+        who: &T::AccountId,
+        market_id: T::MarketId,
+        market_rate_id: T::MarketRateId,
+        class_ids: Vec<T::ClassId>,
+        asset_ids: Vec<Vec<T::AssetId>>,
+        amounts: Vec<Vec<Balance>>,
+    ) -> DispatchResult {
+        let market = Markets::<T>::get(market_id).ok_or(Error::<T>::InvalidMarket)?;
+        let _market_rate = MarketRates::<T>::get((market_id, market_rate_id))
+            .ok_or(Error::<T>::InvalidMarketRate)?;
+
+        ensure!(*who == market.owner, Error::<T>::InvalidMarketOwner);
+
+        ensure!(
+            class_ids.len() == amounts.len(),
+            Error::<T>::InvalidArrayLength
+        );
+        ensure!(
+            asset_ids.len() == amounts.len(),
+            Error::<T>::InvalidArrayLength
+        );
+
+        for (idx, class_id) in class_ids.iter().enumerate() {
+            ensure!(
+                asset_ids[idx].len() == amounts[idx].len(),
+                Error::<T>::InvalidArrayLength
+            );
+
+            sugarfunge_asset::Pallet::<T>::do_batch_transfer_from(
+                &market.owner,
+                &market.owner,
+                &market.vault,
+                *class_id,
+                asset_ids[idx].clone(),
+                amounts[idx].clone(),
+            )?;
+        }
+
+        Self::deposit_event(Event::LiquidityAdded {
+            who: who.clone(),
+            market_id,
+            market_rate_id,
+            class_ids,
+            asset_ids,
+            amounts,
+        });
+
+        Ok(().into())
+    }
+
+    pub fn remove_liquidity(
+        who: &T::AccountId,
+        market_id: T::MarketId,
+        market_rate_id: T::MarketRateId,
+        class_ids: Vec<T::ClassId>,
+        asset_ids: Vec<Vec<T::AssetId>>,
+        amounts: Vec<Vec<Balance>>,
+    ) -> DispatchResult {
+        let market = Markets::<T>::get(market_id).ok_or(Error::<T>::InvalidMarket)?;
+        let _market_rate = MarketRates::<T>::get((market_id, market_rate_id))
+            .ok_or(Error::<T>::InvalidMarketRate)?;
+
+        ensure!(*who == market.owner, Error::<T>::InvalidMarketOwner);
+
+        ensure!(
+            class_ids.len() == amounts.len(),
+            Error::<T>::InvalidArrayLength
+        );
+        ensure!(
+            asset_ids.len() == amounts.len(),
+            Error::<T>::InvalidArrayLength
+        );
+
+        for (idx, class_id) in class_ids.iter().enumerate() {
+            ensure!(
+                asset_ids[idx].len() == amounts[idx].len(),
+                Error::<T>::InvalidArrayLength
+            );
+
+            sugarfunge_asset::Pallet::<T>::do_batch_transfer_from(
+                &market.owner,
+                &market.vault,
+                &market.owner,
+                *class_id,
+                asset_ids[idx].clone(),
+                amounts[idx].clone(),
+            )?;
+        }
+
+        Self::deposit_event(Event::LiquidityRemoved {
+            who: who.clone(),
+            market_id,
+            market_rate_id,
+            class_ids,
+            asset_ids,
+            amounts,
+        });
+
+        Ok(().into())
     }
 
     pub fn do_quote_deposit(
@@ -566,56 +685,6 @@ impl<T: Config> Pallet<T> {
         }
 
         Ok((can_do_deposit, deposit_balances))
-    }
-
-    pub fn add_liquidity(
-        who: &T::AccountId,
-        market_id: T::MarketId,
-        market_rate_id: T::MarketRateId,
-        class_id: T::ClassId,
-        asset_id: T::AssetId,
-    ) -> DispatchResult {
-        let market = Markets::<T>::get(market_id).ok_or(Error::<T>::InvalidMarket)?;
-        let _market_rate = MarketRates::<T>::get((market_id, market_rate_id))
-            .ok_or(Error::<T>::InvalidMarketRate)?;
-
-        ensure!(*who == market.owner, Error::<T>::InvalidMarketOwner);
-
-        // let (can_do_deposit, deposit_balances) =
-        //     Self::do_quote_deposit(who, market_id, market_rate_id, amount)?;
-
-        // if can_do_deposit {
-        //     for (asset_rate, amount) in &deposit_balances {
-        //         let amount: u128 = (*amount).try_into().map_err(|_| Error::<T>::Overflow)?;
-        //         sugarfunge_asset::Pallet::<T>::do_transfer_from(
-        //             &market.owner,
-        //             &market.owner,
-        //             &market.vault,
-        //             asset_rate.class_id,
-        //             asset_rate.asset_id,
-        //             amount,
-        //         )?
-        //     }
-        // }
-
-        // let balances = deposit_balances
-        //     .iter()
-        //     .map(|(rate, balance)| RateBalance {
-        //         rate: rate.clone(),
-        //         balance: *balance,
-        //     })
-        //     .collect();
-
-        // Self::deposit_event(Event::Deposit {
-        //     who: who.clone(),
-        //     market_id,
-        //     market_rate_id,
-        //     amount,
-        //     balances,
-        //     success: can_do_deposit,
-        // });
-
-        Ok(().into())
     }
 
     pub fn do_deposit(
