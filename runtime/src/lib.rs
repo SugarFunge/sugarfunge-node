@@ -122,6 +122,8 @@ const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(10);
 const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 /// We allow for 2 seconds of compute with a 6 second average block time.
 const MAXIMUM_BLOCK_WEIGHT: Weight = 2 * WEIGHT_PER_SECOND;
+/// Maximum metadata size usually for JSON content
+const METADATA_SIZE: u32 = 1024 * 4;
 
 parameter_types! {
     pub const Version: RuntimeVersion = VERSION;
@@ -400,8 +402,8 @@ parameter_types! {
 }
 
 parameter_types! {
-    pub const MaxClassMetadata: u32 = 128;
-    pub const MaxAssetMetadata: u32 = 32;
+    pub const MaxClassMetadata: u32 = METADATA_SIZE;
+    pub const MaxAssetMetadata: u32 = METADATA_SIZE;
 }
 
 impl sugarfunge_asset::Config for Runtime {
@@ -444,7 +446,7 @@ impl sugarfunge_dao::Config for Runtime {
 parameter_types! {
     pub const MaxAssets: u32 = 20;
     pub const MaxRates: u32 = 20;
-    pub const MaxMetadata: u32 = 256;
+    pub const MaxMetadata: u32 = METADATA_SIZE;
 }
 
 impl sugarfunge_bundle::Config for Runtime {
