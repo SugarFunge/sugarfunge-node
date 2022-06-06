@@ -237,7 +237,8 @@ impl<T: Config> Pallet<T> {
             metadata.clone(),
         )?;
 
-        let vault: T::AccountId = <T as Config>::PalletId::get().into_sub_account_truncating(bundle_id);
+        let vault: T::AccountId =
+            <T as Config>::PalletId::get().into_sub_account_truncating(bundle_id);
 
         Bundles::<T>::insert(
             &bundle_id,

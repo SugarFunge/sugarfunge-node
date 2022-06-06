@@ -154,6 +154,35 @@ pub fn before_market() {
     );
 }
 
+pub fn add_some_liquidity() {
+    run_to_block(10);
+
+    assert_ok!(Asset::do_batch_mint(
+        &1,
+        &2,
+        8000,
+        vec![1, 2, 3],
+        vec![1000, 1000, 1000],
+    ));
+
+    assert_ok!(Asset::do_batch_mint(
+        &1,
+        &2,
+        9000,
+        vec![1, 2, 3],
+        vec![1000, 1000, 1000],
+    ));
+
+    assert_ok!(Market::add_liquidity(
+        &2,
+        2000,
+        100,
+        vec![8000, 9000],
+        vec![vec![1, 2, 3], vec![1, 2, 3]],
+        vec![vec![10, 20, 30], vec![100, 200, 300]]
+    ));
+}
+
 #[test]
 fn before_market_works() {
     new_test_ext().execute_with(|| {
@@ -574,6 +603,71 @@ fn exchange_assets_fails() {
             assert_eq!(get_balance(6), Some(&-3));
         } else {
             unreachable!()
+        }
+    })
+}
+
+#[test]
+fn add_liquidity() {
+    new_test_ext().execute_with(|| {
+        before_market();
+        assert_ok!(Market::do_create_market(&2, 2000));
+        let rates = simple_market_rates();
+        assert_ok!(Market::do_create_market_rate(&2, 2000, 100, &rates));
+        assert_ok!(Market::do_deposit(&2, 2000, 100, 4));
+        add_some_liquidity();
+
+        let market_vault = Market::get_vault(2000).unwrap();
+        let market_balances = Asset::balances_of_owner(&market_vault).unwrap();
+        let balances = vec![
+            (8000, 1, 10),
+            (8000, 2, 20),
+            (8000, 3, 30),
+            (9000, 1, 100),
+            (9000, 2, 200),
+            (9000, 3, 300),
+        ];
+        for (b_class_id, b_asset_id, b_balance) in balances {
+            assert!(market_balances.iter().any(|(class_id, asset_id, balance)| {
+                *class_id == b_class_id && *asset_id == b_asset_id && *balance == b_balance
+            }));
+        }
+    })
+}
+
+#[test]
+fn remove_liquidity() {
+    new_test_ext().execute_with(|| {
+        before_market();
+        assert_ok!(Market::do_create_market(&2, 2000));
+        let rates = simple_market_rates();
+        assert_ok!(Market::do_create_market_rate(&2, 2000, 100, &rates));
+        assert_ok!(Market::do_deposit(&2, 2000, 100, 4));
+        add_some_liquidity();
+
+        assert_ok!(Market::remove_liquidity(
+            &2,
+            2000,
+            100,
+            vec![8000, 9000],
+            vec![vec![1, 2, 3], vec![1, 2, 3]],
+            vec![vec![1, 2, 3], vec![10, 20, 30]]
+        ));
+
+        let market_vault = Market::get_vault(2000).unwrap();
+        let market_balances = Asset::balances_of_owner(&market_vault).unwrap();
+        let balances = vec![
+            (8000, 1, 9),
+            (8000, 2, 18),
+            (8000, 3, 27),
+            (9000, 1, 90),
+            (9000, 2, 180),
+            (9000, 3, 270),
+        ];
+        for (b_class_id, b_asset_id, b_balance) in balances {
+            assert!(market_balances.iter().any(|(class_id, asset_id, balance)| {
+                *class_id == b_class_id && *asset_id == b_asset_id && *balance == b_balance
+            }));
         }
     })
 }

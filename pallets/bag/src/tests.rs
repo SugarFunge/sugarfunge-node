@@ -63,12 +63,7 @@ fn deposit_assets() {
             amounts.clone(),
         ));
 
-        assert_ok!(Bag::create(
-            Origin::signed(1),
-            1000,
-            vec![2],
-            vec![1]
-        ));
+        assert_ok!(Bag::create(Origin::signed(1), 1000, vec![2], vec![1]));
 
         if let Event::Bag(crate::Event::Created {
             bag,
@@ -183,12 +178,7 @@ fn sweep_assets() {
             amounts.clone(),
         ));
 
-        assert_ok!(Bag::create(
-            Origin::signed(1),
-            1000,
-            vec![2],
-            vec![1]
-        ));
+        assert_ok!(Bag::create(Origin::signed(1), 1000, vec![2], vec![1]));
         if let Event::Bag(crate::Event::Created {
             bag,
             who,
