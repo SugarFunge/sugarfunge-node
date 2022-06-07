@@ -9,7 +9,7 @@ use frame_support::{
 };
 use scale_info::TypeInfo;
 use sp_runtime::{
-    traits::{AccountIdConversion, BlakeTwo256, Hash, IdentifyAccount},
+    traits::{AccountIdConversion, BlakeTwo256, Hash},
     RuntimeDebug,
 };
 use sp_std::prelude::*;
