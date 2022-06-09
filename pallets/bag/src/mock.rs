@@ -1,16 +1,15 @@
-use crate as sugarfunge_escrow;
+use crate as sugarfunge_bag;
 use frame_support::{
     construct_runtime, parameter_types,
-    traits::{GenesisBuild, Nothing, OnFinalize, OnInitialize},
+    traits::{OnFinalize, OnInitialize},
     PalletId,
 };
-use orml_traits::parameter_type_with_key;
 use sp_core::H256;
 use sp_runtime::{
     testing::Header,
-    traits::{BlakeTwo256, IdentityLookup, Zero},
+    traits::{BlakeTwo256, IdentityLookup},
 };
-use sugarfunge_primitives::{Amount, Balance, BlockNumber, CurrencyId};
+use sugarfunge_primitives::Balance;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -18,11 +17,6 @@ type Block = frame_system::mocking::MockBlock<Test>;
 pub const MILLICENTS: Balance = 10_000_000_000_000;
 pub const CENTS: Balance = 1_000 * MILLICENTS; // assume this is worth about a cent.
 pub const DOLLARS: Balance = 100 * CENTS;
-
-pub const SUGAR: CurrencyId = CurrencyId(0, 0);
-pub const DOT: CurrencyId = CurrencyId(0, 1);
-pub const ETH: CurrencyId = CurrencyId(0, 2);
-pub const BTC: CurrencyId = CurrencyId(0, 3);
 
 parameter_types! {
     pub const BlockHashCount: u64 = 250;
@@ -72,42 +66,9 @@ impl pallet_balances::Config for Test {
     type ReserveIdentifier = [u8; 8];
 }
 
-parameter_type_with_key! {
-    pub ExistentialDeposits: |_currency_id: CurrencyId| -> Balance {
-        Zero::zero()
-    };
-}
-
-impl orml_tokens::Config for Test {
-    type Event = Event;
-    type Balance = Balance;
-    type Amount = Amount;
-    type CurrencyId = CurrencyId;
-    type WeightInfo = ();
-    type ExistentialDeposits = ExistentialDeposits;
-    type OnDust = ();
-    type MaxLocks = ();
-    type DustRemovalWhitelist = Nothing;
-}
-
-parameter_types! {
-    pub const GetNativeCurrencyId: CurrencyId = SUGAR;
-}
-
-pub type AdaptedBasicCurrency =
-    orml_currencies::BasicCurrencyAdapter<Test, Balances, Amount, BlockNumber>;
-
-impl orml_currencies::Config for Test {
-    type Event = Event;
-    type MultiCurrency = OrmlTokens;
-    type NativeCurrency = AdaptedBasicCurrency;
-    type GetNativeCurrencyId = GetNativeCurrencyId;
-    type WeightInfo = ();
-}
-
 parameter_types! {
     pub const CreateAssetClassDeposit: Balance = 1;
-    pub const CreateEscrowDeposit: Balance = 1;
+    pub const CreateBagDeposit: Balance = 1;
     pub const CreateCurrencyClassDeposit: Balance = 1;
     pub const MaxClassMetadata: u32 = 1;
     pub const MaxAssetMetadata: u32 = 1;
@@ -125,22 +86,14 @@ impl sugarfunge_asset::Config for Test {
 
 parameter_types! {
     pub const CurrencyModuleId: PalletId = PalletId(*b"sug/curr");
-    pub const EscrowModuleId: PalletId = PalletId(*b"sug/crow");
+    pub const BagModuleId: PalletId = PalletId(*b"sug/crow");
     pub const MaxOwners: u32 = 20;
 }
 
-impl sugarfunge_currency::Config for Test {
+impl sugarfunge_bag::Config for Test {
     type Event = Event;
-    type PalletId = CurrencyModuleId;
-    type Currency = OrmlCurrencies;
-    type CreateCurrencyClassDeposit = CreateCurrencyClassDeposit;
-    type GetNativeCurrencyId = GetNativeCurrencyId;
-}
-
-impl sugarfunge_escrow::Config for Test {
-    type Event = Event;
-    type PalletId = EscrowModuleId;
-    type CreateEscrowDeposit = CreateEscrowDeposit;
+    type PalletId = BagModuleId;
+    type CreateBagDeposit = CreateBagDeposit;
     type Currency = Balances;
     type MaxOwners = MaxOwners;
 }
@@ -154,11 +107,8 @@ construct_runtime!(
     {
         System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
         Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-        OrmlTokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>},
-        OrmlCurrencies: orml_currencies::{Pallet, Call, Event<T>},
         Asset: sugarfunge_asset::{Pallet, Call, Storage, Event<T>},
-        Escrow: sugarfunge_escrow::{Pallet, Call, Storage, Event<T>},
-        Currency: sugarfunge_currency::{Pallet, Call, Storage, Event<T>},
+        Bag: sugarfunge_bag::{Pallet, Call, Storage, Event<T>},
     }
 );
 
@@ -171,31 +121,17 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     }
     .assimilate_storage(&mut t)
     .unwrap();
-    orml_tokens::GenesisConfig::<Test> {
-        balances: vec![
-            (1, DOT, 100_000_000 * DOLLARS),
-            (1, ETH, 100_000_000 * DOLLARS),
-            (1, BTC, 100_000_000 * DOLLARS),
-        ],
-    }
-    .assimilate_storage(&mut t)
-    .unwrap();
-    sugarfunge_currency::GenesisConfig::<Test> {
-        class: (1, 0, 0, vec![], vec![]),
-    }
-    .assimilate_storage(&mut t)
-    .unwrap();
     t.into()
 }
 
 pub fn run_to_block(n: u64) {
     while System::block_number() < n {
-        Escrow::on_finalize(System::block_number());
+        Bag::on_finalize(System::block_number());
         Balances::on_finalize(System::block_number());
         System::on_finalize(System::block_number());
         System::set_block_number(System::block_number() + 1);
         System::on_initialize(System::block_number());
         Balances::on_initialize(System::block_number());
-        Escrow::on_initialize(System::block_number());
+        Bag::on_initialize(System::block_number());
     }
 }

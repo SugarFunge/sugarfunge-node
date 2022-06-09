@@ -13,7 +13,7 @@ pub const MILLICENTS: Balance = 10_000_000_000_000;
 parameter_types! {
     pub const CreateAssetClassDeposit: Balance = 500 * MILLICENTS;
     pub const CreateCurrencyClassDeposit: Balance = 500 * MILLICENTS;
-    pub const CreateEscrowDeposit: Balance = 1;
+    pub const CreateBagDeposit: Balance = 1;
 }
 
 parameter_types! {
@@ -126,7 +126,7 @@ pub const ENDOWED_BALANCE: u128 = 100_000_000;
 pub const TEST_THRESHOLD: u32 = 2;
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
-    let bridge_id = <Test as sugarfunge_bridge::Config>::PalletId::get().into_account();
+    let bridge_id = <Test as sugarfunge_bridge::Config>::PalletId::get().into_account_truncating();
     let mut t = frame_system::GenesisConfig::default()
         .build_storage::<Test>()
         .unwrap();

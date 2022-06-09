@@ -1,16 +1,11 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use codec::{Decode, Encode, MaxEncodedLen};
-use scale_info::TypeInfo;
 use sp_runtime::{
     generic,
     traits::{BlakeTwo256, IdentifyAccount, Verify},
-    MultiSignature, OpaqueExtrinsic, RuntimeDebug,
+    MultiSignature, OpaqueExtrinsic
 };
-use sp_std::prelude::*;
 
-#[cfg(feature = "std")]
-use serde::{Deserialize, Serialize};
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -56,19 +51,3 @@ pub type Amount = i128;
 
 pub type ClassId = u64;
 pub type AssetId = u64;
-
-#[derive(
-    Encode,
-    Decode,
-    Eq,
-    PartialEq,
-    Copy,
-    Clone,
-    RuntimeDebug,
-    PartialOrd,
-    Ord,
-    TypeInfo,
-    MaxEncodedLen,
-)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub struct CurrencyId(pub ClassId, pub AssetId);

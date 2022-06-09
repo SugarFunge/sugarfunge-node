@@ -381,7 +381,7 @@ impl<T: Config> Pallet<T> {
     /// Provides an AccountId for the pallet.
     /// This is used both as an origin check and deposit/withdrawal account.
     pub fn account_id() -> T::AccountId {
-        <T as Config>::PalletId::get().into_account()
+        <T as Config>::PalletId::get().into_account_truncating()
     }
 
     /// Asserts if a resource is registered
@@ -700,7 +700,7 @@ pub struct EnsureBridge<T>(sp_std::marker::PhantomData<T>);
 impl<T: Config> EnsureOrigin<T::Origin> for EnsureBridge<T> {
     type Success = T::AccountId;
     fn try_origin(o: T::Origin) -> Result<Self::Success, T::Origin> {
-        let bridge_id = <T as Config>::PalletId::get().into_account();
+        let bridge_id = <T as Config>::PalletId::get().into_account_truncating();
         o.into().and_then(|o| match o {
             frame_system::RawOrigin::Signed(who) if who == bridge_id => Ok(bridge_id),
             r => Err(T::Origin::from(r)),
