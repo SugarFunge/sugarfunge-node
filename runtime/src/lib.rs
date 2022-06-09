@@ -1,5 +1,3 @@
-//! The Substrate Node Template runtime. This can be compiled with `#[no_std]`, ready for Wasm.
-
 #![cfg_attr(not(feature = "std"), no_std)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
@@ -10,20 +8,17 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 use pallet_grandpa::fg_primitives;
 use pallet_grandpa::{AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
+use pallet_transaction_payment::CurrencyAdapter;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use sp_core::{
-    crypto::KeyTypeId,
-    u32_trait::{_1, _2},
-    OpaqueMetadata,
-};
+use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::traits::{
-    AccountIdLookup, BlakeTwo256, Block as BlockT, NumberFor, OpaqueKeys, Zero,
+    AccountIdLookup, BlakeTwo256, Block as BlockT, NumberFor, OpaqueKeys
 };
 use sp_runtime::{
     create_runtime_str, generic, impl_opaque_keys,
     transaction_validity::{TransactionSource, TransactionValidity},
-    ApplyExtrinsicResult,
+    ApplyExtrinsicResult, Perbill
 };
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
@@ -40,7 +35,7 @@ pub use frame_support::{
     },
     weights::{
         constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
-        DispatchClass, IdentityFee, Weight,
+        ConstantMultiplier, DispatchClass, IdentityFee, Weight,
     },
     ConsensusEngineId, PalletId, StorageValue,
 };
@@ -48,26 +43,28 @@ use frame_system::{
     limits::{BlockLength, BlockWeights},
     EnsureRoot,
 };
-use orml_currencies::BasicCurrencyAdapter;
-pub use orml_currencies::Call as OrmlCurrencyCall;
-use orml_traits::parameter_type_with_key;
+
+#[cfg(any(feature = "std", test))]
+pub use frame_system::Call as SystemCall;
+#[cfg(any(feature = "std", test))]
 pub use pallet_balances::Call as BalancesCall;
+#[cfg(any(feature = "std", test))]
 pub use pallet_timestamp::Call as TimestampCall;
-use pallet_transaction_payment::CurrencyAdapter;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
-pub use sp_runtime::{Perbill, Permill};
+#[cfg(any(feature = "std", test))]
 pub use sugarfunge_bundle::Call as BundleCall;
-pub use sugarfunge_currency::Call as CurrencyCall;
+#[cfg(any(feature = "std", test))]
 pub use sugarfunge_exgine::Call as ExgineCall;
+#[cfg(any(feature = "std", test))]
 pub use sugarfunge_market::Call as MarketCall;
 
 /// Constant values used within the runtime.
 mod constants;
 pub use constants::{currency::*, time::*};
 pub use primitives::{
-    AccountId, AccountIndex, Amount, AssetId, Balance, BlockNumber, ClassId, CurrencyId, Hash,
-    Index, Moment, Signature,
+    AccountId, AccountIndex, Amount, AssetId, Balance, BlockNumber, ClassId, Hash, Index, Moment,
+    Signature,
 };
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
@@ -273,15 +270,15 @@ impl pallet_balances::Config for Runtime {
 }
 
 parameter_types! {
-    pub const TransactionByteFee: Balance = 1;
+    pub const TransactionByteFee: Balance = 10 * MILLICENTS;
     pub OperationalFeeMultiplier: u8 = 5;
 }
 
 impl pallet_transaction_payment::Config for Runtime {
     type OnChargeTransaction = CurrencyAdapter<Balances, ()>;
-    type TransactionByteFee = TransactionByteFee;
     type OperationalFeeMultiplier = OperationalFeeMultiplier;
     type WeightToFee = IdentityFee<Balance>;
+    type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
     type FeeMultiplierUpdate = ();
 }
 
@@ -331,7 +328,7 @@ impl pallet_collective::Config<CouncilCollective> for Runtime {
 
 type EnsureRootOrHalfCouncil = EnsureOneOf<
     EnsureRoot<AccountId>,
-    pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>,
+    pallet_collective::EnsureProportionMoreThan<AccountId, CouncilCollective, 1, 2>,
 >;
 
 parameter_types! {
@@ -362,42 +359,10 @@ impl pallet_session::Config for Runtime {
     type Event = Event;
 }
 
-parameter_type_with_key! {
-    pub ExistentialDeposits: |_currency_id: CurrencyId| -> Balance {
-        Zero::zero()
-    };
-}
-
-impl orml_tokens::Config for Runtime {
-    type Event = Event;
-    type Balance = Balance;
-    type Amount = Amount;
-    type CurrencyId = CurrencyId;
-    type WeightInfo = ();
-    type ExistentialDeposits = ExistentialDeposits;
-    type OnDust = ();
-    type MaxLocks = MaxLocks;
-    type DustRemovalWhitelist = Nothing;
-}
-
-pub const SUGAR: CurrencyId = CurrencyId(0, 0);
-
-parameter_types! {
-    pub const GetNativeCurrencyId: CurrencyId = SUGAR;
-}
-
-impl orml_currencies::Config for Runtime {
-    type Event = Event;
-    type MultiCurrency = OrmlTokens;
-    type NativeCurrency = BasicCurrencyAdapter<Runtime, Balances, Amount, BlockNumber>;
-    type GetNativeCurrencyId = GetNativeCurrencyId;
-    type WeightInfo = ();
-}
-
 parameter_types! {
     pub const CreateAssetClassDeposit: Balance = 500 * MILLICENTS;
     pub const CreateExchangeDeposit: Balance = 500 * MILLICENTS;
-    pub const CreateEscrowDeposit: Balance = 500 * MILLICENTS;
+    pub const CreateBagDeposit: Balance = 500 * MILLICENTS;
     pub const CreateCurrencyClassDeposit: Balance = 500 * MILLICENTS;
 }
 
@@ -417,26 +382,9 @@ impl sugarfunge_asset::Config for Runtime {
 }
 
 parameter_types! {
-    pub const CurrencyModuleId: PalletId = PalletId(*b"sug/curr");
-    pub const DexModuleId: PalletId = PalletId(*b"sug/dexm");
     pub const BundleModuleId: PalletId = PalletId(*b"sug/bndl");
-    pub const EscrowModuleId: PalletId = PalletId(*b"sug/crow");
+    pub const BagModuleId: PalletId = PalletId(*b"sug/crow");
     pub const MarketModuleId: PalletId = PalletId(*b"sug/mrkt");
-}
-
-impl sugarfunge_currency::Config for Runtime {
-    type Event = Event;
-    type PalletId = CurrencyModuleId;
-    type Currency = OrmlCurrencies;
-    type CreateCurrencyClassDeposit = CreateCurrencyClassDeposit;
-    type GetNativeCurrencyId = GetNativeCurrencyId;
-}
-
-impl sugarfunge_dex::Config for Runtime {
-    type Event = Event;
-    type PalletId = DexModuleId;
-    type CreateExchangeDeposit = CreateExchangeDeposit;
-    type Currency = Balances;
 }
 
 impl sugarfunge_dao::Config for Runtime {
@@ -460,10 +408,10 @@ parameter_types! {
     pub const MaxOwners: u32 = 20;
 }
 
-impl sugarfunge_escrow::Config for Runtime {
+impl sugarfunge_bag::Config for Runtime {
     type Event = Event;
-    type PalletId = EscrowModuleId;
-    type CreateEscrowDeposit = CreateEscrowDeposit;
+    type PalletId = BagModuleId;
+    type CreateBagDeposit = CreateBagDeposit;
     type Currency = Balances;
     type MaxOwners = MaxOwners;
 }
@@ -501,16 +449,11 @@ construct_runtime!(
         ValidatorSet: validator_set::{Pallet, Call, Storage, Event<T>, Config<T>},
         Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>},
 
-        OrmlTokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>},
-        OrmlCurrencies: orml_currencies::{Pallet, Storage, Call, Event<T>},
-
         // SugarFunge pallets
         Asset: sugarfunge_asset::{Pallet, Call, Storage, Event<T>},
-        Currency: sugarfunge_currency::{Pallet, Call, Storage, Event<T>, Config<T>},
-        Dex: sugarfunge_dex::{Pallet, Call, Storage, Event<T>},
         Dao: sugarfunge_dao::{Pallet, Call, Storage, Event<T>},
         Bundle: sugarfunge_bundle::{Pallet, Call, Storage, Event<T>},
-        Escrow: sugarfunge_escrow::{Pallet, Call, Storage, Event<T>},
+        Bag: sugarfunge_bag::{Pallet, Call, Storage, Event<T>},
         Exgine: sugarfunge_exgine::{Pallet, Call, Storage, Event<T>},
         Market: sugarfunge_market::{Pallet, Call, Storage, Event<T>},
     }
@@ -528,6 +471,7 @@ pub type SignedBlock = generic::SignedBlock<Block>;
 pub type BlockId = generic::BlockId<Block>;
 /// The SignedExtension to the basic transaction logic.
 pub type SignedExtra = (
+    frame_system::CheckNonZeroSender<Runtime>,
     frame_system::CheckSpecVersion<Runtime>,
     frame_system::CheckTxVersion<Runtime>,
     frame_system::CheckGenesis<Runtime>,
@@ -538,8 +482,8 @@ pub type SignedExtra = (
 );
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
-/// Extrinsic type that has already been checked.
-pub type CheckedExtrinsic = generic::CheckedExtrinsic<AccountId, Call, SignedExtra>;
+/// The payload being signed in transactions.
+pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
 /// Executive: handles dispatch to the various modules.
 pub type Executive = frame_executive::Executive<
     Runtime,
@@ -678,14 +622,6 @@ impl_runtime_apis! {
             len: u32,
         ) -> pallet_transaction_payment::FeeDetails<Balance> {
             TransactionPayment::query_fee_details(uxt, len)
-        }
-    }
-
-    impl sugarfunge_asset_rpc_runtime_api::SugarfungeAssetApi<Block, AccountId, ClassId, AssetId, Balance> for Runtime {
-        fn balances_of_owner(
-            account: AccountId,
-        ) -> Vec<(ClassId, AssetId, Balance)> {
-            Asset::balances_of_owner(&account).unwrap_or(Default::default())
         }
     }
 

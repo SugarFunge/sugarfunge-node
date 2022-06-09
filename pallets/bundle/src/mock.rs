@@ -19,7 +19,7 @@ pub const DOLLARS: Balance = 100 * CENTS;
 parameter_types! {
     pub const CreateAssetClassDeposit: Balance = 500 * MILLICENTS;
     pub const CreateCurrencyClassDeposit: Balance = 500 * MILLICENTS;
-    pub const CreateEscrowDeposit: Balance = 1;
+    pub const CreateBagDeposit: Balance = 1;
 }
 
 parameter_types! {
