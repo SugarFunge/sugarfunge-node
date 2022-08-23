@@ -1,8 +1,15 @@
-# Based on https://github.com/paritytech/polkadot/blob/master/scripts/dockerfiles/polkadot/polkadot_builder.Dockerfile
+FROM rustlang/rust:nightly AS builder
 
-FROM paritytech/ci-linux:production AS builder
+RUN rustup target add wasm32-unknown-unknown
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        clang \
+        libclang-dev 
+
 WORKDIR /sugarfunge
+
 COPY . /sugarfunge
+
 RUN cargo build --locked --release
 
 FROM gcr.io/distroless/cc-debian11
@@ -12,5 +19,3 @@ COPY --from=builder /sugarfunge/target/release/sugarfunge-node /
 ENTRYPOINT ["/sugarfunge-node"]
 
 CMD ["--dev", "--pruning", "archive", "--tmp"]
-
-# CMD ["--dev", "--pruning", "archive", "--tmp", "--ws-external", "--rpc-external", "--rpc-cors", "all"]
