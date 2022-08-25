@@ -1,0 +1,3 @@
+[submodule "pallets/fula-pallet"]
+	path = pallets/fula-pallet
+	url = https://github.com/functionland/fula-pallet
