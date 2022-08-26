@@ -1,3 +1,4 @@
-[submodule "pallets/fula-pallet"]
-	path = pallets/fula-pallet
+[submodule "pallets/fula"]
+	path = pallets/fula
 	url = https://github.com/functionland/fula-pallet
+	branch = feature/polkadot-v0.9.27

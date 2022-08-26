@@ -57,6 +57,9 @@ pub use sugarfunge_exgine::Call as ExgineCall;
 #[cfg(any(feature = "std", test))]
 pub use sugarfunge_market::Call as MarketCall;
 
+#[cfg(any(feature = "std", test))]
+pub use functionland_fula::Call as FulaCall;
+
 /// Constant values used within the runtime.
 mod constants;
 pub use constants::{currency::*, time::*};
@@ -429,6 +432,15 @@ impl sugarfunge_market::Config for Runtime {
     type MaxMetadata = MaxMetadata;
 }
 
+parameter_types! {
+    pub const MaxManifestMetadata: u32 = 128;
+}
+
+impl functionland_fula::Config for Runtime {
+    type Event = Event;
+    type MaxManifestMetadata = MaxManifestMetadata;
+}
+
 construct_runtime!(
     pub enum Runtime where
         Block = Block,
@@ -456,6 +468,9 @@ construct_runtime!(
         Bag: sugarfunge_bag::{Pallet, Call, Storage, Event<T>},
         Exgine: sugarfunge_exgine::{Pallet, Call, Storage, Event<T>},
         Market: sugarfunge_market::{Pallet, Call, Storage, Event<T>},
+
+         // Functionland pallets
+         Fula: functionland_fula::{Pallet, Call, Storage, Event<T>},
     }
 );
 
