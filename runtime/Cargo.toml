@@ -80,7 +80,7 @@ sugarfunge-bag = { default-features = false, path = "../pallets/bag" }
 sugarfunge-exgine = { default-features = false, path = "../pallets/exgine" }
 sugarfunge-market = { default-features = false, path = "../pallets/market" }
 
-functionland-fula = { default-features = false, path = "../pallets/fula" }
+functionland-fula = { default-features = false, path = "../pallets/fula-pallet" }
 
 [build-dependencies]
 substrate-wasm-builder = { version = "5.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
