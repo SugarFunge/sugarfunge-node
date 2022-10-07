@@ -9,18 +9,16 @@ jobs:
         steps:
         - name: 'Checkout GitHub Action'
           uses: actions/checkout@main
-          
-        - name: 'Build and push image'
-          uses: azure/docker-login@v1
+        - name: Login to Docker Hub
+          uses: docker/login-action@v2
           with:
-            login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
-            username: ${{ secrets.REGISTRY_USERNAME }}
-            password: ${{ secrets.REGISTRY_PASSWORD }}
+            username: ${{ secrets.DOCKERHUB_USERNAME }}
+            password: ${{ secrets.DOCKERHUB_ORG_TOKEN }}
         - run: |
-            docker build -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/node:${{ github.sha }} -f docker/Dockerfile .
-            docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/node:${{ github.sha }}
-            docker tag ${{ secrets.REGISTRY_LOGIN_SERVER }}/node:${{ github.sha }} ${{ secrets.REGISTRY_LOGIN_SERVER }}/node:latest
-            docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/node:latest
+            docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/node:${{ github.sha }} -f docker/Dockerfile .
+            docker push ${{ secrets.DOCKERHUB_USERNAME }}/node:${{ github.sha }}
+            docker tag ${{ secrets.DOCKERHUB_USERNAME }}/node:${{ github.sha }} ${{ secrets.DOCKERHUB_USERNAME }}/node:latest
+            docker push ${{ secrets.DOCKERHUB_USERNAME }}/node:latest
         - uses: slackapi/slack-github-action@v1.18.0
           with:
             channel-id: ${{ secrets.SUGARFUNGE_SLACK_CHANNEL_ID }}
