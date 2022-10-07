@@ -2,7 +2,7 @@ name: DockerBuildPush
 
 on:
   push:
-    branches: [ main ]
+    branches: [ feature/polkadot-v0.9.27 ]
 jobs:
     build-and-deploy:
         runs-on: ubuntu-latest
