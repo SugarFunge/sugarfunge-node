@@ -12,13 +12,11 @@ use pallet_transaction_payment::CurrencyAdapter;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
-use sp_runtime::traits::{
-    AccountIdLookup, BlakeTwo256, Block as BlockT, NumberFor, OpaqueKeys
-};
+use sp_runtime::traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, NumberFor, OpaqueKeys};
 use sp_runtime::{
     create_runtime_str, generic, impl_opaque_keys,
     transaction_validity::{TransactionSource, TransactionValidity},
-    ApplyExtrinsicResult, Perbill
+    ApplyExtrinsicResult, Perbill,
 };
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
@@ -30,8 +28,8 @@ use sugarfunge_validator_set as validator_set;
 pub use frame_support::{
     construct_runtime, parameter_types,
     traits::{
-        Contains, EnsureOneOf, EqualPrivilegeOnly, FindAuthor, KeyOwnerProofSystem, Nothing,
-        Randomness,
+        ConstU128, Contains, EitherOfDiverse, EqualPrivilegeOnly, FindAuthor, KeyOwnerProofSystem,
+        Nothing, Randomness,
     },
     weights::{
         constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -247,8 +245,9 @@ impl pallet_timestamp::Config for Runtime {
     type WeightInfo = ();
 }
 
+pub const EXISTENTIAL_DEPOSIT: u128 = 500;
+
 parameter_types! {
-    pub const ExistentialDeposit: u128 = 500;
     // For weight estimation, we assume that the most locks on an individual account will be 50.
     // This number may need to be adjusted in the future if this assumption no longer holds true.
     pub const MaxLocks: u32 = 50;
@@ -264,7 +263,7 @@ impl pallet_balances::Config for Runtime {
     /// The ubiquitous event type.
     type Event = Event;
     type DustRemoval = ();
-    type ExistentialDeposit = ExistentialDeposit;
+    type ExistentialDeposit = ConstU128<EXISTENTIAL_DEPOSIT>;
     type AccountStore = System;
     type WeightInfo = pallet_balances::weights::SubstrateWeight<Runtime>;
 }
@@ -275,6 +274,7 @@ parameter_types! {
 }
 
 impl pallet_transaction_payment::Config for Runtime {
+    type Event = Event;
     type OnChargeTransaction = CurrencyAdapter<Balances, ()>;
     type OperationalFeeMultiplier = OperationalFeeMultiplier;
     type WeightToFee = IdentityFee<Balance>;
@@ -326,7 +326,7 @@ impl pallet_collective::Config<CouncilCollective> for Runtime {
     type WeightInfo = pallet_collective::weights::SubstrateWeight<Runtime>;
 }
 
-type EnsureRootOrHalfCouncil = EnsureOneOf<
+type EnsureRootOrHalfCouncil = EitherOfDiverse<
     EnsureRoot<AccountId>,
     pallet_collective::EnsureProportionMoreThan<AccountId, CouncilCollective, 1, 2>,
 >;
@@ -441,7 +441,7 @@ construct_runtime!(
         Aura: pallet_aura::{Pallet, Config<T>},
         Grandpa: pallet_grandpa::{Pallet, Call, Storage, Config, Event},
         Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-        TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
+        TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Event<T>},
         Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
         Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>},
         Council: pallet_collective::<Instance1>,
