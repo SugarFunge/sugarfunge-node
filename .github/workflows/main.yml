@@ -49,7 +49,7 @@ jobs:
               --amend ${{ secrets.REGISTRY_LOGIN_SERVER }}/node:amd64-latest \
               --amend ${{ secrets.REGISTRY_LOGIN_SERVER }}/node:arm64-latest
               docker manifest push ${{ secrets.REGISTRY_LOGIN_SERVER }}/node:latest
-          - uses: slacknode/slack-github-action@v1.18.0
+          - uses: slackapi/slack-github-action@v1.23.0
             with:
               channel-id: ${{ secrets.SUGARFUNGE_SLACK_CHANNEL_ID }}
               payload: |
