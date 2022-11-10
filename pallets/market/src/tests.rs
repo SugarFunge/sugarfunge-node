@@ -4,7 +4,7 @@ use crate::{
 use frame_support::{assert_noop, assert_ok, bounded_vec};
 use sp_std::prelude::*;
 
-fn last_event() -> Event {
+fn last_event() -> RuntimeEvent {
     frame_system::Pallet::<Test>::events()
         .pop()
         .expect("Event expected")
@@ -147,7 +147,7 @@ pub fn before_market() {
 
     assert_eq!(
         last_event(),
-        Event::Market(crate::Event::Created {
+        RuntimeEvent::Market(crate::Event::Created {
             market_id: 1000,
             who: 1,
         }),
@@ -199,7 +199,7 @@ fn create_market_works() {
 
         assert_eq!(
             last_event(),
-            Event::Market(crate::Event::Created {
+            RuntimeEvent::Market(crate::Event::Created {
                 market_id: 1001,
                 who: 1,
             }),
@@ -218,7 +218,7 @@ fn create_market_rate_works() {
 
         assert_eq!(
             last_event(),
-            Event::Market(crate::Event::RateCreated {
+            RuntimeEvent::Market(crate::Event::RateCreated {
                 market_id: 1000,
                 market_rate_id: 2,
                 who: 1
@@ -314,7 +314,7 @@ fn deposit_works() {
         assert_ok!(Market::do_create_market_rate(&2, 2000, 100, &rates));
         assert_ok!(Market::do_deposit(&2, 2000, 100, 4));
 
-        if let Event::Market(crate::Event::Deposit {
+        if let RuntimeEvent::Market(crate::Event::Deposit {
             who,
             market_id,
             market_rate_id,
@@ -360,7 +360,7 @@ fn deposit_fails() {
         assert_ok!(Market::do_create_market_rate(&2, 2000, 100, &rates));
         assert_ok!(Market::do_deposit(&2, 2000, 100, 100));
 
-        if let Event::Market(crate::Event::Deposit {
+        if let RuntimeEvent::Market(crate::Event::Deposit {
             who,
             market_id,
             market_rate_id,
@@ -506,7 +506,7 @@ fn exchange_assets_works() {
 
         assert_ok!(Market::do_exchange_assets(&3, 2000, 100, 3));
 
-        if let Event::Market(crate::Event::Exchanged {
+        if let RuntimeEvent::Market(crate::Event::Exchanged {
             buyer,
             market_id,
             market_rate_id,
@@ -570,7 +570,7 @@ fn exchange_assets_fails() {
 
         assert_ok!(Market::do_exchange_assets(&3, 2000, 100, 3));
 
-        if let Event::Market(crate::Event::Exchanged {
+        if let RuntimeEvent::Market(crate::Event::Exchanged {
             buyer,
             market_id,
             market_rate_id,

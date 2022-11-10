@@ -2,7 +2,7 @@ use crate::{mock::*, BundleSchema, Error};
 use frame_support::{assert_err, assert_ok, bounded_vec, BoundedVec};
 use sp_runtime::traits::{BlakeTwo256, Hash};
 
-fn last_event() -> Event {
+fn last_event() -> RuntimeEvent {
     frame_system::Pallet::<Test>::events()
         .pop()
         .expect("Event expected")
@@ -85,7 +85,7 @@ fn mint_bundle_works() {
 
         assert_eq!(
             last_event(),
-            Event::Bundle(crate::Event::Mint {
+            RuntimeEvent::Bundle(crate::Event::Mint {
                 bundle_id,
                 who: 2,
                 from: 2,
@@ -243,7 +243,7 @@ fn burn_bundle_works() {
 
         assert_eq!(
             last_event(),
-            Event::Bundle(crate::Event::Burn {
+            RuntimeEvent::Bundle(crate::Event::Burn {
                 bundle_id,
                 who: 2,
                 from: 2,
