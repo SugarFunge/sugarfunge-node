@@ -1,7 +1,7 @@
 #![cfg(test)]
 
 use super::mock::{
-    assert_events, new_test_ext, Balances, Bridge, Call, Event, Origin, ProposalLifetime, System,
+    assert_events, new_test_ext, Balances, Bridge, RuntimeCall, RuntimeEvent, RuntimeOrigin, ProposalLifetime, System,
     Test, TestChainId, ENDOWED_BALANCE, RELAYER_A, RELAYER_B, RELAYER_C, TEST_THRESHOLD,
 };
 use super::*;
@@ -88,13 +88,13 @@ fn setup_resources() {
                 .try_into()
                 .unwrap();
 
-        assert_ok!(Bridge::set_resource(Origin::root(), id, method.clone()));
+        assert_ok!(Bridge::set_resource(RuntimeOrigin::root(), id, method.clone()));
         assert_eq!(Bridge::resources(id), Some(method));
 
-        assert_ok!(Bridge::set_resource(Origin::root(), id, method2.clone()));
+        assert_ok!(Bridge::set_resource(RuntimeOrigin::root(), id, method2.clone()));
         assert_eq!(Bridge::resources(id), Some(method2));
 
-        assert_ok!(Bridge::remove_resource(Origin::root(), id));
+        assert_ok!(Bridge::remove_resource(RuntimeOrigin::root(), id));
         assert_eq!(Bridge::resources(id), None);
     })
 }
@@ -104,13 +104,13 @@ fn whitelist_chain() {
     new_test_ext().execute_with(|| {
         assert!(!Bridge::chain_whitelisted(0));
 
-        assert_ok!(Bridge::whitelist_chain(Origin::root(), 0));
+        assert_ok!(Bridge::whitelist_chain(RuntimeOrigin::root(), 0));
         assert_noop!(
-            Bridge::whitelist_chain(Origin::root(), TestChainId::get()),
+            Bridge::whitelist_chain(RuntimeOrigin::root(), TestChainId::get()),
             Error::<Test>::InvalidChainId
         );
 
-        assert_events(vec![Event::Bridge(crate::Event::ChainWhitelisted(0))]);
+        assert_events(vec![RuntimeEvent::Bridge(crate::Event::ChainWhitelisted(0))]);
     })
 }
 
@@ -119,15 +119,15 @@ fn set_get_threshold() {
     new_test_ext().execute_with(|| {
         assert_eq!(RelayerThreshold::<Test>::get(), 1);
 
-        assert_ok!(Bridge::set_threshold(Origin::root(), TEST_THRESHOLD));
+        assert_ok!(Bridge::set_threshold(RuntimeOrigin::root(), TEST_THRESHOLD));
         assert_eq!(RelayerThreshold::<Test>::get(), TEST_THRESHOLD);
 
-        assert_ok!(Bridge::set_threshold(Origin::root(), 5));
+        assert_ok!(Bridge::set_threshold(RuntimeOrigin::root(), 5));
         assert_eq!(RelayerThreshold::<Test>::get(), 5);
 
         assert_events(vec![
-            Event::Bridge(crate::Event::RelayerThresholdChanged(TEST_THRESHOLD)),
-            Event::Bridge(crate::Event::RelayerThresholdChanged(5)),
+            RuntimeEvent::Bridge(crate::Event::RelayerThresholdChanged(TEST_THRESHOLD)),
+            RuntimeEvent::Bridge(crate::Event::RelayerThresholdChanged(5)),
         ]);
     })
 }
@@ -142,9 +142,9 @@ fn asset_transfer_success() {
         let amount: u128 = 100;
         let token_id = vec![1, 2, 3, 4];
 
-        assert_ok!(Bridge::set_threshold(Origin::root(), TEST_THRESHOLD,));
+        assert_ok!(Bridge::set_threshold(RuntimeOrigin::root(), TEST_THRESHOLD,));
 
-        assert_ok!(Bridge::whitelist_chain(Origin::root(), dest_id.clone()));
+        assert_ok!(Bridge::whitelist_chain(RuntimeOrigin::root(), dest_id.clone()));
         assert_ok!(Bridge::transfer_fungible(
             dest_id.clone(),
             resource_id.clone(),
@@ -152,8 +152,8 @@ fn asset_transfer_success() {
             amount.into()
         ));
         assert_events(vec![
-            Event::Bridge(crate::Event::ChainWhitelisted(dest_id.clone())),
-            Event::Bridge(crate::Event::FungibleTransfer(
+            RuntimeEvent::Bridge(crate::Event::ChainWhitelisted(dest_id.clone())),
+            RuntimeEvent::Bridge(crate::Event::FungibleTransfer(
                 dest_id.clone(),
                 1,
                 resource_id.clone(),
@@ -169,7 +169,7 @@ fn asset_transfer_success() {
             to.clone(),
             metadata.clone()
         ));
-        assert_events(vec![Event::Bridge(crate::Event::NonFungibleTransfer(
+        assert_events(vec![RuntimeEvent::Bridge(crate::Event::NonFungibleTransfer(
             dest_id.clone(),
             2,
             resource_id.clone(),
@@ -183,7 +183,7 @@ fn asset_transfer_success() {
             resource_id.clone(),
             metadata.clone()
         ));
-        assert_events(vec![Event::Bridge(crate::Event::GenericTransfer(
+        assert_events(vec![RuntimeEvent::Bridge(crate::Event::GenericTransfer(
             dest_id.clone(),
             3,
             resource_id,
@@ -199,8 +199,8 @@ fn asset_transfer_invalid_chain() {
         let bad_dest_id = 3;
         let resource_id = [4; 32];
 
-        assert_ok!(Bridge::whitelist_chain(Origin::root(), chain_id.clone()));
-        assert_events(vec![Event::Bridge(crate::Event::ChainWhitelisted(
+        assert_ok!(Bridge::whitelist_chain(RuntimeOrigin::root(), chain_id.clone()));
+        assert_events(vec![RuntimeEvent::Bridge(crate::Event::ChainWhitelisted(
             chain_id.clone(),
         ))]);
 
@@ -224,40 +224,40 @@ fn asset_transfer_invalid_chain() {
 #[test]
 fn add_remove_relayer() {
     new_test_ext().execute_with(|| {
-        assert_ok!(Bridge::set_threshold(Origin::root(), TEST_THRESHOLD,));
+        assert_ok!(Bridge::set_threshold(RuntimeOrigin::root(), TEST_THRESHOLD,));
         assert_eq!(Bridge::relayer_count(), 0);
 
-        assert_ok!(Bridge::add_relayer(Origin::root(), RELAYER_A));
-        assert_ok!(Bridge::add_relayer(Origin::root(), RELAYER_B));
-        assert_ok!(Bridge::add_relayer(Origin::root(), RELAYER_C));
+        assert_ok!(Bridge::add_relayer(RuntimeOrigin::root(), RELAYER_A));
+        assert_ok!(Bridge::add_relayer(RuntimeOrigin::root(), RELAYER_B));
+        assert_ok!(Bridge::add_relayer(RuntimeOrigin::root(), RELAYER_C));
         assert_eq!(Bridge::relayer_count(), 3);
 
         // Already exists
         assert_noop!(
-            Bridge::add_relayer(Origin::root(), RELAYER_A),
+            Bridge::add_relayer(RuntimeOrigin::root(), RELAYER_A),
             Error::<Test>::RelayerAlreadyExists
         );
 
         // Confirm removal
-        assert_ok!(Bridge::remove_relayer(Origin::root(), RELAYER_B));
+        assert_ok!(Bridge::remove_relayer(RuntimeOrigin::root(), RELAYER_B));
         assert_eq!(Bridge::relayer_count(), 2);
         assert_noop!(
-            Bridge::remove_relayer(Origin::root(), RELAYER_B),
+            Bridge::remove_relayer(RuntimeOrigin::root(), RELAYER_B),
             Error::<Test>::RelayerInvalid
         );
         assert_eq!(Bridge::relayer_count(), 2);
 
         assert_events(vec![
-            Event::Bridge(crate::Event::RelayerAdded(RELAYER_A)),
-            Event::Bridge(crate::Event::RelayerAdded(RELAYER_B)),
-            Event::Bridge(crate::Event::RelayerAdded(RELAYER_C)),
-            Event::Bridge(crate::Event::RelayerRemoved(RELAYER_B)),
+            RuntimeEvent::Bridge(crate::Event::RelayerAdded(RELAYER_A)),
+            RuntimeEvent::Bridge(crate::Event::RelayerAdded(RELAYER_B)),
+            RuntimeEvent::Bridge(crate::Event::RelayerAdded(RELAYER_C)),
+            RuntimeEvent::Bridge(crate::Event::RelayerRemoved(RELAYER_B)),
         ]);
     })
 }
 
-fn make_proposal(r: Vec<u8>) -> mock::Call {
-    Call::System(frame_system::Call::remark { remark: r })
+fn make_proposal(r: Vec<u8>) -> mock::RuntimeCall {
+    RuntimeCall::System(frame_system::Call::remark { remark: r })
 }
 
 #[test]
@@ -274,7 +274,7 @@ fn create_sucessful_proposal() {
 
         // Create proposal (& vote)
         assert_ok!(Bridge::acknowledge_proposal(
-            Origin::signed(RELAYER_A),
+            RuntimeOrigin::signed(RELAYER_A),
             prop_id,
             src_id,
             r_id,
@@ -291,7 +291,7 @@ fn create_sucessful_proposal() {
 
         // Second relayer votes against
         assert_ok!(Bridge::reject_proposal(
-            Origin::signed(RELAYER_B),
+            RuntimeOrigin::signed(RELAYER_B),
             prop_id,
             src_id,
             r_id,
@@ -308,7 +308,7 @@ fn create_sucessful_proposal() {
 
         // Third relayer votes in favour
         assert_ok!(Bridge::acknowledge_proposal(
-            Origin::signed(RELAYER_C),
+            RuntimeOrigin::signed(RELAYER_C),
             prop_id,
             src_id,
             r_id,
@@ -324,11 +324,11 @@ fn create_sucessful_proposal() {
         assert_eq!(prop, expected);
 
         assert_events(vec![
-            Event::Bridge(crate::Event::VoteFor(src_id, prop_id, RELAYER_A)),
-            Event::Bridge(crate::Event::VoteAgainst(src_id, prop_id, RELAYER_B)),
-            Event::Bridge(crate::Event::VoteFor(src_id, prop_id, RELAYER_C)),
-            Event::Bridge(crate::Event::ProposalApproved(src_id, prop_id)),
-            Event::Bridge(crate::Event::ProposalSucceeded(src_id, prop_id)),
+            RuntimeEvent::Bridge(crate::Event::VoteFor(src_id, prop_id, RELAYER_A)),
+            RuntimeEvent::Bridge(crate::Event::VoteAgainst(src_id, prop_id, RELAYER_B)),
+            RuntimeEvent::Bridge(crate::Event::VoteFor(src_id, prop_id, RELAYER_C)),
+            RuntimeEvent::Bridge(crate::Event::ProposalApproved(src_id, prop_id)),
+            RuntimeEvent::Bridge(crate::Event::ProposalSucceeded(src_id, prop_id)),
         ]);
     })
 }
@@ -347,7 +347,7 @@ fn create_unsucessful_proposal() {
 
         // Create proposal (& vote)
         assert_ok!(Bridge::acknowledge_proposal(
-            Origin::signed(RELAYER_A),
+            RuntimeOrigin::signed(RELAYER_A),
             prop_id,
             src_id,
             r_id,
@@ -364,7 +364,7 @@ fn create_unsucessful_proposal() {
 
         // Second relayer votes against
         assert_ok!(Bridge::reject_proposal(
-            Origin::signed(RELAYER_B),
+            RuntimeOrigin::signed(RELAYER_B),
             prop_id,
             src_id,
             r_id,
@@ -381,7 +381,7 @@ fn create_unsucessful_proposal() {
 
         // Third relayer votes against
         assert_ok!(Bridge::reject_proposal(
-            Origin::signed(RELAYER_C),
+            RuntimeOrigin::signed(RELAYER_C),
             prop_id,
             src_id,
             r_id,
@@ -403,10 +403,10 @@ fn create_unsucessful_proposal() {
         );
 
         assert_events(vec![
-            Event::Bridge(crate::Event::VoteFor(src_id, prop_id, RELAYER_A)),
-            Event::Bridge(crate::Event::VoteAgainst(src_id, prop_id, RELAYER_B)),
-            Event::Bridge(crate::Event::VoteAgainst(src_id, prop_id, RELAYER_C)),
-            Event::Bridge(crate::Event::ProposalRejected(src_id, prop_id)),
+            RuntimeEvent::Bridge(crate::Event::VoteFor(src_id, prop_id, RELAYER_A)),
+            RuntimeEvent::Bridge(crate::Event::VoteAgainst(src_id, prop_id, RELAYER_B)),
+            RuntimeEvent::Bridge(crate::Event::VoteAgainst(src_id, prop_id, RELAYER_C)),
+            RuntimeEvent::Bridge(crate::Event::ProposalRejected(src_id, prop_id)),
         ]);
     })
 }
@@ -425,7 +425,7 @@ fn execute_after_threshold_change() {
 
         // Create proposal (& vote)
         assert_ok!(Bridge::acknowledge_proposal(
-            Origin::signed(RELAYER_A),
+            RuntimeOrigin::signed(RELAYER_A),
             prop_id,
             src_id,
             r_id,
@@ -441,11 +441,11 @@ fn execute_after_threshold_change() {
         assert_eq!(prop, expected);
 
         // Change threshold
-        assert_ok!(Bridge::set_threshold(Origin::root(), 1));
+        assert_ok!(Bridge::set_threshold(RuntimeOrigin::root(), 1));
 
         // Attempt to execute
         assert_ok!(Bridge::eval_vote_state(
-            Origin::signed(RELAYER_A),
+            RuntimeOrigin::signed(RELAYER_A),
             prop_id,
             src_id,
             Box::new(proposal.clone())
@@ -467,10 +467,10 @@ fn execute_after_threshold_change() {
         );
 
         assert_events(vec![
-            Event::Bridge(crate::Event::VoteFor(src_id, prop_id, RELAYER_A)),
-            Event::Bridge(crate::Event::RelayerThresholdChanged(1)),
-            Event::Bridge(crate::Event::ProposalApproved(src_id, prop_id)),
-            Event::Bridge(crate::Event::ProposalSucceeded(src_id, prop_id)),
+            RuntimeEvent::Bridge(crate::Event::VoteFor(src_id, prop_id, RELAYER_A)),
+            RuntimeEvent::Bridge(crate::Event::RelayerThresholdChanged(1)),
+            RuntimeEvent::Bridge(crate::Event::ProposalApproved(src_id, prop_id)),
+            RuntimeEvent::Bridge(crate::Event::ProposalSucceeded(src_id, prop_id)),
         ]);
     })
 }
@@ -489,7 +489,7 @@ fn proposal_expires() {
 
         // Create proposal (& vote)
         assert_ok!(Bridge::acknowledge_proposal(
-            Origin::signed(RELAYER_A),
+            RuntimeOrigin::signed(RELAYER_A),
             prop_id,
             src_id,
             r_id,
@@ -510,7 +510,7 @@ fn proposal_expires() {
         // Attempt to submit a vote should fail
         assert_noop!(
             Bridge::reject_proposal(
-                Origin::signed(RELAYER_B),
+                RuntimeOrigin::signed(RELAYER_B),
                 prop_id,
                 src_id,
                 r_id,
@@ -532,7 +532,7 @@ fn proposal_expires() {
         // eval_vote_state should have no effect
         assert_noop!(
             Bridge::eval_vote_state(
-                Origin::signed(RELAYER_C),
+                RuntimeOrigin::signed(RELAYER_C),
                 prop_id,
                 src_id,
                 Box::new(proposal.clone())
@@ -548,7 +548,7 @@ fn proposal_expires() {
         };
         assert_eq!(prop, expected);
 
-        assert_events(vec![Event::Bridge(crate::Event::VoteFor(
+        assert_events(vec![RuntimeEvent::Bridge(crate::Event::VoteFor(
             src_id, prop_id, RELAYER_A,
         ))]);
     })

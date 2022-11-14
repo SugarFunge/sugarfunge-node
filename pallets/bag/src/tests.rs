@@ -1,7 +1,7 @@
 use crate::mock::*;
 use frame_support::{assert_ok, bounded_vec};
 
-fn last_event() -> Event {
+fn last_event() -> RuntimeEvent {
     frame_system::Pallet::<Test>::events()
         .pop()
         .expect("Event expected")
@@ -12,8 +12,8 @@ pub fn before_bag() {
     run_to_block(10);
     assert_ok!(Asset::do_mint(&1, &1, 0, 0, 500 * DOLLARS));
     assert_eq!(Asset::balance_of(&1, 0, 0), 500 * DOLLARS);
-    assert_ok!(Asset::create_class(Origin::signed(1), 1, 1, bounded_vec![]));
-    assert_ok!(Asset::create_asset(Origin::signed(1), 1, 1, bounded_vec![]));
+    assert_ok!(Asset::create_class(RuntimeOrigin::signed(1), 1, 1, bounded_vec![]));
+    assert_ok!(Asset::create_asset(RuntimeOrigin::signed(1), 1, 1, bounded_vec![]));
     assert_ok!(Asset::do_mint(&1, &1, 1, 1, 50000 * DOLLARS));
     assert_eq!(Asset::balance_of(&1, 1, 1), 50000 * DOLLARS);
 
@@ -25,9 +25,9 @@ fn deposit_assets() {
     new_test_ext().execute_with(|| {
         before_bag();
 
-        assert_ok!(Asset::create_class(Origin::signed(1), 1, 2, bounded_vec![]));
-        assert_ok!(Asset::create_class(Origin::signed(1), 1, 3, bounded_vec![]));
-        assert_ok!(Asset::create_class(Origin::signed(1), 1, 4, bounded_vec![]));
+        assert_ok!(Asset::create_class(RuntimeOrigin::signed(1), 1, 2, bounded_vec![]));
+        assert_ok!(Asset::create_class(RuntimeOrigin::signed(1), 1, 3, bounded_vec![]));
+        assert_ok!(Asset::create_class(RuntimeOrigin::signed(1), 1, 4, bounded_vec![]));
 
         let asset_ids = [0, 1, 2, 3, 4].to_vec();
         let amounts = [
@@ -63,9 +63,9 @@ fn deposit_assets() {
             amounts.clone(),
         ));
 
-        assert_ok!(Bag::create(Origin::signed(1), 1000, vec![2], vec![1]));
+        assert_ok!(Bag::create(RuntimeOrigin::signed(1), 1000, vec![2], vec![1]));
 
-        if let Event::Bag(crate::Event::Created {
+        if let RuntimeEvent::Bag(crate::Event::Created {
             bag,
             who,
             class_id,
@@ -79,7 +79,7 @@ fn deposit_assets() {
             assert_eq!(owners, vec![2]);
 
             assert_ok!(Bag::deposit(
-                Origin::signed(2),
+                RuntimeOrigin::signed(2),
                 bag,
                 vec![2, 3, 4],
                 vec![asset_ids.clone(), asset_ids.clone(), asset_ids.clone()],
@@ -140,9 +140,9 @@ fn sweep_assets() {
     new_test_ext().execute_with(|| {
         before_bag();
 
-        assert_ok!(Asset::create_class(Origin::signed(1), 1, 2, bounded_vec![]));
-        assert_ok!(Asset::create_class(Origin::signed(1), 1, 3, bounded_vec![]));
-        assert_ok!(Asset::create_class(Origin::signed(1), 1, 4, bounded_vec![]));
+        assert_ok!(Asset::create_class(RuntimeOrigin::signed(1), 1, 2, bounded_vec![]));
+        assert_ok!(Asset::create_class(RuntimeOrigin::signed(1), 1, 3, bounded_vec![]));
+        assert_ok!(Asset::create_class(RuntimeOrigin::signed(1), 1, 4, bounded_vec![]));
 
         let asset_ids = [0, 1, 2, 3, 4].to_vec();
         let amounts = [
@@ -178,8 +178,8 @@ fn sweep_assets() {
             amounts.clone(),
         ));
 
-        assert_ok!(Bag::create(Origin::signed(1), 1000, vec![2], vec![1]));
-        if let Event::Bag(crate::Event::Created {
+        assert_ok!(Bag::create(RuntimeOrigin::signed(1), 1000, vec![2], vec![1]));
+        if let RuntimeEvent::Bag(crate::Event::Created {
             bag,
             who,
             class_id,
@@ -193,7 +193,7 @@ fn sweep_assets() {
             assert_eq!(owners, vec![2]);
 
             assert_ok!(Bag::deposit(
-                Origin::signed(2),
+                RuntimeOrigin::signed(2),
                 bag,
                 vec![2, 3, 4],
                 vec![asset_ids.clone(), asset_ids.clone(), asset_ids.clone()],
@@ -243,7 +243,7 @@ fn sweep_assets() {
             ];
             assert_eq!(balances, expected_balances);
 
-            assert_ok!(Bag::sweep(Origin::signed(2), 2, bag));
+            assert_ok!(Bag::sweep(RuntimeOrigin::signed(2), 2, bag));
             let mut balances = Asset::balances_of_owner(&2).unwrap();
             balances.sort();
             let expected_balances = vec![

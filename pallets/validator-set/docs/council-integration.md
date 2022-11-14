@@ -12,7 +12,7 @@ parameter_types! {
 }
 
 impl pallet_collective::Config for Runtime {
-	type Origin = Origin;
+	type RuntimeOrigin = RuntimeOrigin;
 	type Proposal = Call;
 	type Event = Event;
 	type MotionDuration = CouncilMotionDuration;

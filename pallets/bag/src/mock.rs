@@ -27,8 +27,8 @@ impl frame_system::Config for Test {
     type BaseCallFilter = frame_support::traits::Everything;
     type BlockWeights = ();
     type BlockLength = ();
-    type Origin = Origin;
-    type Call = Call;
+    type RuntimeOrigin = RuntimeOrigin;
+    type RuntimeCall = RuntimeCall;
     type Index = u64;
     type BlockNumber = u64;
     type Hash = H256;
@@ -36,7 +36,7 @@ impl frame_system::Config for Test {
     type AccountId = u64;
     type Lookup = IdentityLookup<Self::AccountId>;
     type Header = Header;
-    type Event = Event;
+    type RuntimeEvent = RuntimeEvent;
     type BlockHashCount = BlockHashCount;
     type DbWeight = ();
     type Version = ();
@@ -56,7 +56,7 @@ parameter_types! {
 
 impl pallet_balances::Config for Test {
     type Balance = Balance;
-    type Event = Event;
+    type RuntimeEvent = RuntimeEvent;
     type DustRemoval = ();
     type ExistentialDeposit = ExistentialDeposit;
     type AccountStore = System;
@@ -75,7 +75,7 @@ parameter_types! {
 }
 
 impl sugarfunge_asset::Config for Test {
-    type Event = Event;
+    type RuntimeEvent = RuntimeEvent;
     type CreateAssetClassDeposit = CreateAssetClassDeposit;
     type Currency = Balances;
     type AssetId = u64;
@@ -91,7 +91,7 @@ parameter_types! {
 }
 
 impl sugarfunge_bag::Config for Test {
-    type Event = Event;
+    type RuntimeEvent = RuntimeEvent;
     type PalletId = BagModuleId;
     type CreateBagDeposit = CreateBagDeposit;
     type Currency = Balances;
