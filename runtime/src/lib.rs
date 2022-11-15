@@ -424,11 +424,13 @@ impl sugarfunge_market::Config for Runtime {
 
 parameter_types! {
     pub const MaxManifestMetadata: u32 = 128;
+    pub const MaxCID: u32 = 128;
 }
 
 impl functionland_fula::Config for Runtime {
-    type Event = Event;
+    type RuntimeEvent = RuntimeEvent;
     type MaxManifestMetadata = MaxManifestMetadata;
+    type MaxCID = MaxCID;
 }
 
 construct_runtime!(
