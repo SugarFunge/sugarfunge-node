@@ -2,3 +2,7 @@
 	path = pallets/fula-pallet
 	url = https://github.com/functionland/fula-pallet
 	branch = feature/polkadot-v0.9.30
+[submodule "pallets/fula-pool"]
+	path = pallets/fula-pool
+	url = https://github.com/carloslopezandara/fula-pool
+	branch = feature/polkadot-v0.9.30

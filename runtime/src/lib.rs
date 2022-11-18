@@ -60,6 +60,8 @@ pub use sugarfunge_market::Call as MarketCall;
 
 #[cfg(any(feature = "std", test))]
 pub use functionland_fula::Call as FulaCall;
+#[cfg(any(feature = "std", test))]
+pub use functionland_pool::Call as FulaPoolCall;
 
 /// Constant values used within the runtime.
 mod constants;
@@ -463,6 +465,7 @@ construct_runtime!(
 
          // Functionland pallets
          Fula: functionland_fula::{Pallet, Call, Storage, Event<T>},
+         Pool: functionland_pool::{Pallet, Call, Storage, Event<T>},
     }
 );
 

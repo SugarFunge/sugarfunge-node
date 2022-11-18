@@ -1932,6 +1932,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "functionland-pool"
+version = "0.1.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "serde_json",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "funty"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7718,6 +7734,7 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
  "functionland-fula",
+ "functionland-pool",
  "getrandom 0.2.8",
  "hex-literal",
  "log",
