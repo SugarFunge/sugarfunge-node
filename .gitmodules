@@ -4,5 +4,5 @@
 	branch = feature/polkadot-v0.9.30
 [submodule "pallets/fula-pool"]
 	path = pallets/fula-pool
-	url = https://github.com/carloslopezandara/fula-pool
-	branch = feature/polkadot-v0.9.30
+	url = https://github.com/MauricinhoMorales/fula-pool
+	branch = pool
