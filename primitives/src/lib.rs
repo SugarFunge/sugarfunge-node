@@ -3,9 +3,8 @@
 use sp_runtime::{
     generic,
     traits::{BlakeTwo256, IdentifyAccount, Verify},
-    MultiSignature, OpaqueExtrinsic
+    MultiSignature, OpaqueExtrinsic,
 };
-
 
 /// An index to a block.
 pub type BlockNumber = u32;
