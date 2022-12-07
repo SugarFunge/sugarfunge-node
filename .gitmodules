@@ -1,7 +1,7 @@
 [submodule "pallets/fula-pallet"]
 	path = pallets/fula-pallet
 	url = https://github.com/functionland/fula-pallet
-	branch = feature/pools
+	branch = feature/manifest-storage-data
 [submodule "pallets/fula-pool"]
 	path = pallets/fula-pool
 	url = https://github.com/MauricinhoMorales/fula-pool
