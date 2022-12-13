@@ -2,7 +2,6 @@ use crate::{
     mock::*,
     pallet::{Assets, Classes},
     Error,
-    Event,
 };
 use frame_support::{assert_noop, assert_ok, bounded_vec, BoundedVec};
 
