@@ -60,7 +60,7 @@ pub use sugarfunge_market::Call as MarketCall;
 #[cfg(any(feature = "std", test))]
 pub use functionland_fula::Call as FulaCall;
 #[cfg(any(feature = "std", test))]
-pub use functionland_pool::Call as FulaPoolCall;
+pub use fula_pool::Call as FulaPoolCall;
 
 /// Constant values used within the runtime.
 mod constants;
@@ -432,6 +432,7 @@ impl functionland_fula::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type MaxManifestMetadata = MaxManifestMetadata;
     type MaxCID = MaxCID;
+    type Pool = Pool;
 }
 
 parameter_types! {
@@ -439,7 +440,7 @@ parameter_types! {
     pub const MaxPoolParticipants: u32 = 200;
 }
 
-impl functionland_pool::Config for Runtime {
+impl fula_pool::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type StringLimit = StringLimit;
     type MaxPoolParticipants = MaxPoolParticipants;
@@ -473,9 +474,9 @@ construct_runtime!(
         Exgine: sugarfunge_exgine::{Pallet, Call, Storage, Event<T>},
         Market: sugarfunge_market::{Pallet, Call, Storage, Event<T>},
 
-         // Functionland pallets
-         Fula: functionland_fula::{Pallet, Call, Storage, Event<T>},
-         Pool: functionland_pool::{Pallet, Call, Storage, Event<T>},
+        // Functionland pallets
+        Fula: functionland_fula::{Pallet, Call, Storage, Event<T>},
+        Pool: fula_pool::{Pallet, Call, Storage, Event<T>},
     }
 );
 
