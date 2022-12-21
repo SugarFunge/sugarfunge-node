@@ -2,7 +2,7 @@ name: DockerBuildPush
 
 on:
   push:
-    branches: [ feature/polkadot-v0.9.27 ]
+    branches: [ main ]
 jobs:
     build-arm64:
         runs-on: [self-hosted, linux, ARM64]
