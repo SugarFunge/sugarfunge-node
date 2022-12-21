@@ -5,7 +5,8 @@ RUN rustup target add wasm32-unknown-unknown
 RUN apt-get update && apt-get install -y --no-install-recommends \
         clang \
         libclang-dev \
-        cmake
+        cmake \
+        protobuf-compiler
 
 WORKDIR /sugarfunge
 
