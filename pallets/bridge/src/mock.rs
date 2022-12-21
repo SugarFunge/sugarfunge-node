@@ -13,7 +13,7 @@ pub const MILLICENTS: Balance = 10_000_000_000_000;
 parameter_types! {
     pub const CreateAssetClassDeposit: Balance = 500 * MILLICENTS;
     pub const CreateCurrencyClassDeposit: Balance = 500 * MILLICENTS;
-    pub const CreateEscrowDeposit: Balance = 1;
+    pub const CreateBagDeposit: Balance = 1;
 }
 
 parameter_types! {
@@ -24,7 +24,7 @@ parameter_types! {
 
 impl pallet_balances::Config for Test {
     type Balance = Balance;
-    type Event = Event;
+    type RuntimeEvent = RuntimeEvent;
     type DustRemoval = ();
     type ExistentialDeposit = ExistentialDeposit;
     type AccountStore = System;
@@ -35,7 +35,7 @@ impl pallet_balances::Config for Test {
 }
 
 impl sugarfunge_asset::Config for Test {
-    type Event = Event;
+    type RuntimeEvent = RuntimeEvent;
     type CreateAssetClassDeposit = CreateAssetClassDeposit;
     type Currency = Balances;
     type AssetId = u64;
@@ -58,10 +58,10 @@ parameter_types! {
 }
 
 impl sugarfunge_bridge::Config for Test {
-    type Event = Event;
+    type RuntimeEvent = RuntimeEvent;
     type PalletId = BridgeModuleId;
     type AdminOrigin = frame_system::EnsureRoot<Self::AccountId>;
-    type Proposal = Call;
+    type Proposal = RuntimeCall;
     type ChainId = TestChainId;
     type ProposalLifetime = ProposalLifetime;
     type MaxResourceMetadata = MaxResourceMetadata;
@@ -96,8 +96,8 @@ impl system::Config for Test {
     type BlockWeights = ();
     type BlockLength = ();
     type DbWeight = ();
-    type Origin = Origin;
-    type Call = Call;
+    type RuntimeOrigin = RuntimeOrigin;
+    type RuntimeCall = RuntimeCall;
     type Index = u64;
     type BlockNumber = u64;
     type Hash = H256;
@@ -105,7 +105,7 @@ impl system::Config for Test {
     type AccountId = u64;
     type Lookup = IdentityLookup<Self::AccountId>;
     type Header = Header;
-    type Event = Event;
+    type RuntimeEvent = RuntimeEvent;
     type BlockHashCount = BlockHashCount;
     type Version = ();
     type PalletInfo = PalletInfo;
@@ -126,7 +126,7 @@ pub const ENDOWED_BALANCE: u128 = 100_000_000;
 pub const TEST_THRESHOLD: u32 = 2;
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
-    let bridge_id = <Test as sugarfunge_bridge::Config>::PalletId::get().into_account();
+    let bridge_id = <Test as sugarfunge_bridge::Config>::PalletId::get().into_account_truncating();
     let mut t = frame_system::GenesisConfig::default()
         .build_storage::<Test>()
         .unwrap();
@@ -148,17 +148,17 @@ pub fn new_test_ext_initialized(
     let mut t = new_test_ext();
     t.execute_with(|| {
         // Set and check threshold
-        assert_ok!(Bridge::set_threshold(Origin::root(), TEST_THRESHOLD));
+        assert_ok!(Bridge::set_threshold(RuntimeOrigin::root(), TEST_THRESHOLD));
         assert_eq!(Bridge::relayer_threshold(), TEST_THRESHOLD);
         // Add relayers
-        assert_ok!(Bridge::add_relayer(Origin::root(), RELAYER_A));
-        assert_ok!(Bridge::add_relayer(Origin::root(), RELAYER_B));
-        assert_ok!(Bridge::add_relayer(Origin::root(), RELAYER_C));
+        assert_ok!(Bridge::add_relayer(RuntimeOrigin::root(), RELAYER_A));
+        assert_ok!(Bridge::add_relayer(RuntimeOrigin::root(), RELAYER_B));
+        assert_ok!(Bridge::add_relayer(RuntimeOrigin::root(), RELAYER_C));
         // Whitelist chain
-        assert_ok!(Bridge::whitelist_chain(Origin::root(), src_id));
+        assert_ok!(Bridge::whitelist_chain(RuntimeOrigin::root(), src_id));
         // Set and check resource ID mapped to some junk data
         assert_ok!(Bridge::set_resource(
-            Origin::root(),
+            RuntimeOrigin::root(),
             r_id,
             resource.try_into().unwrap()
         ));
@@ -169,8 +169,8 @@ pub fn new_test_ext_initialized(
 
 // Checks events against the latest. A contiguous set of events must be provided. They must
 // include the most recent event, but do not have to include every past event.
-pub fn assert_events(mut expected: Vec<Event>) {
-    let mut actual: Vec<Event> = system::Pallet::<Test>::events()
+pub fn assert_events(mut expected: Vec<RuntimeEvent>) {
+    let mut actual: Vec<RuntimeEvent> = system::Pallet::<Test>::events()
         .iter()
         .map(|e| e.event.clone())
         .collect();

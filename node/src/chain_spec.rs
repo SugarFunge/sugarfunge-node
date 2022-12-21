@@ -6,8 +6,8 @@ use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{IdentifyAccount, Verify};
 use sugarfunge_runtime::{
     opaque::SessionKeys, AccountId, AuraConfig, Balance, BalancesConfig, CouncilConfig,
-    CurrencyConfig, CurrencyId, GenesisConfig, GrandpaConfig, OrmlTokensConfig, SessionConfig,
-    Signature, SudoConfig, SystemConfig, ValidatorSetConfig, DOLLARS, WASM_BINARY,
+    GenesisConfig, GrandpaConfig, SessionConfig, Signature, SudoConfig, SystemConfig,
+    ValidatorSetConfig, DOLLARS, WASM_BINARY,
 };
 
 // The URL for the telemetry server.
@@ -46,11 +46,6 @@ pub fn authority_keys_from_seed(s: &str) -> (AccountId, AuraId, GrandpaId) {
     )
 }
 
-// Default currencies
-pub const DOT: CurrencyId = CurrencyId(0, 1);
-pub const ETH: CurrencyId = CurrencyId(0, 2);
-pub const BTC: CurrencyId = CurrencyId(0, 3);
-
 pub fn development_config() -> Result<ChainSpec, String> {
     let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
 
@@ -64,10 +59,7 @@ pub fn development_config() -> Result<ChainSpec, String> {
             testnet_genesis(
                 wasm_binary,
                 // Initial PoA authorities
-                vec![
-                    authority_keys_from_seed("Alice"),
-                    authority_keys_from_seed("Bob"),
-                ],
+                vec![authority_keys_from_seed("Alice")],
                 // Sudo account
                 get_account_id_from_seed::<sr25519::Public>("Alice"),
                 // Pre-funded accounts
@@ -220,27 +212,6 @@ fn testnet_genesis(
         sudo: SudoConfig {
             // Assign network admin rights.
             key: Some(root_key),
-        },
-        orml_tokens: OrmlTokensConfig {
-            balances: endowed_accounts
-                .iter()
-                .flat_map(|x| {
-                    vec![
-                        (x.clone(), DOT, 1000000 * DOLLARS),
-                        (x.clone(), ETH, 1000000 * DOLLARS),
-                        (x.clone(), BTC, 1000000 * DOLLARS),
-                    ]
-                })
-                .collect(),
-        },
-        currency: CurrencyConfig {
-            class: (
-                get_account_id_from_seed::<sr25519::Public>("Alice"),
-                0,
-                0,
-                "native currency class".as_bytes().to_vec(),
-                "native currency asset class".as_bytes().to_vec(),
-            ),
         },
     }
 }

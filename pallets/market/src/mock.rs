@@ -29,7 +29,7 @@ parameter_types! {
 
 impl pallet_balances::Config for Test {
     type Balance = Balance;
-    type Event = Event;
+    type RuntimeEvent = RuntimeEvent;
     type DustRemoval = ();
     type ExistentialDeposit = ExistentialDeposit;
     type AccountStore = System;
@@ -40,7 +40,7 @@ impl pallet_balances::Config for Test {
 }
 
 impl sugarfunge_asset::Config for Test {
-    type Event = Event;
+    type RuntimeEvent = RuntimeEvent;
     type CreateAssetClassDeposit = CreateAssetClassDeposit;
     type Currency = Balances;
     type AssetId = u64;
@@ -61,14 +61,14 @@ parameter_types! {
 }
 
 impl sugarfunge_bundle::Config for Test {
-    type Event = Event;
+    type RuntimeEvent = RuntimeEvent;
     type PalletId = BundleModuleId;
     type Currency = Balances;
     type MaxAssets = MaxAssets;
 }
 
 impl sugarfunge_market::Config for Test {
-    type Event = Event;
+    type RuntimeEvent = RuntimeEvent;
     type PalletId = MarketModuleId;
     type MarketId = u64;
     type MarketRateId = u64;
@@ -104,8 +104,8 @@ impl system::Config for Test {
     type BlockWeights = ();
     type BlockLength = ();
     type DbWeight = ();
-    type Origin = Origin;
-    type Call = Call;
+    type RuntimeOrigin = RuntimeOrigin;
+    type RuntimeCall = RuntimeCall;
     type Index = u64;
     type BlockNumber = u64;
     type Hash = H256;
@@ -113,7 +113,7 @@ impl system::Config for Test {
     type AccountId = u64;
     type Lookup = IdentityLookup<Self::AccountId>;
     type Header = Header;
-    type Event = Event;
+    type RuntimeEvent = RuntimeEvent;
     type BlockHashCount = BlockHashCount;
     type Version = ();
     type PalletInfo = PalletInfo;

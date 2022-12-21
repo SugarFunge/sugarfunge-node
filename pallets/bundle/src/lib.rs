@@ -53,7 +53,7 @@ pub mod pallet {
     #[pallet::config]
     pub trait Config: frame_system::Config + sugarfunge_asset::Config {
         /// Because this pallet emits events, it depends on the runtime's definition of an event.
-        type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+        type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
         #[pallet::constant]
         type PalletId: Get<PalletId>;
@@ -228,7 +228,7 @@ impl<T: Config> Pallet<T> {
             Error::<T>::BundleExists
         );
 
-        let operator = <T as Config>::PalletId::get().into_account();
+        let operator = <T as Config>::PalletId::get().into_account_truncating();
 
         sugarfunge_asset::Pallet::<T>::do_create_class(
             &who,
@@ -237,7 +237,8 @@ impl<T: Config> Pallet<T> {
             metadata.clone(),
         )?;
 
-        let vault: T::AccountId = <T as Config>::PalletId::get().into_sub_account(bundle_id);
+        let vault: T::AccountId =
+            <T as Config>::PalletId::get().into_sub_account_truncating(bundle_id);
 
         Bundles::<T>::insert(
             &bundle_id,
@@ -316,7 +317,7 @@ impl<T: Config> Pallet<T> {
             )?;
         }
 
-        let operator: T::AccountId = <T as Config>::PalletId::get().into_account();
+        let operator: T::AccountId = <T as Config>::PalletId::get().into_account_truncating();
 
         // Mint IOU assets for each bundle created
         sugarfunge_asset::Pallet::<T>::do_mint(
@@ -381,7 +382,7 @@ impl<T: Config> Pallet<T> {
             }
         }
 
-        let operator: T::AccountId = <T as Config>::PalletId::get().into_account();
+        let operator: T::AccountId = <T as Config>::PalletId::get().into_account_truncating();
 
         // Transfer bundle assets from reserves to IOU owner
         for (idx, class_id) in class_ids.iter().enumerate() {

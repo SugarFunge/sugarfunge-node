@@ -47,7 +47,7 @@ pub mod pallet {
 
     #[pallet::config]
     pub trait Config: frame_system::Config {
-        type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+        type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
         /// The minimum balance to create class
         #[pallet::constant]
@@ -131,6 +131,12 @@ pub mod pallet {
             class_id: T::ClassId,
             asset_id: T::AssetId,
             who: T::AccountId,
+        },
+        AssetMetadataUpdated {
+            class_id: T::ClassId,
+            asset_id: T::AssetId,
+            who: T::AccountId,
+            metadata: Vec<u8>,
         },
         Mint {
             who: T::AccountId,
@@ -465,6 +471,14 @@ impl<T: Config> Pallet<T> {
             }
             Ok(())
         })?;
+
+        Self::deposit_event(Event::AssetMetadataUpdated {
+            class_id,
+            asset_id,
+            who: who.clone(),
+            metadata: metadata.to_vec(),
+        });
+
         Ok(())
     }
 

@@ -4,7 +4,7 @@
 
 use super::*;
 use crate as validator_set;
-use frame_support::{parameter_types, traits::GenesisBuild, BasicExternalities};
+use frame_support::{parameter_types, traits::GenesisBuild, BasicExternalities, weights::Weight};
 use frame_system::EnsureRoot;
 use pallet_session::*;
 use sp_core::{crypto::key_types::DUMMY, H256};
@@ -148,7 +148,7 @@ parameter_types! {
 	pub const MinimumPeriod: u64 = 5;
 	pub const BlockHashCount: u64 = 250;
 	pub BlockWeights: frame_system::limits::BlockWeights =
-		frame_system::limits::BlockWeights::simple_max(1024);
+		frame_system::limits::BlockWeights::simple_max(Weight::from_ref_time(1024 as u64));
 }
 
 impl frame_system::Config for Test {
@@ -156,16 +156,16 @@ impl frame_system::Config for Test {
 	type BlockWeights = ();
 	type BlockLength = ();
 	type DbWeight = ();
-	type Origin = Origin;
+	type RuntimeOrigin = RuntimeOrigin;
 	type Index = u64;
 	type BlockNumber = u64;
-	type Call = Call;
+	type RuntimeCall = RuntimeCall;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
 	type AccountId = u64;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = BlockHashCount;
 	type Version = ();
 	type PalletInfo = PalletInfo;
@@ -185,7 +185,7 @@ parameter_types! {
 
 impl validator_set::Config for Test {
 	type AddRemoveOrigin = EnsureRoot<Self::AccountId>;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type MinAuthorities = MinAuthorities;
 	type MaxAuthorities = MaxAuthorities;
 }
@@ -199,5 +199,5 @@ impl pallet_session::Config for Test {
 	type SessionHandler = TestSessionHandler;
 	type Keys = MockSessionKeys;
 	type WeightInfo = ();
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 }
