@@ -1925,7 +1925,7 @@ checksum = "2022715d62ab30faffd124d40b76f4134a550a87792276512b18d63272333394"
 [[package]]
 name = "fula-pool"
 version = "0.1.0"
-source = "git+https://github.com/MauricinhoMorales/fula-pool?branch=main#b5985d91dfdda0f24fb7808d196191703365eed3"
+source = "git+https://github.com/functionland/fula-pool?branch=main#b8df114560cdb400ebcd0325620d7171a7d9e738"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -1941,7 +1941,7 @@ dependencies = [
 [[package]]
 name = "functionland-fula"
 version = "0.1.0"
-source = "git+https://github.com/functionland/fula-pallet?branch=main#acb682be28dbc9058cd981d8179ed2fd6fe262b1"
+source = "git+https://github.com/functionland/fula-pallet?branch=main#9f8c348818ca6720c2a5bd81ba20a71ec4f77805"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -2876,9 +2876,9 @@ checksum = "830d08ce1d1d941e6b30645f1a0eb5643013d835ce3779a5fc208261dbe10f55"
 
 [[package]]
 name = "libc"
-version = "0.2.138"
+version = "0.2.139"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "db6d7e329c562c5dfab7a46a2afabc8b987ab9a4834c9d1ca04dc54c1546cef8"
+checksum = "201de327520df007757c1f0adce6e827fe8562fbc28bfd9c15571c66ca1f5f79"
 
 [[package]]
 name = "libloading"
