@@ -33,7 +33,7 @@ pub use frame_support::{
         Nothing, Randomness,
     },
     weights::{
-        constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
+        constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_REF_TIME_PER_SECOND},
         ConstantMultiplier, IdentityFee, Weight,
     },
     ConsensusEngineId, PalletId, StorageValue,
@@ -126,7 +126,8 @@ parameter_types! {
     pub const BlockHashCount: BlockNumber = 2400;
     pub RuntimeBlockWeights: frame_system::limits::BlockWeights =
 		frame_system::limits::BlockWeights::with_sensible_defaults(
-			(2u64 * WEIGHT_PER_SECOND).set_proof_size(u64::MAX),
+			//(2u64 * WEIGHT_PER_SECOND).set_proof_size(u64::MAX),
+            Weight::from_parts(2u64 * WEIGHT_REF_TIME_PER_SECOND, u64::MAX),
 			NORMAL_DISPATCH_RATIO,
 		);
 	pub RuntimeBlockLength: frame_system::limits::BlockLength = frame_system::limits::BlockLength
