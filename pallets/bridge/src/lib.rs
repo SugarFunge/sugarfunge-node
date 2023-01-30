@@ -6,7 +6,6 @@ use frame_support::{
     dispatch::DispatchResult,
     ensure,
     traits::{EnsureOrigin, Get},
-    weights::GetDispatchInfo,
     BoundedVec, PalletId,
 };
 use frame_system::ensure_root;
@@ -66,17 +65,17 @@ pub mod pallet {
     #[pallet::config]
     pub trait Config: frame_system::Config + sugarfunge_asset::Config {
         /// Because this pallet emits events, it depends on the runtime's definition of an event.
-        type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+        type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
         type PalletId: Get<PalletId>;
 
-        /// Origin used to administer the pallet
-        type AdminOrigin: EnsureOrigin<Self::Origin>;
+        /// RuntimeOrigin used to administer the pallet
+        type AdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
         /// Proposed dispatchable call
         type Proposal: Parameter
-            + Dispatchable<Origin = Self::Origin>
-            + EncodeLike
-            + GetDispatchInfo;
+            + Dispatchable<RuntimeOrigin = Self::RuntimeOrigin>
+            + EncodeLike;
+
         /// The identifier for this chain.
         /// This must be unique and must not collide with existing IDs within a set of bridged chains.
         type ChainId: Get<ChainId>;
@@ -366,7 +365,7 @@ pub mod pallet {
 impl<T: Config> Pallet<T> {
     // *** Utility methods ***
 
-    pub fn ensure_admin(o: T::Origin) -> DispatchResult {
+    pub fn ensure_admin(o: T::RuntimeOrigin) -> DispatchResult {
         T::AdminOrigin::try_origin(o)
             .map(|_| ())
             .or_else(ensure_root)?;
@@ -697,13 +696,13 @@ impl<T: Config> Pallet<T> {
 
 /// Simple ensure origin for the bridge account
 pub struct EnsureBridge<T>(sp_std::marker::PhantomData<T>);
-impl<T: Config> EnsureOrigin<T::Origin> for EnsureBridge<T> {
+impl<T: Config> EnsureOrigin<T::RuntimeOrigin> for EnsureBridge<T> {
     type Success = T::AccountId;
-    fn try_origin(o: T::Origin) -> Result<Self::Success, T::Origin> {
+    fn try_origin(o: T::RuntimeOrigin) -> Result<Self::Success, T::RuntimeOrigin> {
         let bridge_id = <T as Config>::PalletId::get().into_account_truncating();
         o.into().and_then(|o| match o {
             frame_system::RawOrigin::Signed(who) if who == bridge_id => Ok(bridge_id),
-            r => Err(T::Origin::from(r)),
+            r => Err(T::RuntimeOrigin::from(r)),
         })
     }
 
@@ -711,7 +710,7 @@ impl<T: Config> EnsureOrigin<T::Origin> for EnsureBridge<T> {
     ///
     /// ** Should be used for benchmarking only!!! **
     #[cfg(feature = "runtime-benchmarks")]
-    fn successful_origin() -> T::Origin {
-        T::Origin::from(frame_system::RawOrigin::Signed(<Module<T>>::account_id()))
+    fn successful_origin() -> T::RuntimeOrigin {
+        T::RuntimeOrigin::from(frame_system::RawOrigin::Signed(<Module<T>>::account_id()))
     }
 }
