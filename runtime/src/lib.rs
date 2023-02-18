@@ -38,10 +38,7 @@ pub use frame_support::{
     },
     ConsensusEngineId, PalletId, StorageValue,
 };
-use frame_system::{
-    //limits::{BlockLength, BlockWeights},
-    EnsureRoot,
-};
+use frame_system::EnsureRoot;
 
 #[cfg(any(feature = "std", test))]
 pub use frame_system::Call as SystemCall;
@@ -57,6 +54,11 @@ pub use sugarfunge_bundle::Call as BundleCall;
 pub use sugarfunge_exgine::Call as ExgineCall;
 #[cfg(any(feature = "std", test))]
 pub use sugarfunge_market::Call as MarketCall;
+
+#[cfg(any(feature = "std", test))]
+pub use functionland_fula::Call as FulaCall;
+#[cfg(any(feature = "std", test))]
+pub use fula_pool::Call as FulaPoolCall;
 
 /// Constant values used within the runtime.
 mod constants;
@@ -422,6 +424,29 @@ impl sugarfunge_market::Config for Runtime {
     type MaxMetadata = MaxMetadata;
 }
 
+parameter_types! {
+    pub const MaxManifestMetadata: u32 = 128;
+    pub const MaxCID: u32 = 128;
+}
+
+impl functionland_fula::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type MaxManifestMetadata = MaxManifestMetadata;
+    type MaxCID = MaxCID;
+    type Pool = Pool;
+}
+
+parameter_types! {
+    pub const StringLimit: u32 = 128;
+    pub const MaxPoolParticipants: u32 = 200;
+}
+
+impl fula_pool::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type StringLimit = StringLimit;
+    type MaxPoolParticipants = MaxPoolParticipants;
+}
+
 construct_runtime!(
     pub struct Runtime where
         Block = Block,
@@ -449,6 +474,10 @@ construct_runtime!(
         Bag: sugarfunge_bag::{Pallet, Call, Storage, Event<T>},
         Exgine: sugarfunge_exgine::{Pallet, Call, Storage, Event<T>},
         Market: sugarfunge_market::{Pallet, Call, Storage, Event<T>},
+
+        // Functionland pallets
+        Fula: functionland_fula::{Pallet, Call, Storage, Event<T>},
+        Pool: fula_pool::{Pallet, Call, Storage, Event<T>},
     }
 );
 
