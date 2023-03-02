@@ -140,7 +140,7 @@ impl frame_system::Config for Runtime {
     /// The basic call filter to use in dispatchable.
     type BaseCallFilter = frame_support::traits::Everything;
     /// Block & extrinsics weights: base values and limits.
-    type BlockWeights = RuntimeBlockWeights;
+    type BlockWeights = BlockWeights;
     /// The maximum length of a block (in bytes).
     type BlockLength = RuntimeBlockLength;
     /// The identifier used to distinguish between accounts.
@@ -281,7 +281,7 @@ impl pallet_sudo::Config for Runtime {
 
 parameter_types! {
     pub MaximumSchedulerWeight: Weight = Perbill::from_percent(80) *
-        RuntimeBlockWeights::get().max_block;
+        BlockWeights::get().max_block;
     pub const MaxScheduledPerBlock: u32 = 50;
     pub const NoPreimagePostponement: Option<u32> = Some(10);
 }
@@ -296,8 +296,7 @@ impl pallet_scheduler::Config for Runtime {
     type MaxScheduledPerBlock = MaxScheduledPerBlock;
     type WeightInfo = pallet_scheduler::weights::SubstrateWeight<Runtime>;
     type OriginPrivilegeCmp = EqualPrivilegeOnly;
-    type PreimageProvider = ();
-    type NoPreimagePostponement = NoPreimagePostponement;
+    type Preimages = ();
 }
 
 parameter_types! {
