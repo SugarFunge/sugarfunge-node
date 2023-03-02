@@ -1,55 +1,83 @@
-name: DockerBuildPush
-
+name: DockerMultiplatform
 on:
   push:
     branches: [ main ]
 jobs:
-    build-and-deploy:
-        runs-on: ubuntu-latest
+    build-arm64:
+        runs-on: [self-hosted, linux, ARM64]
         steps:
         - name: 'Checkout GitHub Action'
           uses: actions/checkout@main
-          
-        - name: 'Build and push image'
+        - name: 'Login to ACR'
           uses: azure/docker-login@v1
           with:
             login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
             username: ${{ secrets.REGISTRY_USERNAME }}
             password: ${{ secrets.REGISTRY_PASSWORD }}
-        - run: |
-            docker build -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/node:${{ github.sha }} -f docker/Dockerfile .
-            docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/node:${{ github.sha }}
-            docker tag ${{ secrets.REGISTRY_LOGIN_SERVER }}/node:${{ github.sha }} ${{ secrets.REGISTRY_LOGIN_SERVER }}/node:latest
-            docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/node:latest
-        - uses: slackapi/slack-github-action@v1.18.0
+        - name: 'Build and Push ARM64 image' 
+          run: |
+            docker build -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/node:arm64-latest -f docker/Dockerfile .
+            docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/node:arm64-latest
+    build-amd64:
+        runs-on: ubuntu-latest
+        steps:
+        - name: 'Checkout GitHub Action'
+          uses: actions/checkout@main
+        - name: 'Login to ACR'
+          uses: azure/docker-login@v1
           with:
-            channel-id: ${{ secrets.SUGARFUNGE_SLACK_CHANNEL_ID }}
-            payload: |
-              {
-                "text": "sugarfunge-node Image Updated",
-                "blocks": [
-                  {
-                    "type": "section",
-                    "text": {
-                      "type": "mrkdwn",
-                      "text": "<https://github.com/SugarFunge/sugarfunge-node | sugarfunge-node> Image Updated :white_check_mark:\n Remember to run `docker-compose pull` to update the image if you're using the `latest` tag!"
+            login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
+            username: ${{ secrets.REGISTRY_USERNAME }}
+            password: ${{ secrets.REGISTRY_PASSWORD }}
+        - name: 'Build and Push AMD64 image'
+          run: |
+            docker build -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/node:amd64-latest -f docker/Dockerfile .
+            docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/node:amd64-latest
+    manifest-notify:
+        needs: [build-arm64, build-amd64]
+        runs-on: ubuntu-latest
+        steps:
+          - name: 'Login to ACR'
+            uses: azure/docker-login@v1
+            with:
+              login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
+              username: ${{ secrets.REGISTRY_USERNAME }}
+              password: ${{ secrets.REGISTRY_PASSWORD }}
+          - name: 'Create and Push manifest'
+            run: |
+              docker manifest create ${{ secrets.REGISTRY_LOGIN_SERVER }}/node:latest \
+              --amend ${{ secrets.REGISTRY_LOGIN_SERVER }}/node:amd64-latest \
+              --amend ${{ secrets.REGISTRY_LOGIN_SERVER }}/node:arm64-latest
+              docker manifest push ${{ secrets.REGISTRY_LOGIN_SERVER }}/node:latest
+          - uses: slackapi/slack-github-action@v1.23.0
+            with:
+              channel-id: ${{ secrets.SUGARFUNGE_SLACK_CHANNEL_ID }}
+              payload: |
+                {
+                  "text": "sugarfunge-node Image Updated",
+                  "blocks": [
+                    {
+                      "type": "section",
+                      "text": {
+                        "type": "mrkdwn",
+                        "text": "<https://github.com/SugarFunge/sugarfunge-node | sugarfunge-node> Image Updated :white_check_mark:\n Remember to run `docker-compose pull` to update the image if you're using the `latest` tag!"
+                      }
+                    },
+                    {
+                      "type": "section",
+                      "text": {
+                        "type": "mrkdwn",
+                        "text": "*Commit:* <${{ github.event.pull_request.html_url || github.event.head_commit.url }} | ${{ github.sha }}>"
+                      }
+                    },
+                    {
+                      "type": "section",
+                      "text": {
+                        "type": "mrkdwn",
+                        "text": "*Author:* ${{ github.event.pusher.name }}"
+                      }
                     }
-                  },
-                  {
-                    "type": "section",
-                    "text": {
-                      "type": "mrkdwn",
-                      "text": "*Commit:* <${{ github.event.pull_request.html_url || github.event.head_commit.url }} | ${{ github.sha }}>"
-                    }
-                  },
-                  {
-                    "type": "section",
-                    "text": {
-                      "type": "mrkdwn",
-                      "text": "*Author:* ${{ github.event.pusher.name }}"
-                    }
-                  }
-                ]
-              }
-          env:
-            SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+                  ]
+                }
+            env:
+              SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
