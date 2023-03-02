@@ -213,6 +213,7 @@ pub mod pallet {
         /// # <weight>
         /// - O(1) lookup and insert
         /// # </weight>
+        #[pallet::call_index(0)]
         #[pallet::weight(10_000)]
         pub fn set_threshold(origin: OriginFor<T>, threshold: u32) -> DispatchResult {
             Self::ensure_admin(origin)?;
@@ -224,6 +225,7 @@ pub mod pallet {
         /// # <weight>
         /// - O(1) write
         /// # </weight>
+        #[pallet::call_index(1)]
         #[pallet::weight(10_000)]
         pub fn set_resource(
             origin: OriginFor<T>,
@@ -242,6 +244,7 @@ pub mod pallet {
         /// # <weight>
         /// - O(1) removal
         /// # </weight>
+        #[pallet::call_index(2)]
         #[pallet::weight(10_000)]
         pub fn remove_resource(origin: OriginFor<T>, id: ResourceId) -> DispatchResult {
             Self::ensure_admin(origin)?;
@@ -253,6 +256,7 @@ pub mod pallet {
         /// # <weight>
         /// - O(1) lookup and insert
         /// # </weight>
+        #[pallet::call_index(3)]
         #[pallet::weight(10_000)]
         pub fn whitelist_chain(origin: OriginFor<T>, id: ChainId) -> DispatchResult {
             Self::ensure_admin(origin)?;
@@ -264,6 +268,7 @@ pub mod pallet {
         /// # <weight>
         /// - O(1) lookup and insert
         /// # </weight>
+        #[pallet::call_index(4)]
         #[pallet::weight(10_000)]
         pub fn add_relayer(origin: OriginFor<T>, v: T::AccountId) -> DispatchResult {
             Self::ensure_admin(origin)?;
@@ -275,6 +280,7 @@ pub mod pallet {
         /// # <weight>
         /// - O(1) lookup and removal
         /// # </weight>
+        #[pallet::call_index(5)]
         #[pallet::weight(10_000)]
         pub fn remove_relayer(origin: OriginFor<T>, v: T::AccountId) -> DispatchResult {
             Self::ensure_admin(origin)?;
@@ -290,6 +296,7 @@ pub mod pallet {
         /// - weight of proposed call, regardless of whether execution is performed
         /// # </weight>
         // #[weight = (call.get_dispatch_info().weight + 195_000_000, call.get_dispatch_info().class, Pays::Yes)]
+        #[pallet::call_index(6)]
         #[pallet::weight(10_000)]
         pub fn acknowledge_proposal(
             origin: OriginFor<T>,
@@ -317,6 +324,7 @@ pub mod pallet {
         /// # <weight>
         /// - Fixed, since execution of proposal should not be included
         /// # </weight>
+        #[pallet::call_index(7)]
         #[pallet::weight(10_000)]
         pub fn reject_proposal(
             origin: OriginFor<T>,
@@ -348,6 +356,7 @@ pub mod pallet {
         /// - weight of proposed call, regardless of whether execution is performed
         /// # </weight>
         // #[weight = (prop.get_dispatch_info().weight + 195_000_000, prop.get_dispatch_info().class, Pays::Yes)]
+        #[pallet::call_index(8)]
         #[pallet::weight(10_000)]
         pub fn eval_vote_state(
             origin: OriginFor<T>,

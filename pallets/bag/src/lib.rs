@@ -110,6 +110,7 @@ pub mod pallet {
     // Dispatchable functions must be annotated with a weight and must return a DispatchResult.
     #[pallet::call]
     impl<T: Config> Pallet<T> {
+        #[pallet::call_index(0)]
         #[pallet::weight(10_000)]
         pub fn register(
             origin: OriginFor<T>,
@@ -123,6 +124,7 @@ pub mod pallet {
             Ok(().into())
         }
 
+        #[pallet::call_index(1)]
         #[pallet::weight(10_000)]
         pub fn create(
             origin: OriginFor<T>,
@@ -137,6 +139,7 @@ pub mod pallet {
             Ok(().into())
         }
 
+        #[pallet::call_index(2)]
         #[pallet::weight(10_000)]
         pub fn deposit(
             origin: OriginFor<T>,
@@ -152,6 +155,7 @@ pub mod pallet {
             Ok(().into())
         }
 
+        #[pallet::call_index(3)]
         #[pallet::weight(10_000)]
         pub fn sweep(
             origin: OriginFor<T>,
