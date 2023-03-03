@@ -16,6 +16,8 @@ RUN cargo build --locked --release
 
 FROM gcr.io/distroless/cc-debian11
 
+COPY --from=builder /lib/x86_64-linux-gnu/libz.so.1 /lib/x86_64-linux-gnu/libz.so.1
+
 COPY --from=builder /sugarfunge/target/release/sugarfunge-node /
 
 ENTRYPOINT ["/sugarfunge-node"]
