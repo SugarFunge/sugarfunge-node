@@ -727,7 +727,7 @@ impl<T: Config> Pallet<T> {
     ) -> Result<Vec<Balance>, DispatchError> {
         let mut batch_balances = Vec::new();
 
-        for i in 0..assets_ids.len() {
+        for i in 0..asset_ids.len() {
             batch_balances.push(Balance::from(0u32));
         }
 
