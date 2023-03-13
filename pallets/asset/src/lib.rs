@@ -23,6 +23,38 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+pub trait InterfacePallet {
+    type AccountId;
+    type ClassId;
+    type AssetId;
+    type MintedBalance;
+    fn mint_labor_tokens(
+        who: Self::AccountId,
+        to: Self::AccountId,
+        class_id: Self::ClassId,
+        asset_id: Self::AssetId,
+        amount: Self::MintedBalance,
+    ) -> DispatchResult;
+}
+
+impl<T: Config> InterfacePallet for Pallet<T> {
+    type AccountId = T::AccountId;
+    type ClassId = T::ClassId;
+    type AssetId = T::AssetId;
+    type MintedBalance = Balance;
+
+    fn mint_labor_tokens(
+        who: Self::AccountId,
+        to: Self::AccountId,
+        class_id: Self::ClassId,
+        asset_id: Self::AssetId,
+        amount: Self::MintedBalance,
+    ) -> DispatchResult {
+        let value = Self::do_mint(&who, &to, class_id, asset_id, amount);
+        return value;
+    }
+}
+
 type BalanceOf<T> =
     <<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
