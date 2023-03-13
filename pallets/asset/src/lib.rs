@@ -704,7 +704,11 @@ impl<T: Config> Pallet<T> {
             Error::<T>::InvalidArrayLength
         );
 
-        let mut batch_balances = vec![Balance::from(0u32); owners.len()];
+        let mut batch_balances = Vec::new();
+
+        for i in 0..owners.len() {
+            batch_balances.push(Balance::from(0u32));
+        }
 
         let n = owners.len();
         for i in 0..n {
@@ -721,7 +725,11 @@ impl<T: Config> Pallet<T> {
         class_id: T::ClassId,
         asset_ids: Vec<T::AssetId>,
     ) -> Result<Vec<Balance>, DispatchError> {
-        let mut batch_balances = vec![Balance::from(0u32); asset_ids.len()];
+        let mut batch_balances = Vec::new();
+
+        for i in 0..assets_ids.len() {
+            batch_balances.push(Balance::from(0u32));
+        }
 
         let n = asset_ids.len();
         for i in 0..n {
@@ -737,7 +745,7 @@ impl<T: Config> Pallet<T> {
     pub fn balances_of_owner(
         owner: &T::AccountId,
     ) -> Result<Vec<(T::ClassId, T::AssetId, Balance)>, DispatchError> {
-        let mut balances = vec![];
+        let mut balances = Vec::new();
         let assets = Balances::<T>::iter_key_prefix((owner,));
         for (class_id, asset_id) in assets {
             let balance = Balances::<T>::get((owner, class_id, asset_id));
@@ -750,7 +758,7 @@ impl<T: Config> Pallet<T> {
         owner: &T::AccountId,
         class_id: T::ClassId,
     ) -> Result<Vec<(T::AssetId, Balance)>, DispatchError> {
-        let mut balances = vec![];
+        let mut balances = Vec::new();
         let assets = Balances::<T>::iter_key_prefix((owner, class_id));
         for asset_id in assets {
             let balance = Balances::<T>::get((owner, class_id, asset_id));
