@@ -374,6 +374,7 @@ impl sugarfunge_asset::Config for Runtime {
     type ClassId = u64;
     type MaxClassMetadata = MaxClassMetadata;
     type MaxAssetMetadata = MaxAssetMetadata;
+    
 }
 
 parameter_types! {
@@ -434,6 +435,7 @@ impl functionland_fula::Config for Runtime {
     type MaxManifestMetadata = MaxManifestMetadata;
     type MaxCID = MaxCID;
     type Pool = Pool;
+    type Asset = Asset;
 }
 
 parameter_types! {

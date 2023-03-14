@@ -37,24 +37,6 @@ pub trait InterfacePallet {
     ) -> DispatchResult;
 }
 
-impl<T: Config> InterfacePallet for Pallet<T> {
-    type AccountId = T::AccountId;
-    type ClassId = T::ClassId;
-    type AssetId = T::AssetId;
-    type MintedBalance = Balance;
-
-    fn mint_labor_tokens(
-        who: Self::AccountId,
-        to: Self::AccountId,
-        class_id: Self::ClassId,
-        asset_id: Self::AssetId,
-        amount: Self::MintedBalance,
-    ) -> DispatchResult {
-        let value = Self::do_mint(&who, &to, class_id, asset_id, amount);
-        return value;
-    }
-}
-
 type BalanceOf<T> =
     <<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
@@ -396,7 +378,6 @@ pub mod pallet {
             Ok(().into())
         }
     }
-}
 
 impl<T: Config> Pallet<T> {
     pub fn do_create_class(
@@ -706,7 +687,7 @@ impl<T: Config> Pallet<T> {
 
         let mut batch_balances = Vec::new();
 
-        for i in 0..owners.len() {
+        for _i in 0..owners.len() {
             batch_balances.push(Balance::from(0u32));
         }
 
@@ -727,7 +708,7 @@ impl<T: Config> Pallet<T> {
     ) -> Result<Vec<Balance>, DispatchError> {
         let mut batch_balances = Vec::new();
 
-        for i in 0..asset_ids.len() {
+        for _i in 0..asset_ids.len() {
             batch_balances.push(Balance::from(0u32));
         }
 
@@ -799,5 +780,23 @@ impl<T: Config> Pallet<T> {
         let class = Classes::<T>::get(class_id).ok_or(Error::<T>::InvalidClassId)?;
         ensure!(*who == class.owner, Error::<T>::NoPermission);
         Ok(())
+    }
+}
+    impl<T: Config> InterfacePallet for Pallet<T> {
+        type AccountId = T::AccountId;
+        type ClassId = T::ClassId;
+        type AssetId = T::AssetId;
+        type MintedBalance = Balance;
+    
+        fn mint_labor_tokens(
+            who: Self::AccountId,
+            to: Self::AccountId,
+            class_id: Self::ClassId,
+            asset_id: Self::AssetId,
+            amount: Self::MintedBalance,
+        ) -> DispatchResult {
+            let value = Self::do_mint(&who, &to, class_id, asset_id, amount);
+            return value;
+        }
     }
 }
