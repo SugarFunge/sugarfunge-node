@@ -23,17 +23,13 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-pub trait InterfacePallet {
-    type AccountId;
-    type ClassId;
-    type AssetId;
-    type MintedBalance;
+pub trait InterfacePallet<AccountId, ClassId, AssetId, MintedBalance> {
     fn mint_labor_tokens(
-        who: Self::AccountId,
-        to: Self::AccountId,
-        class_id: Self::ClassId,
-        asset_id: Self::AssetId,
-        amount: Self::MintedBalance,
+        who: AccountId,
+        to: AccountId,
+        class_id: ClassId,
+        asset_id: AssetId,
+        amount: MintedBalance,
     ) -> DispatchResult;
 }
 

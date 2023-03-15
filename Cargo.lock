@@ -1856,7 +1856,7 @@ dependencies = [
 [[package]]
 name = "functionland-fula"
 version = "0.1.0"
-source = "git+https://github.com/MauricinhoMorales/fula-pallet?branch=feature/challenges#1504848a86dd3877a9baad8b90057bc5077b26e4"
+source = "git+https://github.com/MauricinhoMorales/fula-pallet?branch=feature/challenges#59adcc7c1c7b7e34c1b5317d5539191c57b8385e"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -1868,7 +1868,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "sugarfunge-asset 0.1.0 (git+https://github.com/functionland/sugarfunge-node.git?rev=021b31477014ebf11b6affa1ba424f5b9c4b235f)",
+ "sugarfunge-asset 0.1.0 (git+https://github.com/functionland/sugarfunge-node.git?branch=feature/mint_labor_tokens)",
 ]
 
 [[package]]
@@ -6217,18 +6217,18 @@ checksum = "388a1df253eca08550bef6c72392cfe7c30914bf41df5269b68cbd6ff8f570a3"
 
 [[package]]
 name = "serde"
-version = "1.0.155"
+version = "1.0.156"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "71f2b4817415c6d4210bfe1c7bfcf4801b2d904cb4d0e1a8fdb651013c9e86b8"
+checksum = "314b5b092c0ade17c00142951e50ced110ec27cea304b1037c6969246c2469a4"
 dependencies = [
  "serde_derive",
 ]
 
 [[package]]
 name = "serde_derive"
-version = "1.0.155"
+version = "1.0.156"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d071a94a3fac4aff69d023a7f411e33f40f3483f8c5190b1953822b6b76d7630"
+checksum = "d7e29c4601e36bcec74a223228dce795f4cd3616341a4af93520ca1a837c087d"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -7312,7 +7312,7 @@ dependencies = [
 [[package]]
 name = "sugarfunge-asset"
 version = "0.1.0"
-source = "git+https://github.com/functionland/sugarfunge-node.git?rev=021b31477014ebf11b6affa1ba424f5b9c4b235f#021b31477014ebf11b6affa1ba424f5b9c4b235f"
+source = "git+https://github.com/functionland/sugarfunge-node.git?branch=feature/mint_labor_tokens#e1375fccb8cffd588f142c33b0e201ae591fbdfa"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -7322,7 +7322,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "sugarfunge-primitives 0.1.0 (git+https://github.com/functionland/sugarfunge-node.git?rev=021b31477014ebf11b6affa1ba424f5b9c4b235f)",
+ "sugarfunge-primitives 0.1.0 (git+https://github.com/functionland/sugarfunge-node.git?branch=feature/mint_labor_tokens)",
 ]
 
 [[package]]
@@ -7496,7 +7496,7 @@ dependencies = [
 [[package]]
 name = "sugarfunge-primitives"
 version = "0.1.0"
-source = "git+https://github.com/functionland/sugarfunge-node.git?rev=021b31477014ebf11b6affa1ba424f5b9c4b235f#021b31477014ebf11b6affa1ba424f5b9c4b235f"
+source = "git+https://github.com/functionland/sugarfunge-node.git?branch=feature/mint_labor_tokens#e1375fccb8cffd588f142c33b0e201ae591fbdfa"
 dependencies = [
  "frame-system",
  "parity-scale-codec",
