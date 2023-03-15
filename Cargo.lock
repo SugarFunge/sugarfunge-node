@@ -4457,15 +4457,15 @@ dependencies = [
 
 [[package]]
 name = "predicates-core"
-version = "1.0.5"
+version = "1.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "72f883590242d3c6fc5bf50299011695fa6590c2c70eac95ee1bdb9a733ad1a2"
+checksum = "b794032607612e7abeb4db69adb4e33590fa6cf1149e95fd7cb00e634b92f174"
 
 [[package]]
 name = "predicates-tree"
-version = "1.0.7"
+version = "1.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "54ff541861505aabf6ea722d2131ee980b8276e10a1297b94e896dd8b621850d"
+checksum = "368ba315fb8c5052ab692e68a0eefec6ec57b23a36959c14496f0b0df2c0cecf"
 dependencies = [
  "predicates-core",
  "termtree",
@@ -4473,9 +4473,9 @@ dependencies = [
 
 [[package]]
 name = "prettyplease"
-version = "0.1.24"
+version = "0.1.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4ebcd279d20a4a0a2404a33056388e950504d891c855c7975b9a8fef75f3bf04"
+checksum = "6c8646e95016a7a6c4adea95bafa8a16baab64b583356217f2c85db4a39d9a86"
 dependencies = [
  "proc-macro2",
  "syn",
@@ -7312,7 +7312,7 @@ dependencies = [
 [[package]]
 name = "sugarfunge-asset"
 version = "0.1.0"
-source = "git+https://github.com/functionland/sugarfunge-node.git?branch=feature/mint_labor_tokens#e1375fccb8cffd588f142c33b0e201ae591fbdfa"
+source = "git+https://github.com/functionland/sugarfunge-node.git?branch=feature/mint_labor_tokens#86830fc78c43b96db7fce7c687f171f6587fc140"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -7496,7 +7496,7 @@ dependencies = [
 [[package]]
 name = "sugarfunge-primitives"
 version = "0.1.0"
-source = "git+https://github.com/functionland/sugarfunge-node.git?branch=feature/mint_labor_tokens#e1375fccb8cffd588f142c33b0e201ae591fbdfa"
+source = "git+https://github.com/functionland/sugarfunge-node.git?branch=feature/mint_labor_tokens#86830fc78c43b96db7fce7c687f171f6587fc140"
 dependencies = [
  "frame-system",
  "parity-scale-codec",
@@ -7659,9 +7659,9 @@ dependencies = [
 
 [[package]]
 name = "termtree"
-version = "0.4.0"
+version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "95059e91184749cb66be6dc994f67f182b6d897cb3df74a5bf66b5e709295fd8"
+checksum = "3369f5ac52d5eb6ab48c6b4ffdc8efbcad6b89c765749064ba298f2c68a16a76"
 
 [[package]]
 name = "thiserror"
