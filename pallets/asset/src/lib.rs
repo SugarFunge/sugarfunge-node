@@ -1,6 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use codec::{Decode, Encode, HasCompact, MaxEncodedLen};
+use codec::{Decode, Encode, HasCompact, MaxEncodedLen, EncodeLike};
 use frame_support::{
     dispatch::{DispatchError, DispatchResult},
     ensure,
@@ -13,6 +13,7 @@ use sp_runtime::{
     RuntimeDebug,
 };
 use sp_std::prelude::*;
+use sp_std::fmt::Debug;
 use sugarfunge_primitives::Balance;
 
 pub use pallet::*;
