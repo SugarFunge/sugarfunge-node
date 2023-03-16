@@ -23,13 +23,18 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-pub trait InterfacePallet<AccountId, ClassId, AssetId, MintedBalance> {
-    fn mint_labor_tokens(
-        who: AccountId,
-        to: AccountId,
-        class_id: ClassId,
-        asset_id: AssetId,
-        amount: MintedBalance,
+pub trait InterfacePallet{
+    type AccountId;
+    type ClassId: Copy + TypeInfo + Debug + Eq + EncodeLike + Encode + Decode;
+    type AssetId: Copy + TypeInfo + Debug + Eq + EncodeLike + Encode + Decode;
+    type MintBalance: Copy + TypeInfo + Debug + Eq + EncodeLike + Encode + Decode;
+
+    fn mint_tokens(
+        who: Self::AccountId,
+        to: Self::AccountId,
+        class_id: Self::ClassId,
+        asset_id: Self::AssetId,
+        amount: Self::MintBalance,
     ) -> DispatchResult;
 }
 
@@ -782,13 +787,20 @@ pub mod pallet {
             Ok(())
         }
     }
-    impl<T: Config> InterfacePallet<T::AccountId, u64, u64, u128> for Pallet<T> {
-        fn mint_labor_tokens(
-            who: T::AccountId,
-            to: T::AccountId,
-            class_id: u64,
-            asset_id: u64,
-            amount: u128,
+
+    impl<T: Config> InterfacePallet for Pallet<T> {
+
+        type AccountId = T::AccountId;
+        type AssetId = u64;
+        type ClassId = u64;
+        type MintBalance = Balance;
+
+        fn mint_tokens(
+            who: Self::AccountId,
+            to: Self::AccountId,
+            class_id: Self::ClassId,
+            asset_id: Self::AssetId,
+            amount: Self::MintBalance,
         ) -> DispatchResult {
             let value = Self::do_mint(&who, &to, class_id.into(), asset_id.into(), amount);
             return value;

@@ -7312,7 +7312,7 @@ dependencies = [
 [[package]]
 name = "sugarfunge-asset"
 version = "0.1.0"
-source = "git+https://github.com/functionland/sugarfunge-node.git?branch=feature/mint_labor_tokens#293c0d6ad01df1cf5e2cbc012ede1064aca3579c"
+source = "git+https://github.com/functionland/sugarfunge-node.git?branch=feature/mint_labor_tokens#2f5885a2c13e3a882b119343faca3f042976d051"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -7496,7 +7496,7 @@ dependencies = [
 [[package]]
 name = "sugarfunge-primitives"
 version = "0.1.0"
-source = "git+https://github.com/functionland/sugarfunge-node.git?branch=feature/mint_labor_tokens#293c0d6ad01df1cf5e2cbc012ede1064aca3579c"
+source = "git+https://github.com/functionland/sugarfunge-node.git?branch=feature/mint_labor_tokens#2f5885a2c13e3a882b119343faca3f042976d051"
 dependencies = [
  "frame-system",
  "parity-scale-codec",
