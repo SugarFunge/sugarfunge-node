@@ -39,6 +39,25 @@ pub trait InterfacePallet{
     ) -> DispatchResult;
 }
 
+impl<T: Config> InterfacePallet for Pallet<T> {
+
+    type AccountId = T::AccountId;
+    type AssetId = u64;
+    type ClassId = u64;
+    type MintBalance = Balance;
+
+    fn mint_tokens(
+        who: Self::AccountId,
+        to: Self::AccountId,
+        class_id: Self::ClassId,
+        asset_id: Self::AssetId,
+        amount: Self::MintBalance,
+    ) -> DispatchResult {
+        let value = Self::do_mint(&who, &to, class_id.into(), asset_id.into(), amount);
+        return value;
+    }
+}
+
 type BalanceOf<T> =
     <<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
@@ -786,25 +805,6 @@ pub mod pallet {
             let class = Classes::<T>::get(class_id).ok_or(Error::<T>::InvalidClassId)?;
             ensure!(*who == class.owner, Error::<T>::NoPermission);
             Ok(())
-        }
-    }
-
-    impl<T: Config> InterfacePallet for Pallet<T> {
-
-        type AccountId = T::AccountId;
-        type AssetId = u64;
-        type ClassId = u64;
-        type MintBalance = Balance;
-
-        fn mint_tokens(
-            who: Self::AccountId,
-            to: Self::AccountId,
-            class_id: Self::ClassId,
-            asset_id: Self::AssetId,
-            amount: Self::MintBalance,
-        ) -> DispatchResult {
-            let value = Self::do_mint(&who, &to, class_id.into(), asset_id.into(), amount);
-            return value;
         }
     }
 }

@@ -1856,7 +1856,7 @@ dependencies = [
 [[package]]
 name = "functionland-fula"
 version = "0.1.0"
-source = "git+https://github.com/MauricinhoMorales/fula-pallet?branch=feature/mint#7084ba67c6ac91558898c020be46f80429923d00"
+source = "git+https://github.com/MauricinhoMorales/fula-pallet?branch=feature/mint#60ff7b4a84b614622504eb3b653d4bc9017a6059"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -7312,7 +7312,7 @@ dependencies = [
 [[package]]
 name = "sugarfunge-asset"
 version = "0.1.0"
-source = "git+https://github.com/functionland/sugarfunge-node.git?branch=feature/mint_labor_tokens#2f5885a2c13e3a882b119343faca3f042976d051"
+source = "git+https://github.com/functionland/sugarfunge-node.git?branch=feature/mint_labor_tokens#f37653d393b6e760dd6a67eef019c3f29a1ece41"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -7496,7 +7496,7 @@ dependencies = [
 [[package]]
 name = "sugarfunge-primitives"
 version = "0.1.0"
-source = "git+https://github.com/functionland/sugarfunge-node.git?branch=feature/mint_labor_tokens#2f5885a2c13e3a882b119343faca3f042976d051"
+source = "git+https://github.com/functionland/sugarfunge-node.git?branch=feature/mint_labor_tokens#f37653d393b6e760dd6a67eef019c3f29a1ece41"
 dependencies = [
  "frame-system",
  "parity-scale-codec",
@@ -8188,12 +8188,11 @@ checksum = "9d5b2c62b4012a3e1eca5a7e077d13b3bf498c4073e33ccd58626607748ceeca"
 
 [[package]]
 name = "walkdir"
-version = "2.3.2"
+version = "2.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "808cf2735cd4b6866113f648b791c6adc5714537bc222d9347bb203386ffda56"
+checksum = "36df944cda56c7d8d8b7496af378e6b16de9284591917d307c9b4d313c44e698"
 dependencies = [
  "same-file",
- "winapi",
  "winapi-util",
 ]
 
