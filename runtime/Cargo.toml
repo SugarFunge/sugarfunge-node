@@ -82,7 +82,7 @@ sugarfunge-bag = { default-features = false, path = "../pallets/bag" }
 sugarfunge-exgine = { default-features = false, path = "../pallets/exgine" }
 sugarfunge-market = { default-features = false, path = "../pallets/market" }
 
-functionland-fula = { git = "https://github.com/MauricinhoMorales/fula-pallet" , branch = "feature/challenges" , default-features = false }
+functionland-fula = { git = "https://github.com/MauricinhoMorales/fula-pallet" , branch = "feature/mint" , default-features = false }
 fula-pool = { git = "https://github.com/carloslopezandara/fula-pool" , branch = "feature/polkadot-v0.9.34" , default-features = false }
 
 [build-dependencies]

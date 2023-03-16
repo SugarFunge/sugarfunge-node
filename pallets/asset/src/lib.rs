@@ -782,10 +782,10 @@ pub mod pallet {
             Ok(())
         }
     }
-    impl<T: Config> InterfacePallet<&T::AccountId, T::ClassId, T::AssetId, Balance> for Pallet<T> {
+    impl<T: Config> InterfacePallet<T::AccountId, T::ClassId, T::AssetId, Balance> for Pallet<T> {
         fn mint_labor_tokens(
-            who: &T::AccountId,
-            to: &T::AccountId,
+            who: T::AccountId,
+            to: T::AccountId,
             class_id: T::ClassId,
             asset_id: T::AssetId,
             amount: Balance,
