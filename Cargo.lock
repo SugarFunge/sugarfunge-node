@@ -1856,7 +1856,7 @@ dependencies = [
 [[package]]
 name = "functionland-fula"
 version = "0.1.0"
-source = "git+https://github.com/MauricinhoMorales/fula-pallet?branch=feature/mint#861401f5f80adf6fc38e2067f1522829ebcbaa6b"
+source = "git+https://github.com/MauricinhoMorales/fula-pallet?branch=feature/mint#7084ba67c6ac91558898c020be46f80429923d00"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -7312,7 +7312,7 @@ dependencies = [
 [[package]]
 name = "sugarfunge-asset"
 version = "0.1.0"
-source = "git+https://github.com/functionland/sugarfunge-node.git?branch=feature/mint_labor_tokens#abddd633969631a8b58e55ed55f3f0c3f36ac1b7"
+source = "git+https://github.com/functionland/sugarfunge-node.git?branch=feature/mint_labor_tokens#293c0d6ad01df1cf5e2cbc012ede1064aca3579c"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -7496,7 +7496,7 @@ dependencies = [
 [[package]]
 name = "sugarfunge-primitives"
 version = "0.1.0"
-source = "git+https://github.com/functionland/sugarfunge-node.git?branch=feature/mint_labor_tokens#abddd633969631a8b58e55ed55f3f0c3f36ac1b7"
+source = "git+https://github.com/functionland/sugarfunge-node.git?branch=feature/mint_labor_tokens#293c0d6ad01df1cf5e2cbc012ede1064aca3579c"
 dependencies = [
  "frame-system",
  "parity-scale-codec",

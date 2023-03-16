@@ -782,15 +782,15 @@ pub mod pallet {
             Ok(())
         }
     }
-    impl<T: Config> InterfacePallet<T::AccountId, T::ClassId, T::AssetId, Balance> for Pallet<T> {
+    impl<T: Config> InterfacePallet<T::AccountId, u64, u64, u128> for Pallet<T> {
         fn mint_labor_tokens(
             who: T::AccountId,
             to: T::AccountId,
-            class_id: T::ClassId,
-            asset_id: T::AssetId,
-            amount: Balance,
+            class_id: u64,
+            asset_id: u64,
+            amount: u128,
         ) -> DispatchResult {
-            let value = Self::do_mint(&who, &to, class_id, asset_id, amount);
+            let value = Self::do_mint(&who, &to, class_id.into(), asset_id.into(), amount);
             return value;
         }
     }
