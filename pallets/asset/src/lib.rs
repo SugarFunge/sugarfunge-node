@@ -1,6 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use codec::{Decode, Encode, HasCompact, MaxEncodedLen, EncodeLike};
+use codec::{Decode, Encode, HasCompact, MaxEncodedLen};
 use frame_support::{
     dispatch::{DispatchError, DispatchResult},
     ensure,
@@ -13,7 +13,6 @@ use sp_runtime::{
     RuntimeDebug,
 };
 use sp_std::prelude::*;
-use sp_std::fmt::Debug;
 use sugarfunge_primitives::Balance;
 
 pub use pallet::*;
@@ -23,40 +22,6 @@ mod mock;
 
 #[cfg(test)]
 mod tests;
-
-// pub trait InterfacePallet{
-//     type AccountId;
-//     type ClassId: Copy + TypeInfo + Debug + Eq + EncodeLike + Encode + Decode;
-//     type AssetId: Copy + TypeInfo + Debug + Eq + EncodeLike + Encode + Decode;
-//     type MintBalance: Copy + TypeInfo + Debug + Eq + EncodeLike + Encode + Decode;
-
-//     fn mint_tokens(
-//         who: Self::AccountId,
-//         to: Self::AccountId,
-//         class_id: Self::ClassId,
-//         asset_id: Self::AssetId,
-//         amount: Self::MintBalance,
-//     ) -> DispatchResult;
-// }
-
-// impl<T: Config> InterfacePallet for Pallet<T> {
-
-//     type AccountId = T::AccountId;
-//     type AssetId = u64;
-//     type ClassId = u64;
-//     type MintBalance = Balance;
-
-//     fn mint_tokens(
-//         who: Self::AccountId,
-//         to: Self::AccountId,
-//         class_id: Self::ClassId,
-//         asset_id: Self::AssetId,
-//         amount: Self::MintBalance,
-//     ) -> DispatchResult {
-//         let value = Self::do_mint(&who, &to, class_id.into(), asset_id.into(), amount);
-//         return value;
-//     }
-// }
 
 type BalanceOf<T> =
     <<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
