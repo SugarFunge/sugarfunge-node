@@ -24,39 +24,39 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-pub trait InterfacePallet{
-    type AccountId;
-    type ClassId: Copy + TypeInfo + Debug + Eq + EncodeLike + Encode + Decode;
-    type AssetId: Copy + TypeInfo + Debug + Eq + EncodeLike + Encode + Decode;
-    type MintBalance: Copy + TypeInfo + Debug + Eq + EncodeLike + Encode + Decode;
+// pub trait InterfacePallet{
+//     type AccountId;
+//     type ClassId: Copy + TypeInfo + Debug + Eq + EncodeLike + Encode + Decode;
+//     type AssetId: Copy + TypeInfo + Debug + Eq + EncodeLike + Encode + Decode;
+//     type MintBalance: Copy + TypeInfo + Debug + Eq + EncodeLike + Encode + Decode;
 
-    fn mint_tokens(
-        who: Self::AccountId,
-        to: Self::AccountId,
-        class_id: Self::ClassId,
-        asset_id: Self::AssetId,
-        amount: Self::MintBalance,
-    ) -> DispatchResult;
-}
+//     fn mint_tokens(
+//         who: Self::AccountId,
+//         to: Self::AccountId,
+//         class_id: Self::ClassId,
+//         asset_id: Self::AssetId,
+//         amount: Self::MintBalance,
+//     ) -> DispatchResult;
+// }
 
-impl<T: Config> InterfacePallet for Pallet<T> {
+// impl<T: Config> InterfacePallet for Pallet<T> {
 
-    type AccountId = T::AccountId;
-    type AssetId = u64;
-    type ClassId = u64;
-    type MintBalance = Balance;
+//     type AccountId = T::AccountId;
+//     type AssetId = u64;
+//     type ClassId = u64;
+//     type MintBalance = Balance;
 
-    fn mint_tokens(
-        who: Self::AccountId,
-        to: Self::AccountId,
-        class_id: Self::ClassId,
-        asset_id: Self::AssetId,
-        amount: Self::MintBalance,
-    ) -> DispatchResult {
-        let value = Self::do_mint(&who, &to, class_id.into(), asset_id.into(), amount);
-        return value;
-    }
-}
+//     fn mint_tokens(
+//         who: Self::AccountId,
+//         to: Self::AccountId,
+//         class_id: Self::ClassId,
+//         asset_id: Self::AssetId,
+//         amount: Self::MintBalance,
+//     ) -> DispatchResult {
+//         let value = Self::do_mint(&who, &to, class_id.into(), asset_id.into(), amount);
+//         return value;
+//     }
+// }
 
 type BalanceOf<T> =
     <<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
