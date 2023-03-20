@@ -136,6 +136,8 @@ std = [
 	"sugarfunge-bridge/std",
 	"sugarfunge-exgine/std",
 	"sugarfunge-market/std",
+	"functionland-fula/std",
+	"fula-pool/std",
 	"primitives/std",
 ]
 
