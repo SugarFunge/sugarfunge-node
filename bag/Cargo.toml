@@ -22,7 +22,7 @@ pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.34", default-features = false }
 sp-arithmetic = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.34", default-features = false }
 
-sugarfunge-primitives = { package = "sugarfunge-primitives", path = "../../primitives", default-features = false }
+sugarfunge-primitives = { package = "sugarfunge-primitives", path = "../primitives", default-features = false }
 sugarfunge-asset = { package = "sugarfunge-asset", path = "../asset", default-features = false }
 
 [dev-dependencies]
