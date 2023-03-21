@@ -1849,6 +1849,7 @@ name = "fula-pool"
 version = "0.1.0"
 source = "git+https://github.com/carloslopezandara/fula-pool?branch=feature/polkadot-v0.9.34#d5246ac35414f891cbf374e18fa161d8f0d0bcbd"
 dependencies = [
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "parity-scale-codec",
@@ -1864,6 +1865,7 @@ name = "functionland-fula"
 version = "0.1.0"
 source = "git+https://github.com/functionland/fula-pallet?branch=main#dad276b6939a7b08f478f667978d4dc37c4816dc"
 dependencies = [
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "fula-pool",
