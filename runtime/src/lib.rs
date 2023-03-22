@@ -65,7 +65,7 @@ pub use functionland_fula::Call as FulaCall;
 /// Constant values used within the runtime.
 mod constants;
 pub use constants::{currency::*, time::*};
-pub use primitives::{
+pub use sugarfunge_primitives::{
     AccountId, AccountIndex, Amount, AssetId, Balance, BlockNumber, ClassId, Hash, Index, Moment,
     Signature,
 };
