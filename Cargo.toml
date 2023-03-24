@@ -5,7 +5,13 @@ panic = 'unwind'
 resolver = "2"
 
 members = [
-    'node',
-    'pallets/*',
-    'runtime',
+    "node",
+    "bag",
+    "bridge",
+    "bundle",
+    "dao",
+    "exgine",
+    "market",
+    "validator-set",
+    "runtime"
 ]
