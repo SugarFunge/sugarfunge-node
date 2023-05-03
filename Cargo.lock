@@ -3993,6 +3993,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-node-authorization"
+version = "4.0.0-dev"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.34#1cc97dd30537997ff4c9827beb2ef0cac9c49063"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "log",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-randomness-collective-flip"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.34#1cc97dd30537997ff4c9827beb2ef0cac9c49063"
@@ -7454,6 +7470,7 @@ dependencies = [
 name = "sugarfunge-node"
 version = "0.1.0"
 dependencies = [
+ "bs58",
  "clap",
  "frame-benchmarking",
  "frame-benchmarking-cli",
@@ -7533,6 +7550,7 @@ dependencies = [
  "pallet-contracts",
  "pallet-contracts-primitives",
  "pallet-grandpa",
+ "pallet-node-authorization",
  "pallet-randomness-collective-flip",
  "pallet-scheduler",
  "pallet-session",
