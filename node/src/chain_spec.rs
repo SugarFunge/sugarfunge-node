@@ -217,11 +217,11 @@ fn testnet_genesis(
         node_authorization: NodeAuthorizationConfig {
             nodes: vec![
               (
-                OpaquePeerId(bs58::decode("12D3KooWC9nU1QzG8m3dZKSNqssmasdupLPhgu9adYe1h4ToBW7r").into_vec().unwrap()),
+                OpaquePeerId(bs58::decode("12D3KooWBmAwcd4PJNJvfV89HwE48nwkRmAgo8Vy3uQEyNNHBox2").into_vec().unwrap()),
                 endowed_accounts[0].clone()
               ),
               (
-                OpaquePeerId(bs58::decode("12D3KooWDMrqqWiNSEhAFd7FifUMNpc8GdjoGr1sGdWEciuSLMqA").into_vec().unwrap()),
+                OpaquePeerId(bs58::decode("12D3KooWQYV9dGMFoRzNStwpXztXaBUjtPqi6aU76ZgUriHhKust").into_vec().unwrap()),
                 endowed_accounts[1].clone()
               ),
             ],
