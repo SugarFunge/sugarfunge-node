@@ -42,6 +42,7 @@ std = [
 	"frame-benchmarking/std",
     "sugarfunge-primitives/std",
     "sugarfunge-asset/std",
+	"pallet-balances/std"
 ]
 
 runtime-benchmarks = ["frame-benchmarking"]

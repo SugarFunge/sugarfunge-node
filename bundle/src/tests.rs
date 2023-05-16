@@ -107,6 +107,65 @@ fn mint_bundle_works() {
 }
 
 #[test]
+fn register_bundle_twice() {
+    new_test_ext().execute_with(|| {
+        before_bundle();
+
+        let asset_ids: BoundedVec<u64, MaxAssets> = bounded_vec![1, 2, 3, 4, 5];
+
+        let basset_ids: BoundedVec<u64, MaxAssets> = asset_ids.clone();
+        let bamounts: BoundedVec<u128, MaxAssets> = bounded_vec![1, 2, 3, 4, 5];
+
+        let schema: BundleSchema<Test> = (
+            vec![2000, 3000, 4000].try_into().unwrap(),
+            vec![basset_ids.clone(), basset_ids.clone(), basset_ids.clone()]
+                .try_into()
+                .unwrap(),
+            vec![bamounts.clone(), bamounts.clone(), bamounts.clone()]
+                .try_into()
+                .unwrap(),
+        );
+
+        let bundle_id = BlakeTwo256::hash_of(&schema);
+
+        assert_ok!(Bundle::do_register_bundle(
+            &1,
+            9000,
+            0,
+            bundle_id,
+            &schema,
+            bounded_vec![]
+        ));
+
+        let asset_ids2: BoundedVec<u64, MaxAssets> = bounded_vec![1, 2, 3, 4, 5];
+
+        let basset_ids2: BoundedVec<u64, MaxAssets> = asset_ids2.clone();
+        let bamounts2: BoundedVec<u128, MaxAssets> = bounded_vec![2, 3, 4, 5, 6];
+
+        let schema2: BundleSchema<Test> = (
+            vec![2000, 3000, 4000].try_into().unwrap(),
+            vec![basset_ids.clone(), basset_ids2.clone(), basset_ids2.clone()]
+                .try_into()
+                .unwrap(),
+            vec![bamounts2.clone(), bamounts2.clone(), bamounts2.clone()]
+                .try_into()
+                .unwrap(),
+        );
+
+        let bundle_id2 = BlakeTwo256::hash_of(&schema2);
+
+        assert_ok!(Bundle::do_register_bundle(
+            &1,
+            9000,
+            1,
+            bundle_id2,
+            &schema2,
+            bounded_vec![]
+        ));
+    })
+}
+
+#[test]
 fn mint_bundle_fails() {
     new_test_ext().execute_with(|| {
         before_bundle();

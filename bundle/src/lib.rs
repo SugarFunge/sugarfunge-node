@@ -230,12 +230,14 @@ impl<T: Config> Pallet<T> {
 
         let operator = <T as Config>::PalletId::get().into_account_truncating();
 
-        sugarfunge_asset::Pallet::<T>::do_create_class(
-            &who,
-            &operator,
-            class_id,
-            metadata.clone(),
-        )?;
+        if !sugarfunge_asset::Pallet::<T>::verify_class_id_(class_id){
+            sugarfunge_asset::Pallet::<T>::do_create_class(
+                &who,
+                &operator,
+                class_id,
+                metadata.clone(),
+            )?;
+        }
 
         let vault: T::AccountId =
             <T as Config>::PalletId::get().into_sub_account_truncating(bundle_id);
