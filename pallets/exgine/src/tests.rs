@@ -5,7 +5,7 @@ use frame_support::{assert_noop, assert_ok};
 fn it_works_for_default_value() {
     new_test_ext().execute_with(|| {
         // Dispatch a signed extrinsic.
-        assert_ok!(Exgine::do_something(Origin::signed(1), 42));
+        assert_ok!(Exgine::do_something(RuntimeOrigin::signed(1), 42));
         // Read pallet storage and assert an expected result.
         assert_eq!(Exgine::something(), Some(42));
     });
@@ -16,7 +16,7 @@ fn correct_error_for_none_value() {
     new_test_ext().execute_with(|| {
         // Ensure the expected error is thrown when no value is present.
         assert_noop!(
-            Exgine::cause_error(Origin::signed(1)),
+            Exgine::cause_error(RuntimeOrigin::signed(1)),
             Error::<Test>::NoneValue
         );
     });
