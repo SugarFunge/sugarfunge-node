@@ -53,7 +53,6 @@ pub mod pallet {
     }
 
     #[pallet::pallet]
-    #[pallet::generate_store(pub(super) trait Store)]
     pub struct Pallet<T>(_);
 
     #[pallet::storage]
@@ -111,7 +110,7 @@ pub mod pallet {
     #[pallet::call]
     impl<T: Config> Pallet<T> {
         #[pallet::call_index(0)]
-        #[pallet::weight(10_000)]
+        #[pallet::weight(Weight::from_parts(10_000 as u64, 0))]
         pub fn register(
             origin: OriginFor<T>,
             class_id: T::ClassId,
@@ -125,7 +124,7 @@ pub mod pallet {
         }
 
         #[pallet::call_index(1)]
-        #[pallet::weight(10_000)]
+        #[pallet::weight(Weight::from_parts(10_000 as u64, 0))]
         pub fn create(
             origin: OriginFor<T>,
             class_id: T::ClassId,
@@ -140,7 +139,7 @@ pub mod pallet {
         }
 
         #[pallet::call_index(2)]
-        #[pallet::weight(10_000)]
+        #[pallet::weight(Weight::from_parts(10_000 as u64, 0))]
         pub fn deposit(
             origin: OriginFor<T>,
             bag: T::AccountId,
@@ -156,7 +155,7 @@ pub mod pallet {
         }
 
         #[pallet::call_index(3)]
-        #[pallet::weight(10_000)]
+        #[pallet::weight(Weight::from_parts(10_000 as u64, 0))]
         pub fn sweep(
             origin: OriginFor<T>,
             to: T::AccountId,

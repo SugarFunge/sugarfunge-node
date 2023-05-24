@@ -92,7 +92,6 @@ pub mod pallet {
         Asset<<T as Config>::ClassId, <T as frame_system::Config>::AccountId, AssetMetadataOf<T>>;
 
     #[pallet::pallet]
-    #[pallet::generate_store(pub(super) trait Store)]
     pub struct Pallet<T>(_);
 
     #[pallet::storage]
@@ -211,7 +210,7 @@ pub mod pallet {
     #[pallet::call]
     impl<T: Config> Pallet<T> {
         #[pallet::call_index(0)]
-        #[pallet::weight(10_000)]
+        #[pallet::weight(Weight::from_parts(10_000 as u64, 0))]
         pub fn create_class(
             origin: OriginFor<T>,
             owner: T::AccountId,
@@ -226,7 +225,7 @@ pub mod pallet {
         }
 
         #[pallet::call_index(1)]
-        #[pallet::weight(10_000)]
+        #[pallet::weight(Weight::from_parts(10_000 as u64, 0))]
         pub fn create_asset(
             origin: OriginFor<T>,
             class_id: T::ClassId,
@@ -242,7 +241,7 @@ pub mod pallet {
         }
 
         #[pallet::call_index(2)]
-        #[pallet::weight(10_000)]
+        #[pallet::weight(Weight::from_parts(10_000 as u64, 0))]
         pub fn transfer_from(
             origin: OriginFor<T>,
             from: T::AccountId,
@@ -260,7 +259,7 @@ pub mod pallet {
         }
 
         #[pallet::call_index(3)]
-        #[pallet::weight(10_000)]
+        #[pallet::weight(Weight::from_parts(10_000 as u64, 0))]
         pub fn batch_transfer_from(
             origin: OriginFor<T>,
             from: T::AccountId,
@@ -278,7 +277,7 @@ pub mod pallet {
         }
 
         #[pallet::call_index(4)]
-        #[pallet::weight(10_000)]
+        #[pallet::weight(Weight::from_parts(10_000 as u64, 0))]
         pub fn mint(
             origin: OriginFor<T>,
             to: T::AccountId,
@@ -295,7 +294,7 @@ pub mod pallet {
         }
 
         #[pallet::call_index(5)]
-        #[pallet::weight(10_000)]
+        #[pallet::weight(Weight::from_parts(10_000 as u64, 0))]
         pub fn batch_mint(
             origin: OriginFor<T>,
             to: T::AccountId,
@@ -312,7 +311,7 @@ pub mod pallet {
         }
 
         #[pallet::call_index(6)]
-        #[pallet::weight(10_000)]
+        #[pallet::weight(Weight::from_parts(10_000 as u64, 0))]
         pub fn burn(
             origin: OriginFor<T>,
             from: T::AccountId,
@@ -329,7 +328,7 @@ pub mod pallet {
         }
 
         #[pallet::call_index(7)]
-        #[pallet::weight(10_000)]
+        #[pallet::weight(Weight::from_parts(10_000 as u64, 0))]
         pub fn batch_burn(
             origin: OriginFor<T>,
             from: T::AccountId,
@@ -346,7 +345,7 @@ pub mod pallet {
         }
 
         #[pallet::call_index(8)]
-        #[pallet::weight(10_000)]
+        #[pallet::weight(Weight::from_parts(10_000 as u64, 0))]
         pub fn update_class_metadata(
             origin: OriginFor<T>,
             class_id: T::ClassId,
@@ -360,7 +359,7 @@ pub mod pallet {
         }
 
         #[pallet::call_index(9)]
-        #[pallet::weight(10_000)]
+        #[pallet::weight(Weight::from_parts(10_000 as u64, 0))]
         pub fn update_asset_metadata(
             origin: OriginFor<T>,
             class_id: T::ClassId,

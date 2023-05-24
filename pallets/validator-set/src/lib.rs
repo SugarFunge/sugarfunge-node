@@ -53,7 +53,6 @@ pub mod pallet {
 	}
 
 	#[pallet::pallet]
-	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
 	#[pallet::storage]
@@ -126,7 +125,7 @@ pub mod pallet {
 		/// The origin can be configured using the `AddRemoveOrigin` type in the
 		/// host runtime. Can also be set to sudo/root.
 		#[pallet::call_index(0)]
-		#[pallet::weight(0)]
+		#[pallet::weight(Weight::from_parts(0, 0))]
 		pub fn add_validator(origin: OriginFor<T>, validator_id: T::AccountId) -> DispatchResult {
 			T::AddRemoveOrigin::ensure_origin(origin)?;
 
@@ -141,7 +140,7 @@ pub mod pallet {
 		/// The origin can be configured using the `AddRemoveOrigin` type in the
 		/// host runtime. Can also be set to sudo/root.
 		#[pallet::call_index(1)]
-		#[pallet::weight(0)]
+		#[pallet::weight(Weight::from_parts(0, 0))]
 		pub fn remove_validator(
 			origin: OriginFor<T>,
 			validator_id: T::AccountId,
@@ -158,7 +157,7 @@ pub mod pallet {
 		///
 		/// For this call, the dispatch origin must be the validator itself.
 		#[pallet::call_index(2)]
-		#[pallet::weight(0)]
+		#[pallet::weight(Weight::from_parts(0, 0))]
 		pub fn add_validator_again(
 			origin: OriginFor<T>,
 			validator_id: T::AccountId,
