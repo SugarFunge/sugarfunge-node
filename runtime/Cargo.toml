@@ -82,8 +82,8 @@ sugarfunge-bag = { default-features = false, path = "../bag" }
 sugarfunge-exgine = { default-features = false, path = "../exgine" }
 sugarfunge-market = { default-features = false, path = "../market" }
 
-functionland-fula = { git = "https://github.com/functionland/fula-pallet" , branch = "main" , default-features = false }
-fula-pool = { git = "https://github.com/functionland/fula-pool" , branch = "main" , default-features = false }
+functionland-fula = { git = "https://github.com/MauricinhoMorales/fula-pallet" , branch = "feature/polkadot-v0.9.42" , default-features = false }
+fula-pool = { git = "https://github.com/MauricinhoMorales/fula-pool" , branch = "feature/polkadot-v0.9.42" , default-features = false }
 
 [build-dependencies]
 substrate-wasm-builder = { version = "5.0.0-dev", git = "https://github.com/paritytech/substrate", optional = true, branch = "polkadot-v0.9.42" }
