@@ -8,6 +8,7 @@ fn it_works_for_default_value() {
         assert_ok!(Exgine::do_something(RuntimeOrigin::signed(1), 42));
         // Read pallet storage and assert an expected result.
         assert_eq!(Exgine::something(), Some(42));
+        // Assert that the correct event was deposited
     });
 }
 

@@ -76,7 +76,6 @@ pub mod pallet {
     >;
 
     #[pallet::pallet]
-    #[pallet::generate_store(pub(super) trait Store)]
     pub struct Pallet<T>(_);
 
     #[pallet::storage]
@@ -143,7 +142,8 @@ pub mod pallet {
     // Dispatchable functions must be annotated with a weight and must return a DispatchResult.
     #[pallet::call]
     impl<T: Config> Pallet<T> {
-        #[pallet::weight(10_000)]
+        #[pallet::call_index(0)]
+        #[pallet::weight(Weight::from_parts(10_000 as u64, 0))]
         pub fn register_bundle(
             origin: OriginFor<T>,
             class_id: T::ClassId,
@@ -159,7 +159,8 @@ pub mod pallet {
             Ok(().into())
         }
 
-        #[pallet::weight(10_000)]
+        #[pallet::call_index(1)]
+        #[pallet::weight(Weight::from_parts(10_000 as u64, 0))]
         pub fn mint_bundle(
             origin: OriginFor<T>,
             from: T::AccountId,
@@ -174,7 +175,8 @@ pub mod pallet {
             Ok(().into())
         }
 
-        #[pallet::weight(10_000)]
+        #[pallet::call_index(2)]
+        #[pallet::weight(Weight::from_parts(10_000 as u64, 0))]
         pub fn burn_bundle(
             origin: OriginFor<T>,
             from: T::AccountId,
