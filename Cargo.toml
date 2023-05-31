@@ -6,12 +6,6 @@ resolver = "2"
 
 members = [
     "node",
-    "bag",
-    "bridge",
-    "bundle",
-    "dao",
-    "exgine",
-    "market",
-    "validator-set",
+    "pallets/*",
     "runtime"
 ]

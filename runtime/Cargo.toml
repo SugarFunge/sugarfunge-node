@@ -73,14 +73,14 @@ frame-system-benchmarking = { git = "https://github.com/paritytech/substrate", b
 sugarfunge-primitives = { git = "https://github.com/SugarFunge/sugarfunge-primitives", branch = "main", default-features = false }
 
 # local pallets
-sugarfunge-validator-set = { default-features = false, path = "../validator-set" }
-sugarfunge-bridge = { default-features = false, path = "../bridge" }
+sugarfunge-validator-set = { default-features = false, path = "../pallets/validator-set" }
+sugarfunge-bridge = { default-features = false, path = "../pallets/bridge" }
 sugarfunge-asset = { git = "https://github.com/SugarFunge/sugarfunge-asset", branch = "main", default-features = false }
-sugarfunge-dao = { default-features = false, path = "../dao" }
-sugarfunge-bundle = { default-features = false, path = "../bundle" }
-sugarfunge-bag = { default-features = false, path = "../bag" }
-sugarfunge-exgine = { default-features = false, path = "../exgine" }
-sugarfunge-market = { default-features = false, path = "../market" }
+sugarfunge-dao = { default-features = false, path = "../pallets/dao" }
+sugarfunge-bundle = { default-features = false, path = "../pallets/bundle" }
+sugarfunge-bag = { default-features = false, path = "../pallets/bag" }
+sugarfunge-exgine = { default-features = false, path = "../pallets/exgine" }
+sugarfunge-market = { default-features = false, path = "../pallets/market" }
 
 functionland-fula = { git = "https://github.com/MauricinhoMorales/fula-pallet" , branch = "feature/polkadot-v0.9.42" , default-features = false }
 fula-pool = { git = "https://github.com/MauricinhoMorales/fula-pool" , branch = "feature/polkadot-v0.9.42" , default-features = false }
