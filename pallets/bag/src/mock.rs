@@ -1,4 +1,4 @@
-use crate as sugarfunge_bag;
+use crate::{self as sugarfunge_bag};
 use frame_support::{
     construct_runtime, parameter_types,
     traits::{OnFinalize, OnInitialize},
@@ -64,6 +64,10 @@ impl pallet_balances::Config for Test {
     type MaxLocks = ();
     type MaxReserves = ();
     type ReserveIdentifier = [u8; 8];
+	type HoldIdentifier = ();
+	type FreezeIdentifier = ();
+	type MaxHolds = ();
+	type MaxFreezes = ();
 }
 
 parameter_types! {

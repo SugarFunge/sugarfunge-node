@@ -37,6 +37,10 @@ impl pallet_balances::Config for Test {
     type MaxLocks = ();
     type MaxReserves = ();
     type ReserveIdentifier = [u8; 8];
+	type HoldIdentifier = ();
+	type FreezeIdentifier = ();
+	type MaxHolds = ();
+	type MaxFreezes = ();
 }
 
 impl sugarfunge_asset::Config for Test {

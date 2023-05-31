@@ -99,7 +99,6 @@ pub mod pallet {
         ProposalVotes<<T as frame_system::Config>::BlockNumber, MaxVotesOf<T>>;
 
     #[pallet::pallet]
-    #[pallet::generate_store(pub(super) trait Store)]
     pub struct Pallet<T>(_);
 
     #[pallet::event]
@@ -213,7 +212,8 @@ pub mod pallet {
         /// # <weight>
         /// - O(1) lookup and insert
         /// # </weight>
-        #[pallet::weight(10_000)]
+        #[pallet::call_index(0)]
+        #[pallet::weight(Weight::from_parts(10_000 as u64, 0))]
         pub fn set_threshold(origin: OriginFor<T>, threshold: u32) -> DispatchResult {
             Self::ensure_admin(origin)?;
             Self::set_relayer_threshold(threshold)
@@ -224,7 +224,8 @@ pub mod pallet {
         /// # <weight>
         /// - O(1) write
         /// # </weight>
-        #[pallet::weight(10_000)]
+        #[pallet::call_index(1)]
+        #[pallet::weight(Weight::from_parts(10_000 as u64, 0))]
         pub fn set_resource(
             origin: OriginFor<T>,
             id: ResourceId,
@@ -242,7 +243,8 @@ pub mod pallet {
         /// # <weight>
         /// - O(1) removal
         /// # </weight>
-        #[pallet::weight(10_000)]
+        #[pallet::call_index(2)]
+        #[pallet::weight(Weight::from_parts(10_000 as u64, 0))]
         pub fn remove_resource(origin: OriginFor<T>, id: ResourceId) -> DispatchResult {
             Self::ensure_admin(origin)?;
             Self::unregister_resource(id)
@@ -253,7 +255,8 @@ pub mod pallet {
         /// # <weight>
         /// - O(1) lookup and insert
         /// # </weight>
-        #[pallet::weight(10_000)]
+        #[pallet::call_index(3)]
+        #[pallet::weight(Weight::from_parts(10_000 as u64, 0))]
         pub fn whitelist_chain(origin: OriginFor<T>, id: ChainId) -> DispatchResult {
             Self::ensure_admin(origin)?;
             Self::whitelist(id)
@@ -264,7 +267,8 @@ pub mod pallet {
         /// # <weight>
         /// - O(1) lookup and insert
         /// # </weight>
-        #[pallet::weight(10_000)]
+        #[pallet::call_index(4)]
+        #[pallet::weight(Weight::from_parts(10_000 as u64, 0))]
         pub fn add_relayer(origin: OriginFor<T>, v: T::AccountId) -> DispatchResult {
             Self::ensure_admin(origin)?;
             Self::register_relayer(v)
@@ -275,7 +279,8 @@ pub mod pallet {
         /// # <weight>
         /// - O(1) lookup and removal
         /// # </weight>
-        #[pallet::weight(10_000)]
+        #[pallet::call_index(5)]
+        #[pallet::weight(Weight::from_parts(10_000 as u64, 0))]
         pub fn remove_relayer(origin: OriginFor<T>, v: T::AccountId) -> DispatchResult {
             Self::ensure_admin(origin)?;
             Self::unregister_relayer(v)
@@ -290,7 +295,8 @@ pub mod pallet {
         /// - weight of proposed call, regardless of whether execution is performed
         /// # </weight>
         // #[weight = (call.get_dispatch_info().weight + 195_000_000, call.get_dispatch_info().class, Pays::Yes)]
-        #[pallet::weight(10_000)]
+        #[pallet::call_index(6)]
+        #[pallet::weight(Weight::from_parts(10_000 as u64, 0))]
         pub fn acknowledge_proposal(
             origin: OriginFor<T>,
             nonce: DepositNonce,
@@ -317,7 +323,8 @@ pub mod pallet {
         /// # <weight>
         /// - Fixed, since execution of proposal should not be included
         /// # </weight>
-        #[pallet::weight(10_000)]
+        #[pallet::call_index(7)]
+        #[pallet::weight(Weight::from_parts(10_000 as u64, 0))]
         pub fn reject_proposal(
             origin: OriginFor<T>,
             nonce: DepositNonce,
@@ -348,7 +355,8 @@ pub mod pallet {
         /// - weight of proposed call, regardless of whether execution is performed
         /// # </weight>
         // #[weight = (prop.get_dispatch_info().weight + 195_000_000, prop.get_dispatch_info().class, Pays::Yes)]
-        #[pallet::weight(10_000)]
+        #[pallet::call_index(8)]
+        #[pallet::weight(Weight::from_parts(10_000 as u64, 0))]
         pub fn eval_vote_state(
             origin: OriginFor<T>,
             nonce: DepositNonce,

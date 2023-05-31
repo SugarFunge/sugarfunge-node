@@ -27,7 +27,6 @@ pub mod pallet {
     }
 
     #[pallet::pallet]
-    #[pallet::generate_store(pub(super) trait Store)]
     pub struct Pallet<T>(_);
 
     // The pallet's runtime storage items.
@@ -64,7 +63,8 @@ pub mod pallet {
     impl<T: Config> Pallet<T> {
         /// An example dispatchable that takes a singles value as a parameter, writes the value to
         /// storage and emits an event. This function must be dispatched by a signed extrinsic.
-        #[pallet::weight(Weight::from_ref_time(10_000 as u64) + T::DbWeight::get().writes(1))]
+        #[pallet::call_index(0)]
+        #[pallet::weight(Weight::from_parts(10_000 as u64, 0) + T::DbWeight::get().writes(1_u64))]
         pub fn do_something(origin: OriginFor<T>, something: u32) -> DispatchResult {
             // Check that the extrinsic was signed and get the signer.
             // This function will return an error if the extrinsic is not signed.
@@ -81,7 +81,8 @@ pub mod pallet {
         }
 
         /// An example dispatchable that may throw a custom error.
-        #[pallet::weight(Weight::from_ref_time(10_000 as u64) + T::DbWeight::get().reads_writes(1,1))]
+        #[pallet::call_index(1)]
+        #[pallet::weight(Weight::from_parts(10_000 as u64, 0) + T::DbWeight::get().reads_writes(1_u64,1_u64))]
         pub fn cause_error(origin: OriginFor<T>) -> DispatchResult {
             let _who = ensure_signed(origin)?;
 
