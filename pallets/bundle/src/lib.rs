@@ -144,7 +144,7 @@ pub mod pallet {
     impl<T: Config> Pallet<T> {
         #[pallet::call_index(0)]
         #[pallet::weight(Weight::from_parts(10_000 as u64, 0))]
-        pub fn register_bundle(
+        pub fn register_new_bundle(
             origin: OriginFor<T>,
             class_id: T::ClassId,
             asset_id: T::AssetId,
