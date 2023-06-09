@@ -69,14 +69,14 @@ pallet-contracts = { git = "https://github.com/paritytech/substrate", branch = "
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false, optional = true }
 frame-system-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false, optional = true }
 
-primitives = { package = "sugarfunge-primitives", path = "../primitives", default-features = false }
+sugarfunge-primitives = { git = "https://github.com/SugarFunge/sugarfunge-primitives", branch = "main", default-features = false }
 
 # local pallets
 sugarfunge-validator-set = { default-features = false, path = "../pallets/validator-set" }
 sugarfunge-bridge = { default-features = false, path = "../pallets/bridge" }
-sugarfunge-asset = { default-features = false, path = "../pallets/asset" }
+sugarfunge-asset = { git = "https://github.com/SugarFunge/sugarfunge-asset", branch = "main", default-features = false }
 sugarfunge-dao = { default-features = false, path = "../pallets/dao" }
-sugarfunge-bundle = { default-features = false, path = "../pallets/bundle" }
+sugarfunge-bundle = { git = "https://github.com/MauricinhoMorales/sugarfunge-bundle", branch = "main", default-features = false }
 sugarfunge-bag = { default-features = false, path = "../pallets/bag" }
 sugarfunge-exgine = { default-features = false, path = "../pallets/exgine" }
 sugarfunge-market = { default-features = false, path = "../pallets/market" }
@@ -133,7 +133,7 @@ std = [
 	"sugarfunge-bridge/std",
 	"sugarfunge-exgine/std",
 	"sugarfunge-market/std",
-	"primitives/std",
+	"sugarfunge-primitives/std",
 ]
 
 runtime-benchmarks = [
