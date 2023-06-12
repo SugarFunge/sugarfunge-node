@@ -16,7 +16,7 @@ sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-
 
 sugarfunge-primitives = { git = "https://github.com/SugarFunge/sugarfunge-primitives", branch = "main", default-features = false }
 sugarfunge-asset = { git = "https://github.com/SugarFunge/sugarfunge-asset", branch = "main", default-features = false }
-sugarfunge-bundle = { package = "sugarfunge-bundle", path = "../bundle", default-features = false }
+sugarfunge-bundle = { git = "https://github.com/SugarFunge/sugarfunge-bundle", branch = "main", default-features = false }
 
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
 
