@@ -76,7 +76,7 @@ sugarfunge-validator-set = { default-features = false, path = "../pallets/valida
 sugarfunge-bridge = { default-features = false, path = "../pallets/bridge" }
 sugarfunge-asset = { git = "https://github.com/SugarFunge/sugarfunge-asset", branch = "main", default-features = false }
 sugarfunge-dao = { default-features = false, path = "../pallets/dao" }
-sugarfunge-bundle = { git = "https://github.com/MauricinhoMorales/sugarfunge-bundle", branch = "main", default-features = false }
+sugarfunge-bundle = { git = "https://github.com/SugarFunge/sugarfunge-bundle", branch = "main", default-features = false }
 sugarfunge-bag = { default-features = false, path = "../pallets/bag" }
 sugarfunge-exgine = { default-features = false, path = "../pallets/exgine" }
 sugarfunge-market = { default-features = false, path = "../pallets/market" }
@@ -124,7 +124,6 @@ std = [
 	"pallet-contracts/std",
 	"pallet-contracts-primitives/std",
 	"pallet-collective/std",
-
 	"sugarfunge-validator-set/std",
 	"sugarfunge-asset/std",
 	"sugarfunge-bundle/std",

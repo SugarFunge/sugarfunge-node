@@ -1027,9 +1027,9 @@ checksum = "520fbf3c07483f94e3e3ca9d0cfd913d7718ef2483d2cfd91c0d9e91474ab913"
 
 [[package]]
 name = "constant_time_eq"
-version = "0.2.5"
+version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "13418e745008f7349ec7e449155f419a61b92b58a99cc3616942b926825ec76b"
+checksum = "21a53c0a4d288377e7415b53dcfc3c04da5cdc2cc95c8d5ac178b58f0b861ad6"
 
 [[package]]
 name = "core-foundation"
@@ -8289,7 +8289,7 @@ dependencies = [
 [[package]]
 name = "sugarfunge-bundle"
 version = "0.1.0"
-source = "git+https://github.com/MauricinhoMorales/sugarfunge-bundle?branch=main#6491049601491e41ecb455cfa4e3c433d61b535b"
+source = "git+https://github.com/SugarFunge/sugarfunge-bundle?branch=main#c6e22e641de8692d8733c34bdbdee6da3e619301"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
