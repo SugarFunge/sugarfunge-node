@@ -7,6 +7,7 @@ use frame_support::{
     traits::Get,
     BoundedVec, PalletId,
 };
+pub use pallet::*;
 use scale_info::TypeInfo;
 use sp_core::U256;
 use sp_runtime::{
@@ -15,8 +16,6 @@ use sp_runtime::{
 };
 use sp_std::{collections::btree_map::BTreeMap, prelude::*};
 use sugarfunge_primitives::{Amount, Balance};
-
-pub use pallet::*;
 
 #[cfg(test)]
 mod mock;
