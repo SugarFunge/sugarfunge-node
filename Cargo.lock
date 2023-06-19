@@ -2344,7 +2344,7 @@ dependencies = [
 [[package]]
 name = "fula-pool"
 version = "0.1.0"
-source = "git+https://github.com/MauricinhoMorales/fula-pool?branch=feature/polkadot-v0.9.42#8350225eaff9e19fe638dbda45cbfb48f494c7fc"
+source = "git+https://github.com/functionland/fula-pool?branch=main#91799f67605a818d622fadd1798c198a6b403eac"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -2360,7 +2360,7 @@ dependencies = [
 [[package]]
 name = "functionland-fula"
 version = "0.1.0"
-source = "git+https://github.com/MauricinhoMorales/fula-pallet?branch=feature/polkadot-v0.9.42#22e9ff2b707c0851b2f81c02f9d93ee543627cb2"
+source = "git+https://github.com/functionland/fula-pallet?branch=main#32e20f720dc23dcd15ee1befbf97871245c6511b"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
