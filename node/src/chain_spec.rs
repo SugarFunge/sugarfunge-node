@@ -1,11 +1,12 @@
 use sc_service::ChainType;
 use serde_json::json;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
+use sp_consensus_grandpa::AuthorityId as GrandpaId;
 use sp_core::{sr25519, Pair, Public};
-use sp_finality_grandpa::AuthorityId as GrandpaId;
+use sp_core::OpaquePeerId;
 use sp_runtime::traits::{IdentifyAccount, Verify};
 use sugarfunge_runtime::{
-    opaque::SessionKeys, AccountId, AuraConfig, Balance, BalancesConfig, CouncilConfig,
+    opaque::SessionKeys, NodeAuthorizationConfig, AccountId, AuraConfig, Balance, BalancesConfig, CouncilConfig,
     GenesisConfig, GrandpaConfig, SessionConfig, Signature, SudoConfig, SystemConfig,
     ValidatorSetConfig, DOLLARS, WASM_BINARY,
 };
@@ -213,5 +214,17 @@ fn testnet_genesis(
             // Assign network admin rights.
             key: Some(root_key),
         },
+        node_authorization: NodeAuthorizationConfig {
+            nodes: vec![
+              (
+                OpaquePeerId(bs58::decode("12D3KooWBmAwcd4PJNJvfV89HwE48nwkRmAgo8Vy3uQEyNNHBox2").into_vec().unwrap()),
+                endowed_accounts[0].clone()
+              ),
+              (
+                OpaquePeerId(bs58::decode("12D3KooWQYV9dGMFoRzNStwpXztXaBUjtPqi6aU76ZgUriHhKust").into_vec().unwrap()),
+                endowed_accounts[1].clone()
+              ),
+            ],
+          },
     }
 }
