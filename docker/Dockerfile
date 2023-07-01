@@ -20,6 +20,12 @@ COPY --from=builder /lib/x86_64-linux-gnu/libz.so.1 /lib/x86_64-linux-gnu/libz.s
 
 COPY --from=builder /sugarfunge/target/release/sugarfunge-node /
 
+COPY ./customSpecRaw.json /customSpecRaw.json
+
+COPY ./password1.txt /password1.txt
+
+COPY ./password2.txt /password2.txt
+
 ENTRYPOINT ["/sugarfunge-node"]
 
 CMD ["--dev", "--pruning", "archive", "--tmp"]
