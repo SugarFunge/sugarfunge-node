@@ -6,7 +6,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         clang \
         libclang-dev \
         protobuf-compiler \
-        cmake
+        cmake \
+        zlib1g-dev
 
 WORKDIR /sugarfunge
 
