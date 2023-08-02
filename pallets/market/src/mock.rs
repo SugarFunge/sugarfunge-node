@@ -143,6 +143,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 }
 
 pub fn run_to_block(n: u64) {
+    // SBP-M1 review: market pallet doesnt implement any hooks to these seem unnecessary?
     while System::block_number() < n {
         Market::on_finalize(System::block_number());
         Balances::on_finalize(System::block_number());

@@ -1,3 +1,4 @@
+// SBP-M1 review: cargo fmt
 //! # Validator Set Pallet
 //!
 //! The Validator Set Pallet allows addition and removal of
@@ -23,11 +24,14 @@ use frame_support::{
 	BoundedVec,
 };
 use log;
+// SBP-M1 review: consider pub(crate)
 pub use pallet::*;
 use sp_runtime::traits::{Convert, Zero};
 use sp_staking::offence::{Offence, OffenceError, ReportOffence};
 use sp_std::{collections::btree_set::BTreeSet, prelude::*};
 
+// SBP-M1 review: static lifetime redundant
+// SBP-M1 review: consider pub(crate)
 pub const LOG_TARGET: &'static str = "runtime::validator-set";
 
 #[frame_support::pallet]
@@ -38,6 +42,7 @@ pub mod pallet {
 	/// Configure the pallet by specifying the parameters and types on which it
 	/// depends.
 	#[pallet::config]
+	// SBP-M1 review: consider loose-coupling via type ValidatorSet: ValidatorSet<Self::AccountId> config item rather than pallet_session::Config
 	pub trait Config: frame_system::Config + pallet_session::Config {
 		/// The Event type.
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
@@ -49,6 +54,7 @@ pub mod pallet {
 		/// auto removal.
 		type MinAuthorities: Get<u32>;
 
+		// SBP-M1 review: missing doc comment
 		type MaxAuthorities: Get<u32>;
 	}
 
@@ -57,16 +63,19 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn validators)]
+	// SBP-M1 review: consider pub(super)
 	pub type Validators<T: Config> =
 		StorageValue<_, BoundedVec<T::AccountId, T::MaxAuthorities>, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn approved_validators)]
+	// SBP-M1 review: consider pub(super)
 	pub type ApprovedValidators<T: Config> =
 		StorageValue<_, BoundedVec<T::AccountId, T::MaxAuthorities>, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn validators_to_remove)]
+	// SBP-M1 review: consider pub(super)
 	pub type OfflineValidators<T: Config> =
 		StorageValue<_, BoundedVec<T::AccountId, T::MaxAuthorities>, ValueQuery>;
 
@@ -93,6 +102,7 @@ pub mod pallet {
 		BadOrigin,
 	}
 
+	// SBP-M1 review: not used, can be removed
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
 
@@ -104,12 +114,14 @@ pub mod pallet {
 	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
+			// SBP-M1 review: consider Vec::default() for clarity
 			Self { initial_validators: Default::default() }
 		}
 	}
 
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+		// SBP-M1 review: consider using Vec as parameter type
 		fn build(&self) {
 			Pallet::<T>::initialize_validators(&self.initial_validators);
 		}
@@ -125,6 +137,7 @@ pub mod pallet {
 		/// The origin can be configured using the `AddRemoveOrigin` type in the
 		/// host runtime. Can also be set to sudo/root.
 		#[pallet::call_index(0)]
+		// SBP-M1 review: benchmark and use proper weight function to avoid spam/DoS - use DispatchResultWithPostInfo and return Pays:No as per sudo pallet
 		#[pallet::weight(Weight::from_parts(0, 0))]
 		pub fn add_validator(origin: OriginFor<T>, validator_id: T::AccountId) -> DispatchResult {
 			T::AddRemoveOrigin::ensure_origin(origin)?;
@@ -140,6 +153,7 @@ pub mod pallet {
 		/// The origin can be configured using the `AddRemoveOrigin` type in the
 		/// host runtime. Can also be set to sudo/root.
 		#[pallet::call_index(1)]
+		// SBP-M1 review: benchmark and use proper weight function to avoid spam/DoS - use DispatchResultWithPostInfo and return Pays:No as per sudo pallet
 		#[pallet::weight(Weight::from_parts(0, 0))]
 		pub fn remove_validator(
 			origin: OriginFor<T>,
@@ -148,6 +162,7 @@ pub mod pallet {
 			T::AddRemoveOrigin::ensure_origin(origin)?;
 
 			Self::do_remove_validator(validator_id.clone())?;
+			// SBP-M1 review: appears to have no effect
 			Self::unapprove_validator(validator_id)?;
 
 			Ok(())
@@ -157,14 +172,17 @@ pub mod pallet {
 		///
 		/// For this call, the dispatch origin must be the validator itself.
 		#[pallet::call_index(2)]
+		// SBP-M1 review: benchmark and use proper weight function to avoid spam/DoS - use DispatchResultWithPostInfo and return Pays:No as per sudo pallet
 		#[pallet::weight(Weight::from_parts(0, 0))]
 		pub fn add_validator_again(
 			origin: OriginFor<T>,
+			// SBP-M1 review: why have this parameter when it can just be obtained via ensure_signed?
 			validator_id: T::AccountId,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 			ensure!(who == validator_id, Error::<T>::BadOrigin);
 
+			// SBP-M1 review: use BoundedVec.contains()
 			let approved_set: BTreeSet<_> = <ApprovedValidators<T>>::get().into_iter().collect();
 			ensure!(approved_set.contains(&validator_id), Error::<T>::ValidatorNotApproved);
 
@@ -183,25 +201,32 @@ impl<T: Config> Pallet<T> {
 		);
 		assert!(
 			(validators.len() as u32) < (T::MaxAuthorities::get()),
+			// SBP-M1 review: improve comment
 			"Initial set of validators must be at less than T::MaxAuthorities"
 		);
 		assert!(<Validators<T>>::get().is_empty(), "Validators are already initialized!");
 		let validators: BoundedVec<T::AccountId, T::MaxAuthorities> =
+			// SBP-M1 review: avoid unwrap (panic)
 			validators.to_vec().try_into().unwrap();
+		// SBP-M1 review: use & to avoid clone
 		<Validators<T>>::put(validators.clone());
 		<ApprovedValidators<T>>::put(validators);
 	}
 
 	fn do_add_validator(validator_id: T::AccountId) -> DispatchResult {
+		// SBP-M1 review: unnecessary set, use .contains() on BoundedVec
 		let validator_set: BTreeSet<_> = <Validators<T>>::get().into_iter().collect();
 		ensure!(!validator_set.contains(&validator_id), Error::<T>::Duplicate);
 
+		// SBP-M1 review: use BoundedVec from first storage query
 		let mut validators = <Validators<T>>::get().to_vec();
 		validators.push(validator_id.clone());
 		let validators: BoundedVec<T::AccountId, T::MaxAuthorities> =
+			// SBP-M1 review: avoid unwrap, return error
 			validators.to_vec().try_into().unwrap();
 		<Validators<T>>::put(validators);
 
+		// SBP-M1 review: unnecessary clone
 		Self::deposit_event(Event::ValidatorAdditionInitiated(validator_id.clone()));
 		log::debug!(target: LOG_TARGET, "Validator addition initiated.");
 
@@ -214,6 +239,7 @@ impl<T: Config> Pallet<T> {
 		// Ensuring that the post removal, target validator count doesn't go
 		// below the minimum.
 		ensure!(
+			// SBP-M1 review: cast may truncate
 			validators.len().saturating_sub(1) as u32 >= T::MinAuthorities::get(),
 			Error::<T>::TooLowValidatorCount
 		);
@@ -222,6 +248,7 @@ impl<T: Config> Pallet<T> {
 
 		<Validators<T>>::put(validators);
 
+		// SBP-M1 review: unnecessary clone
 		Self::deposit_event(Event::ValidatorRemovalInitiated(validator_id.clone()));
 		log::debug!(target: LOG_TARGET, "Validator removal initiated.");
 
@@ -229,11 +256,15 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn approve_validator(validator_id: T::AccountId) -> DispatchResult {
+		// SBP-M1 review: doesnt need to be a set to check if validator_id exists
 		let approved_set: BTreeSet<_> = <ApprovedValidators<T>>::get().into_iter().collect();
 		ensure!(!approved_set.contains(&validator_id), Error::<T>::Duplicate);
 
+		// SBP-M1 review: use .into_inner() to use existing vector
 		let mut validators = <ApprovedValidators<T>>::get().to_vec();
+		// SBP-M1 review: unnecessary clone
 		validators.push(validator_id.clone());
+		// SBP-M1 review: use BoundedVec received directly from storage, avoid unwrap, unnecessary clone
 		let validators: BoundedVec<T::AccountId, T::MaxAuthorities> =
 			validators.to_vec().try_into().unwrap();
 		<ApprovedValidators<T>>::put(validators);
@@ -241,17 +272,24 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	// SBP-M1 review: appears to have no effect as storage not updated with updated set
 	fn unapprove_validator(validator_id: T::AccountId) -> DispatchResult {
 		let mut approved_set = <ApprovedValidators<T>>::get();
 		approved_set.retain(|v| *v != validator_id);
+		// SBP-M1 review: return type unnecessary
 		Ok(())
 	}
 
+	// SBP-M1 review: comment should be refined based on logic: validator_id added to OfflineValidators
 	// Adds offline validators to a local cache for removal at new session.
 	fn mark_for_removal(validator_id: T::AccountId) {
+		// SBP-M1 review: use .into_inner() to access inner vec rather than implicit clone
 		let mut validators = <OfflineValidators<T>>::get().to_vec();
+		// SBP-M1 review: clone unnecessary
 		validators.push(validator_id.clone());
+		// SBP-M1 review: why not just use the BoundedVec from OfflineValidators::get()
 		let validators: BoundedVec<T::AccountId, T::MaxAuthorities> =
+			// SBP-M1 review: already its own vector, unwrap could panic
 			validators.to_vec().try_into().unwrap();
 		<OfflineValidators<T>>::put(validators);
 
@@ -264,6 +302,7 @@ impl<T: Config> Pallet<T> {
 	// check for `MinAuthorities` here, because the offline validators will not
 	// produce blocks and will have the same overall effect on the runtime.
 	fn remove_offline_validators() {
+		// SBP-M1 review: set may be unnecessary if all OfflineValidators modifications ensure distinct items
 		let validators_to_remove: BTreeSet<_> = <OfflineValidators<T>>::get().into_iter().collect();
 
 		// Delete from active validator set.
@@ -275,6 +314,7 @@ impl<T: Config> Pallet<T> {
 		);
 
 		// Clear the offline validator list to avoid repeated deletion.
+		// SBP-M1 review: use BoundedVec::new() or BoundedVec::default(), avoid .unwrap()
 		let validators: BoundedVec<T::AccountId, T::MaxAuthorities> = vec![].try_into().unwrap();
 		<OfflineValidators<T>>::put(validators);
 	}
@@ -287,10 +327,12 @@ impl<T: Config> pallet_session::SessionManager<T::AccountId> for Pallet<T> {
 	fn new_session(_new_index: u32) -> Option<Vec<T::AccountId>> {
 		// Remove any offline validators. This will only work when the runtime
 		// also has the im-online pallet.
+		// SBP-M1 review: consider returning validator set from this function as it already reads validators state
 		Self::remove_offline_validators();
 
 		log::debug!(target: LOG_TARGET, "New session called; updated validator set provided.");
 
+		// SBP-M1 review: use .into_inner()
 		Some(Self::validators().to_vec())
 	}
 
@@ -299,6 +341,7 @@ impl<T: Config> pallet_session::SessionManager<T::AccountId> for Pallet<T> {
 	fn start_session(_start_index: u32) {}
 }
 
+// SBP-M1 review: provide justification as to why this provides default values
 impl<T: Config> EstimateNextSessionRotation<T::BlockNumber> for Pallet<T> {
 	fn average_session_length() -> T::BlockNumber {
 		Zero::zero()
@@ -306,18 +349,21 @@ impl<T: Config> EstimateNextSessionRotation<T::BlockNumber> for Pallet<T> {
 
 	fn estimate_current_session_progress(
 		_now: T::BlockNumber,
+		// SBP-M1 review: unnecessary qualification
 	) -> (Option<sp_runtime::Permill>, frame_support::dispatch::Weight) {
 		(None, Zero::zero())
 	}
 
 	fn estimate_next_session_rotation(
 		_now: T::BlockNumber,
+		// SBP-M1 review: unnecessary qualification
 	) -> (Option<T::BlockNumber>, frame_support::dispatch::Weight) {
 		(None, Zero::zero())
 	}
 }
 
 // Implementation of Convert trait for mapping ValidatorId with AccountId.
+// SBP-M1 review: unnecessary qualification
 pub struct ValidatorOf<T>(sp_std::marker::PhantomData<T>);
 
 impl<T: Config> Convert<T::ValidatorId, Option<T::ValidatorId>> for ValidatorOf<T> {
@@ -326,6 +372,7 @@ impl<T: Config> Convert<T::ValidatorId, Option<T::ValidatorId>> for ValidatorOf<
 	}
 }
 
+// SBP-M1 review: consider loose coupling with pallet_session injected via type with ValidatorSet trait bound on Config
 impl<T: Config> ValidatorSet<T::AccountId> for Pallet<T> {
 	type ValidatorId = T::ValidatorId;
 	type ValidatorIdOf = T::ValidatorIdOf;
@@ -351,7 +398,10 @@ impl<T: Config, O: Offence<(T::AccountId, T::AccountId)>>
 	fn report_offence(_reporters: Vec<T::AccountId>, offence: O) -> Result<(), OffenceError> {
 		let offenders = offence.offenders();
 
+		// SBP-M1 review: simply as 'for (v, _) in offenders {}'
 		for (v, _) in offenders.into_iter() {
+			// SBP-M1 review: pass offenders as parameters to process as batch
+			// SBP-M1 review: should timeslot be passed so that is_known_offence can be properly implemented
 			Self::mark_for_removal(v);
 		}
 
@@ -361,6 +411,7 @@ impl<T: Config, O: Offence<(T::AccountId, T::AccountId)>>
 	fn is_known_offence(
 		_offenders: &[(T::AccountId, T::AccountId)],
 		_time_slot: &O::TimeSlot,
+		// SBP-M1 review: provide justification as to why this is not implemented
 	) -> bool {
 		false
 	}

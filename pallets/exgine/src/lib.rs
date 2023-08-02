@@ -1,3 +1,5 @@
+// SBP-M1 review: appears to be pallet_template, not reviewed
+
 #![cfg_attr(not(feature = "std"), no_std)]
 
 /// Edit this file to define custom logic or remove it if it is not needed.

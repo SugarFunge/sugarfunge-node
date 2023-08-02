@@ -1,9 +1,12 @@
 [package]
+#SBP-M1 review: use double quotes
 name = 'sugarfunge-market'
 version = "0.1.0"
 authors = ["SugarFunge Developers"]
 edition = "2021"
+#SBP-M1 review: ensure that licenses satisfy the requirements of all dependencies
 license = "Proprietary"
+#SBP-M1 review: no description, repository
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
@@ -14,12 +17,15 @@ sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
 
+#SBP-M1 review: external dependencies not reviewed, but quick glance shows issues such as no benchmarks, invalid weights, unnecessary cargo.lock, minimal tests
 sugarfunge-primitives = { git = "https://github.com/SugarFunge/sugarfunge-primitives", branch = "main", default-features = false }
 sugarfunge-asset = { git = "https://github.com/SugarFunge/sugarfunge-asset", branch = "main", default-features = false }
+#SBP-M1 review: appears to only be used in mock, either remove if not actually required or move to dev-dependencies
 sugarfunge-bundle = { git = "https://github.com/SugarFunge/sugarfunge-bundle", branch = "main", default-features = false }
-
+#SBP-M1 review: appears to only be used in mock, either remove if not actually required or move to dev-dependencies
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
 
+#SBP-M1 review: use single line
 codec = { package = "parity-scale-codec", version = "3.2.2", default-features = false, features = [
 	"derive",
 ] }
@@ -47,6 +53,7 @@ std = [
 	'frame-benchmarking/std',
     'sugarfunge-primitives/std',
     'sugarfunge-asset/std',
+	#SBP-M1 review: 'pallet-balances/std' missing
 ]
 
 runtime-benchmarks = ["frame-benchmarking"]

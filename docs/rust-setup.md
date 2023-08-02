@@ -2,6 +2,8 @@
 title: Installation
 ---
 
+[//]: # (SBP-M1 review: appears to be taken from docs.substrate.io without attribution)
+
 This page will guide you through the steps needed to prepare a computer for development with the
 Substrate Node Template. Since Substrate is built with
 [the Rust programming language](https://www.rust-lang.org/), the first thing you will need to do is

@@ -4,10 +4,12 @@
 pub mod currency {
     use crate::Balance;
 
+    // SBP-M1 review: provide justification for values or link to source
     pub const MILLICENTS: Balance = 10_000_000_000_000;
     pub const CENTS: Balance = 1_000 * MILLICENTS; // assume this is worth about a cent.
     pub const DOLLARS: Balance = 100 * CENTS;
 
+    // SBP-M1 review: seems unused, remove
     pub const fn deposit(items: u32, bytes: u32) -> Balance {
         items as Balance * 15 * CENTS + (bytes as Balance) * 6 * CENTS
     }
@@ -37,11 +39,14 @@ pub mod time {
     pub const MILLISECS_PER_BLOCK: Moment = 6000;
     pub const SECS_PER_BLOCK: Moment = MILLISECS_PER_BLOCK / 1000;
 
+    // SBP-M1 review: copy comment from https://github.com/substrate-developer-hub/substrate-node-template/blob/e6bf90cfbf774fc284056068fe75e3e97eeb0306/runtime/src/lib.rs#L122
     pub const SLOT_DURATION: Moment = MILLISECS_PER_BLOCK;
 
+    // SBP-M1 review: not used, remove
     // 1 in 4 blocks (on average, not counting collisions) will be primary BABE blocks.
     pub const PRIMARY_PROBABILITY: (u64, u64) = (1, 4);
 
+    // SBP-M1 review: not used, remove
     pub const EPOCH_DURATION_IN_BLOCKS: BlockNumber = 10 * MINUTES;
     pub const EPOCH_DURATION_IN_SLOTS: u64 = {
         const SLOT_FILL_RATE: f64 = MILLISECS_PER_BLOCK as f64 / SLOT_DURATION as f64;

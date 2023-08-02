@@ -3,7 +3,9 @@ name = 'sugarfunge-exgine'
 version = "0.1.0"
 authors = ["SugarFunge Developers"]
 edition = "2021"
+#SBP-M1 review: ensure that licenses satisfy the requirements of all dependencies
 license = "Proprietary"
+#SBP-M1 review: no description, repository
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]

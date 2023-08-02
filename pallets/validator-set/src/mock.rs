@@ -1,3 +1,4 @@
+// SBP-M1 review: cargo fmt
 //! Mock helpers for Validator Set pallet.
 
 #![cfg(test)]
