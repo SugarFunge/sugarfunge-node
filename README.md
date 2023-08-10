@@ -5,19 +5,19 @@ The SugarFunge blockchain powers the SugarFunge Protocol. A protocol for compani
 
 Read more about [Owned Economies](https://github.com/SugarFunge/OwnedEconomies).
 
+
 ## Local Testnet
 
-alice:
-```
-cargo run --release -- --chain=local --enable-offchain-indexing true --alice --base-path=.tmp/a --port=30334 --rpc-port 9944 --rpc-external --rpc-cors=all --rpc-methods=Unsafe
+> **Important**: to be able to use all [sugarfunge-api](https://github.com/functionland/sugarfunge-api) endpoints without problem you must run at least two validators
+
+<br/>
+
+1st Validator:
+```bash
+cargo run --release -- --chain ./customSpecRaw.json --enable-offchain-indexing true --base-path=.tmp/node01 --port=30334 --rpc-port 9944 --rpc-cors=all --rpc-methods=Unsafe --rpc-external --validator --name "${1st Validator Name}" --node-key=${1st Validator Node key} --password-filename "${path to file}"
 ```
 
-bob:
-```
-cargo run --release -- --chain=local --enable-offchain-indexing true --bob --base-path=.tmp/b --port=30335 --rpc-port 9945 --rpc-external --rpc-cors=all --rpc-methods=Unsafe  --bootnodes /ip4/127.0.0.1/tcp/30334/p2p/12D3KooWNxmYfzomt7EXfMSLuoaK68JzXnZkNjXyAYAwNrQTDx7Y
-```
-
-charlie:
-```
-cargo run --release -- --chain=local --enable-offchain-indexing true --charlie --base-path=.tmp/c --port=30336 --rpc-port 9946 --rpc-external --rpc-cors=all --rpc-methods=Unsafe --bootnodes /ip4/127.0.0.1/tcp/30334/p2p/12D3KooWNxmYfzomt7EXfMSLuoaK68JzXnZkNjXyAYAwNrQTDx7Y
+2nd Validator:
+``` bash
+cargo run --release -- --chain ./customSpecRaw.json --enable-offchain-indexing true --base-path=.tmp/node02 --port=30335 --rpc-port 9945 --rpc-cors=all --rpc-methods=Unsafe --rpc-external --bootnodes /ip4/127.0.0.1/tcp/30334/p2p/${1st Validator Local node identity} --validator --name "${2nd Validator Name}" --node-key=${2nd Validator Node key} --password-filename "${path to file}"
 ```
