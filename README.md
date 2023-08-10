@@ -5,19 +5,26 @@ The SugarFunge blockchain powers the SugarFunge Protocol. A protocol for compani
 
 Read more about [Owned Economies](https://github.com/SugarFunge/OwnedEconomies).
 
+
 ## Local Testnet
 
-alice:
-```
-cargo run --release -- --chain=local --enable-offchain-indexing true --alice --base-path=.tmp/a --port=30334 --rpc-port 9944 --rpc-external --rpc-cors=all --rpc-methods=Unsafe
+> **Important**: to be able to use all [sugarfunge-api](https://github.com/SugarFunge/sugarfunge-api.git) endpoints without problem you must run at least two of these commands and make sure the same version of Polkadot is being used.
+
+<br/>
+
+Alice:
+```bash
+cargo run --release -- --chain=local --enable-offchain-indexing true --alice --base-path=.tmp/a --port=30334 --rpc-port 9944 --rpc-cors=all --rpc-methods=Unsafe --rpc-external
 ```
 
-bob:
-```
-cargo run --release -- --chain=local --enable-offchain-indexing true --bob --base-path=.tmp/b --port=30335 --rpc-port 9945 --rpc-external --rpc-cors=all --rpc-methods=Unsafe  --bootnodes /ip4/127.0.0.1/tcp/30334/p2p/12D3KooWNxmYfzomt7EXfMSLuoaK68JzXnZkNjXyAYAwNrQTDx7Y
+Bob:
+``` bash
+cargo run --release -- --chain=local --enable-offchain-indexing true --bob --base-path=.tmp/b --port=30335 --rpc-port 9945 --rpc-cors=all --rpc-methods=Unsafe --rpc-external --bootnodes /ip4/127.0.0.1/tcp/30334/p2p/${Alice Local node identity}
 ```
 
-charlie:
+Charlie:
+```bash
+cargo run --release -- --chain=local --enable-offchain-indexing true --charlie --base-path=.tmp/c --port=30336 --rpc-port 9946 --rpc-cors=all --rpc-methods=Unsafe --rpc-external --bootnodes /ip4/127.0.0.1/tcp/30334/p2p/${Alice Local node identity}
 ```
-cargo run --release -- --chain=local --enable-offchain-indexing true --charlie --base-path=.tmp/c --port=30336 --rpc-port 9946 --rpc-external --rpc-cors=all --rpc-methods=Unsafe --bootnodes /ip4/127.0.0.1/tcp/30334/p2p/12D3KooWNxmYfzomt7EXfMSLuoaK68JzXnZkNjXyAYAwNrQTDx7Y
-```
+
+Where `Alice Local node identity` can be obtained from the console logs of the Alice command. Local node identity _ej. **12D3KooWCHDDz4kHRN2dEqn6F4ev5YfPk4o2H5MWwboqZt55myPy**_
