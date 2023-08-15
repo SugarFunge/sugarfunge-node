@@ -4,6 +4,11 @@ use crate::{
 use frame_support::{assert_noop, assert_ok, bounded_vec};
 use sp_std::prelude::*;
 
+// SBP-M1 review: tests do not run in isolation, seemingly due to pallet_balances missing from std feature in cargo.toml. Works when run from project root.
+// SBP-M1 review: dispatchable functions not tested, only corresponding impls
+// SBP-M1 review: missing event assertions (LiquidityAdded, LiquidityRemoved)
+
+// SBP-M1 review: replace with assert_last_event or assert_has_event
 fn last_event() -> RuntimeEvent {
     frame_system::Pallet::<Test>::events()
         .pop()
@@ -12,6 +17,7 @@ fn last_event() -> RuntimeEvent {
 }
 
 fn simple_market_rates() -> Rates<Test> {
+    // SBP-M1 review: use bounded_vec![]
     vec![
         //
         // Buyer wants these goods
@@ -24,6 +30,7 @@ fn simple_market_rates() -> Rates<Test> {
             from: RateAccount::Market,
             to: RateAccount::Buyer,
         },
+        // SBP-M1 review: quantity in comment does not match mint amount in action
         // Market will mint 100 assets of class_id: 2000 asset_id: 2 for buyer
         AssetRate {
             class_id: 2000,
@@ -84,6 +91,7 @@ fn simple_market_rates() -> Rates<Test> {
 }
 
 fn swap_market_rates() -> Rates<Test> {
+    // SBP-M1 review: use bounded_vec![]
     vec![
         //
         // Buyer wants these goods
@@ -109,13 +117,16 @@ fn swap_market_rates() -> Rates<Test> {
     .unwrap()
 }
 
+// SBP-M1 review: pub not required
 pub fn before_market() {
     run_to_block(10);
 
+    // SBP-M1 review: use BoundedVec::new() or BoundedVec::default()
     assert_ok!(Asset::do_create_class(&1, &1, 2000, bounded_vec![]));
     assert_ok!(Asset::do_create_class(&1, &1, 3000, bounded_vec![]));
     assert_ok!(Asset::do_create_class(&1, &1, 4000, bounded_vec![]));
 
+    // SBP-M1 review: use vec![] rather than [].to_vec()
     let asset_ids = [1, 2, 3, 4, 5].to_vec();
     let amounts = [100, 200, 300, 400, 500].to_vec();
 
@@ -145,6 +156,7 @@ pub fn before_market() {
 
     assert_ok!(Market::do_create_market(&1, 1000));
 
+    // SBP-M1 review: replace with assert_last_event or assert_has_event
     assert_eq!(
         last_event(),
         RuntimeEvent::Market(crate::Event::Created {
@@ -154,6 +166,7 @@ pub fn before_market() {
     );
 }
 
+// SBP-M1 review: pub not required
 pub fn add_some_liquidity() {
     run_to_block(10);
 
@@ -197,6 +210,7 @@ fn create_market_works() {
 
         assert_ok!(Market::do_create_market(&1, 1001));
 
+        // SBP-M1 review: replace with assert_last_event or assert_has_event
         assert_eq!(
             last_event(),
             RuntimeEvent::Market(crate::Event::Created {
@@ -216,6 +230,7 @@ fn create_market_rate_works() {
 
         assert_ok!(Market::do_create_market_rate(&1, 1000, 2, &market_rate));
 
+        // SBP-M1 review: replace with assert_last_event or assert_has_event
         assert_eq!(
             last_event(),
             RuntimeEvent::Market(crate::Event::RateCreated {
@@ -328,6 +343,7 @@ fn deposit_works() {
             assert_eq!(market_rate_id, 100);
             assert_eq!(amount, 4);
 
+            // SBP-M1 review: duplicate code, refactor into function
             let get_balance = |rate_idx: usize| {
                 balances.iter().find_map(|RateBalance { rate, balance }| {
                     if *rate == rates[rate_idx] {
@@ -360,6 +376,7 @@ fn deposit_fails() {
         assert_ok!(Market::do_create_market_rate(&2, 2000, 100, &rates));
         assert_ok!(Market::do_deposit(&2, 2000, 100, 100));
 
+        // SBP-M1 review: replace with assert_last_event or assert_has_event, passing event with expected values for comparison
         if let RuntimeEvent::Market(crate::Event::Deposit {
             who,
             market_id,
@@ -375,6 +392,7 @@ fn deposit_fails() {
             assert_eq!(market_rate_id, 100);
             assert_eq!(amount, 100);
 
+            // SBP-M1 review: duplicate code, refactor into function
             let get_balance = |rate_idx: usize| {
                 balances.iter().find_map(|RateBalance { rate, balance }| {
                     if *rate == rates[rate_idx] {
@@ -506,6 +524,7 @@ fn exchange_assets_works() {
 
         assert_ok!(Market::do_exchange_assets(&3, 2000, 100, 3));
 
+        // SBP-M1 review: replace with assert_last_event or assert_has_event, passing event with expected values for comparison
         if let RuntimeEvent::Market(crate::Event::Exchanged {
             buyer,
             market_id,
@@ -515,6 +534,7 @@ fn exchange_assets_works() {
             success,
         }) = last_event()
         {
+            // SBP-M1 review: duplicate code, refactor into function
             let get_balance = |rate_idx: usize| {
                 balances.iter().find_map(|RateBalance { rate, balance }| {
                     if *rate == rates[rate_idx] {
@@ -570,6 +590,7 @@ fn exchange_assets_fails() {
 
         assert_ok!(Market::do_exchange_assets(&3, 2000, 100, 3));
 
+        // SBP-M1 review: replace with assert_last_event or assert_has_event, passing event with expected values for comparison
         if let RuntimeEvent::Market(crate::Event::Exchanged {
             buyer,
             market_id,
@@ -579,6 +600,7 @@ fn exchange_assets_fails() {
             success,
         }) = last_event()
         {
+            // SBP-M1 review: duplicate code, refactor into function
             let get_balance = |rate_idx: usize| {
                 balances.iter().find_map(|RateBalance { rate, balance }| {
                     if *rate == rates[rate_idx] {

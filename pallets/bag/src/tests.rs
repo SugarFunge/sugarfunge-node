@@ -1,6 +1,11 @@
 use crate::mock::*;
 use frame_support::{assert_ok, bounded_vec};
 
+// SBP-M1 review: no test for register dispatchable function
+// SBP-M1 review: no assertion for Deposit and Sweep events
+// SBP-M1 review: no assertions for errors
+
+// SBP-M1 review: replace with assert_last_event or assert_has_event
 fn last_event() -> RuntimeEvent {
     frame_system::Pallet::<Test>::events()
         .pop()
@@ -65,12 +70,14 @@ fn deposit_assets() {
 
         assert_ok!(Bag::create(RuntimeOrigin::signed(1), 1000, vec![2], vec![1]));
 
+        // SBP-M1 review: replace with assert_last_event or assert_has_event, passing event with expected values for comparison
         if let RuntimeEvent::Bag(crate::Event::Created {
             bag,
             who,
             class_id,
             asset_id,
             owners,
+
         }) = last_event()
         {
             assert_eq!(who, 1);
@@ -179,6 +186,7 @@ fn sweep_assets() {
         ));
 
         assert_ok!(Bag::create(RuntimeOrigin::signed(1), 1000, vec![2], vec![1]));
+        // SBP-M1 review: replace with assert_last_event or assert_has_event, passing event with expected values for comparison
         if let RuntimeEvent::Bag(crate::Event::Created {
             bag,
             who,

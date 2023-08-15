@@ -1,3 +1,5 @@
+[//]: # (SBP-M1 review: appears to be taken from docs.substrate.io without attribution)
+
 # Substrate SugarFunge Node
 
 A fresh FRAME-based [Substrate](https://www.substrate.io/) node, ready for hacking :rocket:
@@ -32,6 +34,7 @@ cargo build --release
 Once the project has been built, the following command can be used to explore all parameters and
 subcommands:
 
+[//]: # (SBP-M1 review: node binary is `sugarfunge-node` - same mistake made throughout doc)
 ```sh
 ./target/release/sf-node -h
 ```
@@ -65,6 +68,8 @@ RUST_LOG=debug RUST_BACKTRACE=1 ./target/release/sf-node -lruntime=debug --dev
 ### Multi-Node Local Testnet
 
 If you want to see the multi-node consensus algorithm in action, refer to
+
+[//]: # (SBP-M1 review: broken link)
 [our Start a Private Network tutorial](https://substrate.dev/docs/en/tutorials/start-a-private-network/).
 
 ## Template Structure

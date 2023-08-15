@@ -1,9 +1,12 @@
 [package]
+#SBP-M1 review: use double quotes
 name = 'sugarfunge-validator-set'
 version = '0.1.0'
 authors = ['Gautam Dhameja <quasijatt@outlook.com>', "SugarFunge Developers"]
 edition = '2021'
+#SBP-M1 review: ensure that licenses satisfy the requirements of all dependencies
 license = 'Apache-2.0'
+#SBP-M1 review: no description, repository
 
 [dependencies]
 log = { version = "0.4.17", default-features = false }
@@ -20,6 +23,7 @@ sp-staking = { git = "https://github.com/paritytech/substrate", branch = "polkad
 
 pallet-session = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43", default-features = false, features = ['historical'] }
 
+#SBP-M1 review: remove as empty
 [dev-dependencies]
 
 [features]

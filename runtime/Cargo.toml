@@ -5,20 +5,24 @@ authors = ["SugarFunge Developers"]
 edition = "2021"
 license = "Proprietary"
 build = "build.rs"
+#SBP-M1 review: no description, repository
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 # third-party dependencies
+#SBP-M1 review: use single line
 codec = { package = "parity-scale-codec", version = "3.2.2", default-features = false, features = [
 	"derive",
 ] }
+#SBP-M1 review: use single line
 scale-info = { version = "2.5.0", default-features = false, features = [
 	"derive",
 ] }
 hex-literal = { version = "0.4.1", optional = true }
 log = { version = "0.4.17", default-features = false }
+#SBP-M1 review: unused?
 getrandom = { version = "0.2", features = ["js"] }
 
 # primitives
@@ -62,10 +66,11 @@ pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/parityt
 pallet-collective = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43", default-features = false }
 
 # Contract
+#SBP-M1 review: not used by runtime, remove
 pallet-contracts-primitives = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43", default-features = false }
 pallet-contracts = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43", default-features = false }
+#SBP-M1 review: remove unused dependency
 # pallet-contracts-rpc-runtime-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43", default-features = false }
-
 # Used for runtime benchmarking
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43", default-features = false, optional = true }
 frame-system-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43", default-features = false, optional = true }
@@ -73,12 +78,18 @@ frame-system-benchmarking = { git = "https://github.com/paritytech/substrate", b
 sugarfunge-primitives = { git = "https://github.com/SugarFunge/sugarfunge-primitives", branch = "main", default-features = false }
 
 # local pallets
+#SBP-M1 review: has not kept pace with forked repo (e.g. benchmarked weights at https://github.com/gautamdhameja/substrate-validator-set), consider replacing dependency
+#SBP-M1 review: readme states not to use 'as-is' in real applications
 sugarfunge-validator-set = { default-features = false, path = "../pallets/validator-set" }
+#SBP-M1 review: not used by runtime
 sugarfunge-bridge = { default-features = false, path = "../pallets/bridge" }
+#SBP-M1 review: not local pallet, move above
 sugarfunge-asset = { git = "https://github.com/SugarFunge/sugarfunge-asset", branch = "main", default-features = false }
 sugarfunge-dao = { default-features = false, path = "../pallets/dao" }
+#SBP-M1 review: not local pallet, move above
 sugarfunge-bundle = { git = "https://github.com/SugarFunge/sugarfunge-bundle", branch = "main", default-features = false }
 sugarfunge-bag = { default-features = false, path = "../pallets/bag" }
+#SBP-M1 review: pallet_template, remove from runtime until properly implemented
 sugarfunge-exgine = { default-features = false, path = "../pallets/exgine" }
 sugarfunge-market = { default-features = false, path = "../pallets/market" }
 
@@ -94,6 +105,7 @@ std = [
 	"codec/std",
 	"scale-info/std",
 	"log/std",
+	#SBP-M1 review: remove blank line
 
 	"frame-executive/std",
 	"frame-support/std",
@@ -129,6 +141,7 @@ std = [
 	"pallet-contracts-primitives/std",
 	"pallet-collective/std",
 	"pallet-node-authorization/std",
+	#SBP-M1 review: remove blank line
 
 	"sugarfunge-validator-set/std",
 	"sugarfunge-asset/std",

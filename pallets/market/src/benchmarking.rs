@@ -8,10 +8,13 @@ use crate::Pallet as Market;
 use frame_benchmarking::v2::*;
 use frame_system::RawOrigin;
 
+// SBP-M1 review: missing benchmarks for dispatchable functions
+// SBP-M1 review: add ci to require successful benchmark tests before merging
 #[benchmarks]
 mod benchmarks {
     use super::*;
 
+	// SBP-M1 review: remove sample benchmark
 	#[benchmark]
 	fn do_something() {
 		let value = 100u32.into();
@@ -21,6 +24,7 @@ mod benchmarks {
 		assert_eq!(Something::<T>::get(), Some(value));
 	}
 
+	// SBP-M1 review: remove sample benchmark
 	#[benchmark]
     fn verify() {
         assert_eq!(Something::<T>::get(), Some(s));
