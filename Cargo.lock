@@ -2362,7 +2362,7 @@ dependencies = [
 [[package]]
 name = "fula-pool"
 version = "0.1.0"
-source = "git+https://github.com/MauricinhoMorales/fula-pool?branch=main#6f4866042bca8dfb95665b1af6f4270564c6571f"
+source = "git+https://github.com/MauricinhoMorales/fula-pool?branch=fula/release#6f4866042bca8dfb95665b1af6f4270564c6571f"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -2378,7 +2378,7 @@ dependencies = [
 [[package]]
 name = "functionland-fula"
 version = "0.1.0"
-source = "git+https://github.com/functionland/fula-pallet?branch=main#b1c59d06e087a008ca30e08f7f0022ad49e7a1aa"
+source = "git+https://github.com/functionland/fula-pallet?branch=fula/release#86b8e1a6d157ea59c9fcdfb88bb04fae788e939d"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8376,7 +8376,7 @@ checksum = "6bdef32e8150c2a081110b42772ffe7d7c9032b606bc226c8260fd97e0976601"
 [[package]]
 name = "sugarfunge-asset"
 version = "0.1.0"
-source = "git+https://github.com/SugarFunge/sugarfunge-asset?branch=main#6599e46ce366f4bdfcb0f057c36b1458b6a74c39"
+source = "git+https://github.com/SugarFunge/sugarfunge-asset?branch=fula/release#a03749426ab655acdcdef2d0abf318fe30715508"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -8433,7 +8433,7 @@ dependencies = [
 [[package]]
 name = "sugarfunge-bundle"
 version = "0.1.0"
-source = "git+https://github.com/SugarFunge/sugarfunge-bundle?branch=main#1cb9cf0ac249ce02ca19e739fd19a9cd80f61e03"
+source = "git+https://github.com/SugarFunge/sugarfunge-bundle?branch=fula/release#ec698b21c3c419567efef6f59835fcdbcea7995d"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8546,7 +8546,7 @@ dependencies = [
 [[package]]
 name = "sugarfunge-primitives"
 version = "0.1.0"
-source = "git+https://github.com/SugarFunge/sugarfunge-primitives?branch=main#a1081127680a7bd785505f6fa7abfd788a799fe1"
+source = "git+https://github.com/SugarFunge/sugarfunge-primitives?branch=fula/release#a1081127680a7bd785505f6fa7abfd788a799fe1"
 dependencies = [
  "frame-system",
  "parity-scale-codec",
