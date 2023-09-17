@@ -196,3 +196,5 @@ When a validator goes offline, it skips its block production slot in Aura and th
 ## Disclaimer
 
 This code not audited and reviewed for production use cases. You can expect bugs and security vulnerabilities. Do not use it as-is in real applications.
+
+[//]: # (SBP-M1 review: missing license information)

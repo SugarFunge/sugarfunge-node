@@ -53,6 +53,7 @@ pub use pallet_timestamp::Call as TimestampCall;
 pub use sp_runtime::BuildStorage;
 #[cfg(any(feature = "std", test))]
 pub use sugarfunge_bundle::Call as BundleCall;
+// SBP-M1 review: pallet_template, remove from runtime until properly implemented
 #[cfg(any(feature = "std", test))]
 pub use sugarfunge_exgine::Call as ExgineCall;
 #[cfg(any(feature = "std", test))]
@@ -117,13 +118,17 @@ pub fn native_version() -> NativeVersion {
 
 /// We assume that ~10% of the block weight is consumed by `on_initalize` handlers.
 /// This is used to limit the maximal weight of a single extrinsic.
+// SBP-M1 review: remove as unused
 // const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(10);
 /// We allow `Normal` extrinsics to fill up the block up to 75%, the rest can be used
 /// by  Operational  extrinsics.
 const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
+// SBP-M1 review: remove as unused
 /// We allow for 2 seconds of compute with a 6 second average block time.
 // const MAXIMUM_BLOCK_WEIGHT: Weight = Weight::from_ref_time(2_000_000_000_000);
+// SBP-M1 review: move closer to usage
 /// Maximum metadata size usually for JSON content
+// SBP-M1 review: evaluate whether this is still feasible if becoming a parachain and adjust design accordingly
 const METADATA_SIZE: u32 = 1024 * 4;
 
 parameter_types! {
@@ -134,6 +139,7 @@ parameter_types! {
             Weight::from_parts(2u64 * WEIGHT_REF_TIME_PER_SECOND, u64::MAX),
             NORMAL_DISPATCH_RATIO,
         );
+    // SBP-M1 review: rename to BlockLength
     pub RuntimeBlockLength: frame_system::limits::BlockLength = frame_system::limits::BlockLength
         ::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
     pub const SS58Prefix: u8 = 42;
@@ -205,6 +211,7 @@ impl pallet_aura::Config for Runtime {
 
 impl pallet_grandpa::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
+    // SBP-M1 review: remove
     //type RuntimeCall = RuntimeCall;
 
     type WeightInfo = ();
@@ -216,6 +223,7 @@ impl pallet_grandpa::Config for Runtime {
 }
 
 parameter_types! {
+    // SBP-M1 review: only used once, consider inlining to `type MinimumPeriod = ConstU64<{ SLOT_DURATION / 2 }>;`
     pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
 }
 
@@ -232,7 +240,9 @@ pub const EXISTENTIAL_DEPOSIT: u128 = 500;
 parameter_types! {
     // For weight estimation, we assume that the most locks on an individual account will be 50.
     // This number may need to be adjusted in the future if this assumption no longer holds true.
+    // SBP-M1 review: only used once, consider inlining
     pub const MaxLocks: u32 = 50;
+    // SBP-M1 review: only used once, consider inlining
     pub const MaxReserves: u32 = 50;
 }
 
@@ -255,7 +265,9 @@ impl pallet_balances::Config for Runtime {
 }
 
 parameter_types! {
+    // SBP-M1 review: only used once, consider inlining
     pub const TransactionByteFee: Balance = 10 * MILLICENTS;
+    // SBP-M1 review: only used once, consider inlining
     pub OperationalFeeMultiplier: u8 = 5;
 }
 
@@ -265,10 +277,13 @@ parameter_types! {
 
 impl pallet_transaction_payment::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
+    // SBP-M1 review: consider what happens with fees and provide an OnUnbalanced handler to CurrencyAdapter accordingly
     type OnChargeTransaction = CurrencyAdapter<Balances, ()>;
     type OperationalFeeMultiplier = OperationalFeeMultiplier;
+    // SBP-M1 review: consider
     type WeightToFee = IdentityFee<Balance>;
     type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
+    // SBP-M1 review: consider updating to SlowAdjustingFeeUpdate as per https://github.com/paritytech/polkadot/blob/6f991987c0b4cbbd7d4badc9ef08d83da5fefbfd/runtime/polkadot/src/lib.rs#L317
     type FeeMultiplierUpdate = ConstFeeMultiplier<FeeMultiplier>;
 }
 
@@ -279,12 +294,16 @@ impl pallet_sudo::Config for Runtime {
 }
 
 parameter_types! {
+    // SBP-M1 review: only used once, consider inlining
     pub MaximumSchedulerWeight: Weight = Perbill::from_percent(80) *
         BlockWeights::get().max_block;
+    // SBP-M1 review: only used once, consider inlining
     pub const MaxScheduledPerBlock: u32 = 50;
+    // SBP-M1 review: not used, remove
     pub const NoPreimagePostponement: Option<u32> = Some(10);
 }
 
+// SBP-M1 review: consider whether required
 impl pallet_scheduler::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type RuntimeOrigin = RuntimeOrigin;
@@ -295,12 +314,16 @@ impl pallet_scheduler::Config for Runtime {
     type MaxScheduledPerBlock = MaxScheduledPerBlock;
     type WeightInfo = pallet_scheduler::weights::SubstrateWeight<Runtime>;
     type OriginPrivilegeCmp = EqualPrivilegeOnly;
+    // SBP-M1 review: consider adding Preimage pallet as required
     type Preimages = ();
 }
 
 parameter_types! {
+    // SBP-M1 review: increase to sane amount (e.g. 48 hours+) or provide justification
     pub const CouncilMotionDuration: BlockNumber = 3 * MINUTES;
+    // SBP-M1 review: only used once, consider inlining
     pub const CouncilMaxProposals: u32 = 100;
+    // SBP-M1 review: only used once, consider inlining
     pub const CouncilMaxMembers: u32 = 100;
     pub MaxProposalWeight: Weight = Perbill::from_percent(50) * BlockWeights::get().max_block;
 }
@@ -325,9 +348,11 @@ type EnsureRootOrHalfCouncil = EitherOfDiverse<
 >;
 
 parameter_types! {
+    // SBP-M1 review: only used once, consider inlining
     pub const MinAuthorities: u32 = 1;
 }
 
+// SBP-M1 review: no benchmarks, zero weights
 impl validator_set::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type AddRemoveOrigin = EnsureRootOrHalfCouncil;
@@ -336,6 +361,7 @@ impl validator_set::Config for Runtime {
 }
 
 parameter_types! {
+    // SBP-M1 review: consider increasing period (e.g. 6 hours is default within parachain template: https://github.com/paritytech/cumulus/blob/9e187970ff89169b795343d6ebcff53158b61324/parachain-template/runtime/src/lib.rs#L407)
     pub const Period: u32 = 2 * MINUTES;
     pub const Offset: u32 = 0;
 }
@@ -353,21 +379,29 @@ impl pallet_session::Config for Runtime {
 }
 
 parameter_types! {
+    // SBP-M1 review: only used once, consider inlining
     pub const CreateAssetClassDeposit: Balance = 500 * MILLICENTS;
+    // SBP-M1 review: not used, remove
     pub const CreateExchangeDeposit: Balance = 500 * MILLICENTS;
+    // SBP-M1 review: only used once, consider inlining
     pub const CreateBagDeposit: Balance = 500 * MILLICENTS;
+    // SBP-M1 review: not used, remove
     pub const CreateCurrencyClassDeposit: Balance = 500 * MILLICENTS;
 }
 
 parameter_types! {
+    // SBP-M1 review: only used once, consider inlining
     pub const MaxClassMetadata: u32 = METADATA_SIZE;
+    // SBP-M1 review: only used once, consider inlining
     pub const MaxAssetMetadata: u32 = METADATA_SIZE;
 }
 
+// SBP-M1 review: no benchmarks, invalid static weights
 impl sugarfunge_asset::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type CreateAssetClassDeposit = CreateAssetClassDeposit;
     type Currency = Balances;
+    // SBP-M1 review: are these overkill for expected usage for the life of the chain?
     type AssetId = u64;
     type ClassId = u64;
     type MaxClassMetadata = MaxClassMetadata;
@@ -380,16 +414,21 @@ parameter_types! {
     pub const MarketModuleId: PalletId = PalletId(*b"sug/mrkt");
 }
 
+// SBP-M1 review: does nothing, pallet template
 impl sugarfunge_dao::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
 }
 
 parameter_types! {
+    // SBP-M1 review: only used once, consider inlining
     pub const MaxAssets: u32 = 20;
+    // SBP-M1 review: only used once, consider inlining
     pub const MaxRates: u32 = 20;
+    // SBP-M1 review: only used once, consider inlining
     pub const MaxMetadata: u32 = METADATA_SIZE;
 }
 
+// SBP-M1 review: no benchmarks, invalid static weights
 impl sugarfunge_bundle::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type PalletId = BundleModuleId;
@@ -398,9 +437,11 @@ impl sugarfunge_bundle::Config for Runtime {
 }
 
 parameter_types! {
+    // SBP-M1 review: only used once, consider inlining
     pub const MaxOwners: u32 = 20;
 }
 
+// SBP-M1 review: no benchmarks, invalid static weights
 impl sugarfunge_bag::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type PalletId = BagModuleId;
@@ -409,13 +450,16 @@ impl sugarfunge_bag::Config for Runtime {
     type MaxOwners = MaxOwners;
 }
 
+// SBP-M1 review: does nothing, pallet_template, remove from runtime until properly implemented
 impl sugarfunge_exgine::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
 }
 
+// SBP-M1 review: no benchmarks, invalid static weights
 impl sugarfunge_market::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type PalletId = MarketModuleId;
+    // SBP-M1 review: are these overkill for expected usage for the life of the chain?
     type MarketId = u64;
     type MarketRateId = u64;
     type MaxRates = MaxRates;
@@ -423,7 +467,9 @@ impl sugarfunge_market::Config for Runtime {
 }
 
 parameter_types! {
+    // SBP-M1 review: only used once, consider inlining
     pub const MaxManifestMetadata: u32 = 128;
+    // SBP-M1 review: only used once, consider inlining
     pub const MaxCID: u32 = 128;
 }
 
@@ -435,7 +481,9 @@ impl functionland_fula::Config for Runtime {
 }
 
 parameter_types! {
+    // SBP-M1 review: only used once, consider inlining
     pub const StringLimit: u32 = 128;
+    // SBP-M1 review: only used once, consider inlining
     pub const MaxPoolParticipants: u32 = 200;
 }
 
@@ -446,7 +494,9 @@ impl fula_pool::Config for Runtime {
 }
 
 parameter_types! {
+    // SBP-M1 review: only used once, consider inlining
  pub const MaxWellKnownNodes: u32 = 8;
+    // SBP-M1 review: only used once, consider inlining
  pub const MaxPeerIdLength: u32 = 128;
 }
 
@@ -467,6 +517,7 @@ construct_runtime!(
         NodeBlock = opaque::Block,
         UncheckedExtrinsic = UncheckedExtrinsic
     {
+        // SBP-M1 review: simplify syntax https://github.com/paritytech/substrate/blob/ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65/bin/node-template/runtime/src/lib.rs#L284
         System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
         Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
         Aura: pallet_aura::{Pallet, Config<T>},
@@ -485,6 +536,7 @@ construct_runtime!(
         Dao: sugarfunge_dao::{Pallet, Call, Storage, Event<T>},
         Bundle: sugarfunge_bundle::{Pallet, Call, Storage, Event<T>},
         Bag: sugarfunge_bag::{Pallet, Call, Storage, Event<T>},
+        // SBP-M1 review: does nothing, pallet_template, remove from runtime until properly implemented
         Exgine: sugarfunge_exgine::{Pallet, Call, Storage, Event<T>},
         Market: sugarfunge_market::{Pallet, Call, Storage, Event<T>},
 
@@ -500,8 +552,10 @@ pub type Address = sp_runtime::MultiAddress<AccountId, ()>;
 pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
 /// Block type as expected by this runtime.
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
+// SBP-M1 review: doesnt appear to be used
 /// A Block signed with a Justification
 pub type SignedBlock = generic::SignedBlock<Block>;
+// SBP-M1 review: doesnt appear to be used
 /// BlockId type as expected by this runtime.
 pub type BlockId = generic::BlockId<Block>;
 /// The SignedExtension to the basic transaction logic.
@@ -539,7 +593,9 @@ mod benches {
         [frame_system, SystemBench::<Runtime>]
         [pallet_balances, Balances]
         [pallet_timestamp, Timestamp]
+        // SBP-M1 review: remove pallet_template
         [pallet_template, TemplateModule]
+        // SBP-M1 review: add all other pallets used once benchmarking implemented and then run benchmarks
     );
 }
 
@@ -728,6 +784,7 @@ impl_runtime_apis! {
             (list, storage_info)
         }
 
+        // SBP-M1 review: outdated implementation, align with https://github.com/paritytech/substrate/blob/ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65/bin/node-template/runtime/src/lib.rs#L530
         fn dispatch_benchmark(
             config: frame_benchmarking::BenchmarkConfig
         ) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
@@ -736,6 +793,7 @@ impl_runtime_apis! {
             use frame_system_benchmarking::Pallet as SystemBench;
             impl frame_system_benchmarking::Config for Runtime {}
 
+            // SBP-M1 review: remove
             // let whitelist: Vec<TrackedStorageKey> = vec![
             //     // Block Number
             //     hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef702a5c1b19ab7a04f536c519aca4983ac").to_vec().into(),
@@ -752,6 +810,7 @@ impl_runtime_apis! {
             use frame_support::traits::WhitelistedStorageKeys;
             let whitelist: Vec<TrackedStorageKey> = AllPalletsWithSystem::whitelisted_storage_keys();
 
+            // SBP-M1 review: as noted above, benchmarks are now read from add_benchmarks! and dont need to be manually defined here anymore
             let mut batches = Vec::<BenchmarkBatch>::new();
             let params = (&config, &whitelist);
 

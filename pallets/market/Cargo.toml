@@ -1,9 +1,12 @@
 [package]
+#SBP-M1 review: use double quotes
 name = 'sugarfunge-market'
 version = "0.1.0"
 authors = ["SugarFunge Developers"]
 edition = "2021"
+#SBP-M1 review: ensure that licenses satisfy the requirements of all dependencies
 license = "Proprietary"
+#SBP-M1 review: no description, repository
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
@@ -21,16 +24,22 @@ sugarfunge-primitives = { git = "https://github.com/SugarFunge/sugarfunge-primit
 sugarfunge-asset = { git = "https://github.com/SugarFunge/sugarfunge-asset", branch = "fula/release", default-features = false }
 sugarfunge-bundle = { git = "https://github.com/SugarFunge/sugarfunge-bundle", branch = "fula/release", default-features = false }
 
+#SBP-M1 review: external dependencies not reviewed, but quick glance shows issues such as no benchmarks, invalid weights, unnecessary cargo.lock, minimal tests
+#SBP-M1 review: appears to only be used in mock, either remove if not actually required or move to dev-dependencies
+#SBP-M1 review: use single line
+
 codec = { package = "parity-scale-codec", version = "3.2.2", default-features = false, features = [
 	"derive",
 ] }
 scale-info = { version = "2.5.0", default-features = false, features = ["derive"] }
+
 [dev-dependencies]
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43", default-features = false }
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43", default-features = false }
 sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43", default-features = false }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43", default-features = false }
 
+#SBP-M1 review: appears to only be used in mock, either remove if not actually required or move to dev-dependencies
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43", default-features = false }
 
 [features]
@@ -46,6 +55,7 @@ std = [
 	'frame-benchmarking/std',
     'sugarfunge-primitives/std',
     'sugarfunge-asset/std',
+	#SBP-M1 review: 'pallet-balances/std' missing
 ]
 
 runtime-benchmarks = ["frame-benchmarking"]

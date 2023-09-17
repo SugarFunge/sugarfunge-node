@@ -1,3 +1,4 @@
+// SBP-M1 review: not used by runtime, review is not exhaustive
 #![cfg(test)]
 
 use super::mock::{
@@ -7,6 +8,9 @@ use super::mock::{
 use super::*;
 use crate::mock::new_test_ext_initialized;
 use frame_support::{assert_noop, assert_ok, bounded_vec, BoundedVec};
+
+// SBP-M1 review: coverage shows missing ProposalFailed event assertion
+// SBP-M1 review: coverage shows missing error assertions of ChainAlreadyWhitelisted, ChainNotWhitelisted, ResourceDoesNotExist, ProposalAlreadyComplete, RelayerAlreadyVoted, MaxVotesReached, ProposalDoesNotExist
 
 #[test]
 fn derive_ids() {
@@ -126,6 +130,7 @@ fn set_get_threshold() {
         assert_eq!(RelayerThreshold::<Test>::get(), 5);
 
         assert_events(vec![
+            // SBP-M1 review: unnecessary qualification
             RuntimeEvent::Bridge(crate::Event::RelayerThresholdChanged(TEST_THRESHOLD)),
             RuntimeEvent::Bridge(crate::Event::RelayerThresholdChanged(5)),
         ]);
@@ -261,6 +266,7 @@ fn make_proposal(r: Vec<u8>) -> mock::RuntimeCall {
 }
 
 #[test]
+// SBP-M1 review: typo > successful
 fn create_sucessful_proposal() {
     let src_id = 1;
     let r_id = derive_resource_id(src_id, b"remark");
@@ -334,6 +340,7 @@ fn create_sucessful_proposal() {
 }
 
 #[test]
+// SBP-M1 review: typo > unsuccessful
 fn create_unsucessful_proposal() {
     let src_id = 1;
     let r_id = derive_resource_id(src_id, b"transfer");

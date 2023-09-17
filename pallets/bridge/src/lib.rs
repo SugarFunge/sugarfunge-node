@@ -1,3 +1,4 @@
+// SBP-M1 review: not used by runtime, review is not exhaustive
 // Ensure we're `no_std` when compiling for Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
 
@@ -25,19 +26,24 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+// SBP-M1 review: consider reducing visibility
 pub type ChainId = u8;
 pub type DepositNonce = u64;
 pub type ResourceId = [u8; 32];
 
 /// Helper function to concatenate a chain ID and some bytes to produce a resource ID.
 /// The common format is (31 bytes unique ID + 1 byte chain ID).
+// SBP-M1 review: reduce visibility
 pub fn derive_resource_id(chain: u8, id: &[u8]) -> ResourceId {
     let mut r_id: ResourceId = [0; 32];
     r_id[31] = chain; // last byte is chain id
     let range = if id.len() > 31 { 31 } else { id.len() }; // Use at most 31 bytes
     for i in 0..range {
+        // SBP-M1 review: indexing may panic
+        // SBP-M1 review: use safe math
         r_id[30 - i] = id[range - 1 - i]; // Ensure left padding for eth compatibility
     }
+    // SBP-M1 review: unneeded return statement
     return r_id;
 }
 
@@ -50,6 +56,7 @@ pub enum ProposalStatus {
 
 #[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 pub struct ProposalVotes<BlockNumber, MaxVotesOf> {
+    // SBP-M1 review: change to BoundedVec<AccountId, MaxVotes> to improve clarity
     pub votes_for: MaxVotesOf,
     pub votes_against: MaxVotesOf,
     pub status: ProposalStatus,
@@ -63,14 +70,17 @@ pub mod pallet {
     use frame_system::pallet_prelude::*;
 
     #[pallet::config]
+    // SBP-M1 review: sugarfunge_asset not used, remove
     pub trait Config: frame_system::Config + sugarfunge_asset::Config {
         /// Because this pallet emits events, it depends on the runtime's definition of an event.
         type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
+        // SBP-M1 review: missing doc comment
         type PalletId: Get<PalletId>;
 
         /// RuntimeOrigin used to administer the pallet
         type AdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+        // SBP-M1 review: add line break for consistency
         /// Proposed dispatchable call
         type Proposal: Parameter
             + Dispatchable<RuntimeOrigin = Self::RuntimeOrigin>
@@ -80,18 +90,23 @@ pub mod pallet {
         /// This must be unique and must not collide with existing IDs within a set of bridged chains.
         type ChainId: Get<ChainId>;
 
+        // SBP-M1 review: missing doc comment
         type ProposalLifetime: Get<Self::BlockNumber>;
 
+        // SBP-M1 review: missing doc comment
         #[pallet::constant]
         type DefaultRelayerThreshold: Get<u32>;
 
+        // SBP-M1 review: missing doc comment
         #[pallet::constant]
         type MaxResourceMetadata: Get<u32>;
 
+        // SBP-M1 review: missing doc comment
         #[pallet::constant]
         type MaxVotes: Get<u32>;
     }
 
+    // SBP-M1 review: consider reducing visibility
     pub type ResourceMetadataOf<T> = BoundedVec<u8, <T as Config>::MaxResourceMetadata>;
     pub type MaxVotesOf<T> =
         BoundedVec<<T as frame_system::Config>::AccountId, <T as Config>::MaxVotes>;
@@ -106,12 +121,14 @@ pub mod pallet {
     pub enum Event<T: Config> {
         /// Vote threshold has changed (new_threshold)
         RelayerThresholdChanged(u32),
+        // SBP-M1 review: consider renaming to AllowListed
         /// Chain now available for transfers (chain_id)
         ChainWhitelisted(ChainId),
         /// Relayer added to set
         RelayerAdded(T::AccountId),
         /// Relayer removed from set
         RelayerRemoved(T::AccountId),
+        // SBP-M1 review: typo
         /// FunglibleTransfer is for relaying fungibles (dest_id, nonce, resource_id, amount, recipient, metadata)
         FungibleTransfer(ChainId, DepositNonce, ResourceId, U256, Vec<u8>),
         /// NonFungibleTransfer is for relaying NFTS (dest_id, nonce, resource_id, token_id, recipient, metadata)
@@ -141,8 +158,10 @@ pub mod pallet {
         /// Relayer threshold cannot be 0
         InvalidThreshold,
         /// Interactions with this chain is not permitted
+        // SBP-M1 review: consider renaming to AllowListed
         ChainNotWhitelisted,
         /// Chain has already been enabled
+        // SBP-M1 review: consider renaming to AllowListed
         ChainAlreadyWhitelisted,
         /// Resource ID provided isn't mapped to anything
         ResourceDoesNotExist,
@@ -184,11 +203,13 @@ pub mod pallet {
 
     #[pallet::storage]
     #[pallet::getter(fn relayer_threshold)]
+    // SBP-M1 review: pub(super)
     pub type RelayerThreshold<T: Config> =
         StorageValue<_, u32, ValueQuery, T::DefaultRelayerThreshold>;
 
     #[pallet::storage]
     #[pallet::getter(fn relayer_count)]
+    // SBP-M1 review: pub(super)
     pub type RelayerCount<T> = StorageValue<_, u32, ValueQuery>;
 
     #[pallet::storage]
@@ -213,6 +234,8 @@ pub mod pallet {
         /// - O(1) lookup and insert
         /// # </weight>
         #[pallet::call_index(0)]
+        // SBP-M1 review: implement benchmark and use resulting weight function
+        // SBP-M1 review: unnecessary cast
         #[pallet::weight(Weight::from_parts(10_000 as u64, 0))]
         pub fn set_threshold(origin: OriginFor<T>, threshold: u32) -> DispatchResult {
             Self::ensure_admin(origin)?;
@@ -225,6 +248,8 @@ pub mod pallet {
         /// - O(1) write
         /// # </weight>
         #[pallet::call_index(1)]
+        // SBP-M1 review: implement benchmark and use resulting weight function
+        // SBP-M1 review: unnecessary cast
         #[pallet::weight(Weight::from_parts(10_000 as u64, 0))]
         pub fn set_resource(
             origin: OriginFor<T>,
@@ -244,6 +269,8 @@ pub mod pallet {
         /// - O(1) removal
         /// # </weight>
         #[pallet::call_index(2)]
+        // SBP-M1 review: implement benchmark and use resulting weight function
+        // SBP-M1 review: unnecessary cast
         #[pallet::weight(Weight::from_parts(10_000 as u64, 0))]
         pub fn remove_resource(origin: OriginFor<T>, id: ResourceId) -> DispatchResult {
             Self::ensure_admin(origin)?;
@@ -256,7 +283,10 @@ pub mod pallet {
         /// - O(1) lookup and insert
         /// # </weight>
         #[pallet::call_index(3)]
+        // SBP-M1 review: implement benchmark and use resulting weight function
+        // SBP-M1 review: unnecessary cast
         #[pallet::weight(Weight::from_parts(10_000 as u64, 0))]
+        // SBP-M1 review: consider renaming to allow_chain
         pub fn whitelist_chain(origin: OriginFor<T>, id: ChainId) -> DispatchResult {
             Self::ensure_admin(origin)?;
             Self::whitelist(id)
@@ -268,6 +298,8 @@ pub mod pallet {
         /// - O(1) lookup and insert
         /// # </weight>
         #[pallet::call_index(4)]
+        // SBP-M1 review: implement benchmark and use resulting weight function
+        // SBP-M1 review: unnecessary cast
         #[pallet::weight(Weight::from_parts(10_000 as u64, 0))]
         pub fn add_relayer(origin: OriginFor<T>, v: T::AccountId) -> DispatchResult {
             Self::ensure_admin(origin)?;
@@ -280,6 +312,8 @@ pub mod pallet {
         /// - O(1) lookup and removal
         /// # </weight>
         #[pallet::call_index(5)]
+        // SBP-M1 review: implement benchmark and use resulting weight function
+        // SBP-M1 review: unnecessary cast
         #[pallet::weight(Weight::from_parts(10_000 as u64, 0))]
         pub fn remove_relayer(origin: OriginFor<T>, v: T::AccountId) -> DispatchResult {
             Self::ensure_admin(origin)?;
@@ -294,8 +328,11 @@ pub mod pallet {
         /// # <weight>
         /// - weight of proposed call, regardless of whether execution is performed
         /// # </weight>
+        // SBP-M1 review: remove commented out weight attribute
         // #[weight = (call.get_dispatch_info().weight + 195_000_000, call.get_dispatch_info().class, Pays::Yes)]
         #[pallet::call_index(6)]
+        // SBP-M1 review: implement benchmark and use resulting weight function
+        // SBP-M1 review: unnecessary cast
         #[pallet::weight(Weight::from_parts(10_000 as u64, 0))]
         pub fn acknowledge_proposal(
             origin: OriginFor<T>,
@@ -324,6 +361,8 @@ pub mod pallet {
         /// - Fixed, since execution of proposal should not be included
         /// # </weight>
         #[pallet::call_index(7)]
+        // SBP-M1 review: implement benchmark and use resulting weight function
+        // SBP-M1 review: unnecessary cast
         #[pallet::weight(Weight::from_parts(10_000 as u64, 0))]
         pub fn reject_proposal(
             origin: OriginFor<T>,
@@ -354,8 +393,11 @@ pub mod pallet {
         /// # <weight>
         /// - weight of proposed call, regardless of whether execution is performed
         /// # </weight>
+        // SBP-M1 review: remove commented out weight attribute
         // #[weight = (prop.get_dispatch_info().weight + 195_000_000, prop.get_dispatch_info().class, Pays::Yes)]
         #[pallet::call_index(8)]
+        // SBP-M1 review: implement benchmark and use resulting weight function
+        // SBP-M1 review: unnecessary cast
         #[pallet::weight(Weight::from_parts(10_000 as u64, 0))]
         pub fn eval_vote_state(
             origin: OriginFor<T>,
@@ -373,6 +415,7 @@ pub mod pallet {
 impl<T: Config> Pallet<T> {
     // *** Utility methods ***
 
+    // SBP-M1 review: reduce visibility
     pub fn ensure_admin(o: T::RuntimeOrigin) -> DispatchResult {
         T::AdminOrigin::try_origin(o)
             .map(|_| ())
@@ -381,28 +424,39 @@ impl<T: Config> Pallet<T> {
     }
 
     /// Checks if who is a relayer
+    // SBP-M1 review: reduce visibility
     pub fn is_relayer(who: &T::AccountId) -> bool {
         Self::relayers(who)
     }
 
     /// Provides an AccountId for the pallet.
     /// This is used both as an origin check and deposit/withdrawal account.
+    // SBP-M1 review: reduce visibility
     pub fn account_id() -> T::AccountId {
         <T as Config>::PalletId::get().into_account_truncating()
     }
 
     /// Asserts if a resource is registered
+    // SBP-M1 review: reduce visibility
+    // SBP-M1 review: use .is_some()
     pub fn resource_exists(id: ResourceId) -> bool {
+        // SBP-M1 review: unneeded return statement
         return Self::resources(id) != None;
     }
 
+    // SBP-M1 review: consider renaming to chain_allowlisted
     /// Checks if a chain exists as a whitelisted destination
+    // SBP-M1 review: reduce visibility
+    // SBP-M1 review: use .is_some()
     pub fn chain_whitelisted(id: ChainId) -> bool {
+        // SBP-M1 review: unneeded return statement
         return Self::chains(id) != None;
     }
 
     /// Increments the deposit nonce for the specified chain ID
     fn bump_nonce(id: ChainId) -> DepositNonce {
+        // SBP-M1 review: use <ChainNonces<T>>.mutate() which also allows a return value
+        // SBP-M1 review: use safe math
         let nonce = Self::chains(id).unwrap_or_default() + 1;
         ChainNonces::<T>::insert(id, nonce);
         nonce
@@ -411,6 +465,7 @@ impl<T: Config> Pallet<T> {
     // *** Admin methods ***
 
     /// Set a new voting threshold
+    // SBP-M1 review: reduce visibility
     pub fn set_relayer_threshold(threshold: u32) -> DispatchResult {
         ensure!(threshold > 0, Error::<T>::InvalidThreshold);
         RelayerThreshold::<T>::put(threshold);
@@ -419,18 +474,22 @@ impl<T: Config> Pallet<T> {
     }
 
     /// Register a method for a resource Id, enabling associated transfers
+    // SBP-M1 review: reduce visibility
     pub fn register_resource(id: ResourceId, method: ResourceMetadataOf<T>) -> DispatchResult {
         Resources::<T>::insert(id, method);
         Ok(())
     }
 
     /// Removes a resource ID, disabling associated transfer
+    // SBP-M1 review: reduce visibility
     pub fn unregister_resource(id: ResourceId) -> DispatchResult {
         Resources::<T>::remove(id);
         Ok(())
     }
 
+    // SBP-M1 review: consider renaming to 'allow'
     /// Whitelist a chain ID for transfer
+    // SBP-M1 review: reduce visibility
     pub fn whitelist(id: ChainId) -> DispatchResult {
         // Cannot whitelist this chain
         ensure!(id != T::ChainId::get(), Error::<T>::InvalidChainId);
@@ -439,18 +498,21 @@ impl<T: Config> Pallet<T> {
             !Self::chain_whitelisted(id),
             Error::<T>::ChainAlreadyWhitelisted
         );
+        // SBP-M1 review: unnecessary borrow
         ChainNonces::<T>::insert(&id, 0);
         Self::deposit_event(Event::ChainWhitelisted(id));
         Ok(())
     }
 
     /// Adds a new relayer to the set
+    // SBP-M1 review: reduce visibility
     pub fn register_relayer(relayer: T::AccountId) -> DispatchResult {
         ensure!(
             !Self::is_relayer(&relayer),
             Error::<T>::RelayerAlreadyExists
         );
         Relayers::<T>::insert(&relayer, true);
+        // SBP-M1 review: use safe math
         RelayerCount::<T>::mutate(|i| *i += 1);
 
         Self::deposit_event(Event::RelayerAdded(relayer));
@@ -458,9 +520,11 @@ impl<T: Config> Pallet<T> {
     }
 
     /// Removes a relayer from the set
+    // SBP-M1 review: reduce visibility
     pub fn unregister_relayer(relayer: T::AccountId) -> DispatchResult {
         ensure!(Self::is_relayer(&relayer), Error::<T>::RelayerInvalid);
         Relayers::<T>::remove(&relayer);
+        // SBP-M1 review: use safe math
         RelayerCount::<T>::mutate(|i| *i -= 1);
         Self::deposit_event(Event::RelayerRemoved(relayer));
         Ok(())
@@ -469,16 +533,20 @@ impl<T: Config> Pallet<T> {
     // *** Proposal voting and execution methods ***
 
     /// Commits a vote for a proposal. If the proposal doesn't exist it will be created.
+    // SBP-M1 review: too many lines, refactor
     fn commit_vote(
+        // SBP-M1 review: not consumed, consider borrow
         who: T::AccountId,
         nonce: DepositNonce,
         src_id: ChainId,
+        // SBP-M1 review: not consumed, consider borrow
         prop: Box<T::Proposal>,
         in_favour: bool,
     ) -> DispatchResult {
         let now = <frame_system::Pallet<T>>::block_number();
         let encoded_call = prop.encode();
         let call_hash = <T as frame_system::Config>::Hashing::hash(&encoded_call[..]);
+        // SBP-M1 review: consider <Votes<T>>::try_mutate(.. -> DispatchResult) or .map_or_else(..)
         let mut votes = match <Votes<T>>::get(src_id, (nonce, call_hash)) {
             Some(v) => v,
             None => {
@@ -488,6 +556,8 @@ impl<T: Config> Pallet<T> {
                     status: ProposalStatus::Initiated,
                     expiry: T::BlockNumber::default(),
                 };
+                // SBP-M1 review: move to initializer, negating need for mut
+                // SBP-M1 review: use safe math
                 v.expiry = now + T::ProposalLifetime::get();
                 v
             }
@@ -505,19 +575,24 @@ impl<T: Config> Pallet<T> {
         );
 
         if in_favour {
+            // SBP-M1 review: .ok_or()? another approach
             ensure!(
                 votes.votes_for.try_push(who.clone()).is_ok(),
                 Error::<T>::MaxVotesReached
             );
+            // SBP-M1 review: unnecessary clone
             Self::deposit_event(Event::VoteFor(src_id, nonce, who.clone()));
         } else {
+            // SBP-M1 review: .ok_or()? another approach
             ensure!(
                 votes.votes_against.try_push(who.clone()).is_ok(),
                 Error::<T>::MaxVotesReached
             );
+            // SBP-M1 review: unnecessary clone
             Self::deposit_event(Event::VoteAgainst(src_id, nonce, who.clone()));
         }
 
+        // SBP-M1 review: unnecessary clone
         <Votes<T>>::insert(src_id, (nonce, call_hash), votes.clone());
 
         Ok(())
@@ -525,6 +600,7 @@ impl<T: Config> Pallet<T> {
 
     /// Attempts to mark the proposal as approve or rejected.
     /// Returns true if the status changes from active.
+    // SBP-M1 review: consider moving to ProposalVotes struct impl as method
     fn try_to_complete(
         votes: &mut ProposalVotes<T::BlockNumber, MaxVotesOf<T>>,
         threshold: u32,
@@ -533,6 +609,7 @@ impl<T: Config> Pallet<T> {
         if votes.votes_for.len() >= threshold as usize {
             votes.status = ProposalStatus::Approved;
             ProposalStatus::Approved
+            // SBP-M1 review: use safe math and cast may truncate
         } else if total >= threshold && votes.votes_against.len() as u32 + threshold > total {
             votes.status = ProposalStatus::Rejected;
             ProposalStatus::Rejected
@@ -542,11 +619,13 @@ impl<T: Config> Pallet<T> {
     }
 
     /// Returns true if the proposal has been rejected or approved, otherwise false.
+    // SBP-M1 review: consider moving to ProposalVotes struct impl as method
     fn is_complete(votes: &ProposalVotes<T::BlockNumber, MaxVotesOf<T>>) -> bool {
         votes.status != ProposalStatus::Initiated
     }
 
     /// Return true if the expiry time has been reached
+    // SBP-M1 review: consider moving to ProposalVotes struct impl as method
     fn is_expired(
         votes: &ProposalVotes<T::BlockNumber, MaxVotesOf<T>>,
         now: T::BlockNumber,
@@ -555,7 +634,9 @@ impl<T: Config> Pallet<T> {
     }
 
     /// Returns true if `who` has voted for or against the proposal
+    // SBP-M1 review: consider moving to ProposalVotes struct impl as method
     fn has_voted(votes: &ProposalVotes<T::BlockNumber, MaxVotesOf<T>>, who: &T::AccountId) -> bool {
+        // SBP-M1 review: needless borrows
         votes.votes_for.contains(&who) || votes.votes_against.contains(&who)
     }
 
@@ -567,6 +648,7 @@ impl<T: Config> Pallet<T> {
     ) -> DispatchResult {
         let encoded_call = prop.encode();
         let call_hash = <T as frame_system::Config>::Hashing::hash(&encoded_call[..]);
+        // SBP-M1 review: consider <Votes<T>>::try_mutate(..) or let-else { return Err(..) }
         if let Some(mut votes) = <Votes<T>>::get(src_id, (nonce, call_hash)) {
             let now = <frame_system::Pallet<T>>::block_number();
             ensure!(
@@ -585,9 +667,11 @@ impl<T: Config> Pallet<T> {
             match status {
                 ProposalStatus::Approved => Self::finalize_execution(src_id, nonce, prop),
                 ProposalStatus::Rejected => Self::cancel_execution(src_id, nonce),
+                // SBP-M1 review: handle remaining variants explicitly, wildcard will match future added variants
                 _ => Ok(()),
             }
         } else {
+            // SBP-M1 review: use 'return Err(..)' syntax instead
             Err(Error::<T>::ProposalDoesNotExist)?
         }
     }
@@ -630,12 +714,16 @@ impl<T: Config> Pallet<T> {
     }
 
     /// Cancels a proposal.
+    // SBP-M1 review: return value unnecessary
     fn cancel_execution(src_id: ChainId, nonce: DepositNonce) -> DispatchResult {
         Self::deposit_event(Event::ProposalRejected(src_id, nonce));
         Ok(())
     }
 
     /// Initiates a transfer of a fungible asset out of the chain. This should be called by another pallet.
+    // SBP-M1 review: doesnt seem to initiate any transfer, just increments nonce and emits event
+    // SBP-M1 review: not used beyond test
+    // SBP-M1 review: reduce visibility
     pub fn transfer_fungible(
         dest_id: ChainId,
         resource_id: ResourceId,
@@ -658,6 +746,9 @@ impl<T: Config> Pallet<T> {
     }
 
     /// Initiates a transfer of a nonfungible asset out of the chain. This should be called by another pallet.
+    // SBP-M1 review: doesnt seem to initiate any transfer, just increments nonce and emits event
+    // SBP-M1 review: not used beyond test
+    // SBP-M1 review: reduce visibility
     pub fn transfer_nonfungible(
         dest_id: ChainId,
         resource_id: ResourceId,
@@ -682,6 +773,7 @@ impl<T: Config> Pallet<T> {
     }
 
     /// Initiates a transfer of generic data out of the chain. This should be called by another pallet.
+    // SBP-M1 review: reduce visibility
     pub fn transfer_generic(
         dest_id: ChainId,
         resource_id: ResourceId,
@@ -707,6 +799,7 @@ pub struct EnsureBridge<T>(sp_std::marker::PhantomData<T>);
 impl<T: Config> EnsureOrigin<T::RuntimeOrigin> for EnsureBridge<T> {
     type Success = T::AccountId;
     fn try_origin(o: T::RuntimeOrigin) -> Result<Self::Success, T::RuntimeOrigin> {
+        // SBP-M1 review: use <Pallet<T>>::account_id() for consistency
         let bridge_id = <T as Config>::PalletId::get().into_account_truncating();
         o.into().and_then(|o| match o {
             frame_system::RawOrigin::Signed(who) if who == bridge_id => Ok(bridge_id),
@@ -718,6 +811,7 @@ impl<T: Config> EnsureOrigin<T::RuntimeOrigin> for EnsureBridge<T> {
     ///
     /// ** Should be used for benchmarking only!!! **
     #[cfg(feature = "runtime-benchmarks")]
+    // SBP-M1 review: should by try_successful_origin, assume this wasn't updated after updating Substrate
     fn successful_origin() -> T::RuntimeOrigin {
         T::RuntimeOrigin::from(frame_system::RawOrigin::Signed(<Module<T>>::account_id()))
     }

@@ -1,3 +1,4 @@
+// SBP-M1 review: cargo fmt
 //! Tests for the Validator Set pallet.
 
 #![cfg(test)]
@@ -6,6 +7,8 @@ use super::*;
 use crate::mock::{authorities, new_test_ext, RuntimeOrigin, Session, Test, ValidatorSet};
 use frame_support::{assert_noop, assert_ok, pallet_prelude::*};
 use sp_runtime::testing::UintAuthorityId;
+
+// SBP-M1 review: improve test coverage - add_validator_again not tested, no event assertions, limited error assertions
 
 #[test]
 fn simple_setup_should_work() {

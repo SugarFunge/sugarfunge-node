@@ -1,14 +1,21 @@
+#SBP-M1 review: not used by runtime, review is not exhaustive
+#SBP-M1 review: no readme/documentation
 [package]
+#SBP-M1 review: use double quotes for consistency
 name = 'sugarfunge-bridge'
 version = "0.1.0"
+#SBP-M1 review: no commits by author in git history, implying code has been copied from elsewhere without attribution and proper licensing
 authors = ["david@chainsafe.io", "SugarFunge Developers"]
 edition = '2021'
+#SBP-M1 review: no description, repository, license
 
 [dependencies]
 # third-party dependencies
 codec = { package = "parity-scale-codec", version = "3.2.2", default-features = false, features = ["derive"] }
 scale-info = { version = "2.5.0", default-features = false, features = ["derive"] }
+#SBP-M1 review: doesnt appear to be used by pallet, remove
 serde = { version = "1.0.160", optional = true }
+#SBP-M1 review: doesnt appear to be used by pallet, remove
 getrandom = { version = "0.2", features = ["js"] }
 
 # primitives
@@ -24,10 +31,15 @@ frame-system = { git = "https://github.com/paritytech/substrate", branch = "polk
 sugarfunge-primitives = { git = "https://github.com/SugarFunge/sugarfunge-primitives", branch = "fula/release", default-features = false }
 sugarfunge-asset = { git = "https://github.com/SugarFunge/sugarfunge-asset", branch = "fula/release", default-features = false }
 
+#SBP-M1 review: external dependencies not reviewed, but quick glance shows issues such as no benchmarks, invalid weights, unnecessary cargo.lock, minimal tests
+#SBP-M1 review: doesnt actually seem to be used by pallet logic, only in mock
+#SBP-M1 review: doesnt actually seem to be used by pallet logic, only in mock
+
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43", default-features = false }
 
 [build-dependencies]
 wasm-builder-runner = { version = "3.0.0", package = "substrate-wasm-builder-runner"}
+#SBP-M1 review: add line break
 [features]
 default = ["std"]
 std = [
