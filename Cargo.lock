@@ -2362,7 +2362,7 @@ dependencies = [
 [[package]]
 name = "fula-pool"
 version = "0.1.0"
-source = "git+https://github.com/functionland/fula-pool?branch=main"
+source = "git+https://github.com/MauricinhoMorales/fula-pool?branch=fula/release#6f4866042bca8dfb95665b1af6f4270564c6571f"
 dependencies = [
  "frame-support",
  "frame-system",
