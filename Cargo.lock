@@ -2362,7 +2362,22 @@ dependencies = [
 [[package]]
 name = "fula-pool"
 version = "0.1.0"
-source = "git+https://github.com/MauricinhoMorales/fula-pool?branch=fula/release#6f4866042bca8dfb95665b1af6f4270564c6571f"
+source = "git+https://github.com/functionland/fula-pool?branch=main"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "fula-pool"
+version = "0.1.0"
+source = "git+https://github.com/functionland/fula-pool?branch=main#5be7fc6cb88959f000a860530b61a5deb5414b6f"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -2378,12 +2393,12 @@ dependencies = [
 [[package]]
 name = "functionland-fula"
 version = "0.1.0"
-source = "git+https://github.com/functionland/fula-pallet?branch=fula/release#86b8e1a6d157ea59c9fcdfb88bb04fae788e939d"
+source = "git+https://github.com/functionland/fula-pallet?branch=main#0f8a1ce097c8099b7b1e86da28092225c16c07db"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "fula-pool",
+ "fula-pool 0.1.0 (git+https://github.com/MauricinhoMorales/fula-pool?branch=fula/release)",
  "libm 0.2.7",
  "pallet-balances",
  "parity-scale-codec",
@@ -8569,7 +8584,7 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
- "fula-pool",
+ "fula-pool 0.1.0 (git+https://github.com/functionland/fula-pool?branch=main)",
  "functionland-fula",
  "getrandom 0.2.10",
  "hex-literal",
