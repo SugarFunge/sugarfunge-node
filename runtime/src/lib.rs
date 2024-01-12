@@ -116,7 +116,7 @@ pub fn native_version() -> NativeVersion {
 /// by  Operational  extrinsics.
 const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 /// We allow for 2 seconds of compute with a 6 second average block time.
-// const MAXIMUM_BLOCK_WEIGHT: Weight = Weight::from_ref_time(2_000_000_000_000); 
+// const MAXIMUM_BLOCK_WEIGHT: Weight = Weight::from_ref_time(2_000_000_000_000);
 /// Maximum metadata size usually for JSON content
 const METADATA_SIZE: u32 = 1024 * 4;
 
@@ -424,16 +424,15 @@ construct_runtime!(
     {
         System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
         Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
-        Aura: pallet_aura::{Pallet, Config<T>},
+		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
+        ValidatorSet: validator_set::{Pallet, Call, Storage, Event<T>, Config<T>},
+        Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>},
+		Aura: pallet_aura::{Pallet, Config<T>},
         Grandpa: pallet_grandpa::{Pallet, Call, Storage, Config, Event},
-        Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
         TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Event<T>},
         Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
         Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>},
         Council: pallet_collective::<Instance1>,
-
-        ValidatorSet: validator_set::{Pallet, Call, Storage, Event<T>, Config<T>},
-        Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>},
 
         // SugarFunge pallets
         Asset: sugarfunge_asset::{Pallet, Call, Storage, Event<T>},
