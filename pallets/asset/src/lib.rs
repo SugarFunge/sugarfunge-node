@@ -1,5 +1,4 @@
 #![cfg_attr(not(feature = "std"), no_std)]
-
 use codec::EncodeLike;
 use codec::{Decode, Encode, HasCompact, MaxEncodedLen};
 use core::iter::Sum;

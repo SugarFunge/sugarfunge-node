@@ -6,7 +6,7 @@ use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
 use sugarfunge_runtime::{
     opaque::SessionKeys, AccountId, AuraConfig, Balance, BalancesConfig, CouncilConfig,
-    RuntimeGenesisConfig, GrandpaConfig, SessionConfig, Signature, SudoConfig, SystemConfig,
+    GrandpaConfig, RuntimeGenesisConfig, SessionConfig, Signature, SudoConfig, SystemConfig,
     ValidatorSetConfig, DOLLARS, WASM_BINARY,
 };
 
@@ -215,5 +215,6 @@ fn testnet_genesis(
             // Assign network admin rights.
             key: Some(root_key),
         },
+        transaction_payment: Default::default(),
     }
 }

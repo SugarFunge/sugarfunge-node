@@ -63,7 +63,7 @@ frame-benchmarking-cli = { version = "4.0.0-dev", git = "https://github.com/pari
 try-runtime-cli = { version = "0.10.0-dev", optional = true, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
 
 # The node's runtime
-sugarfunge-runtime = { version = "0.1.0", path = "../runtime" }
+sugarfunge-runtime = {  version = "4.0.0-dev", path = "../runtime" }
 
 [build-dependencies]
 substrate-build-script-utils = { version = "3.0.0", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
