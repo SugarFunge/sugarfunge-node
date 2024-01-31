@@ -1,6 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
-
+use codec::EncodeLike;
 use codec::{Decode, Encode, HasCompact, MaxEncodedLen};
+use core::iter::Sum;
 use frame_support::{
     dispatch::{DispatchError, DispatchResult},
     ensure,
@@ -12,16 +13,114 @@ use sp_runtime::{
     traits::{AtLeast32BitUnsigned, One, Zero},
     RuntimeDebug,
 };
+use sp_std::fmt::Debug;
 use sp_std::prelude::*;
 use sugarfunge_primitives::Balance;
+pub use weights::WeightInfo;
 
 pub use pallet::*;
 
 #[cfg(test)]
-mod mock;
+pub mod mock;
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+
+pub mod weights;
+
+pub trait AssetInterface {
+    type AccountId;
+    type AssetId: Copy
+        + TypeInfo
+        + Debug
+        + Eq
+        + EncodeLike
+        + Encode
+        + Decode
+        + From<u64>
+        + Into<u64>
+        + MaxEncodedLen
+        + Ord;
+    type ClassId: Copy
+        + TypeInfo
+        + Debug
+        + Eq
+        + EncodeLike
+        + Encode
+        + Decode
+        + From<u64>
+        + Into<u64>
+        + MaxEncodedLen
+        + Ord;
+    type Metadata: Clone + TypeInfo + Debug + Eq + EncodeLike + Encode + Decode;
+    type Balance: Copy
+        + TypeInfo
+        + Debug
+        + Eq
+        + EncodeLike
+        + Encode
+        + Decode
+        + MaxEncodedLen
+        + Sum
+        + From<u128>
+        + Into<u128>
+        + Ord
+        + Zero;
+
+    fn create_class(
+        who: Self::AccountId,
+        owner: Self::AccountId,
+        class_id: Self::ClassId,
+        metadata: Self::Metadata,
+    ) -> DispatchResult;
+
+    fn mint(
+        who: Self::AccountId,
+        to: Self::AccountId,
+        class_id: Self::ClassId,
+        asset_id: Self::AssetId,
+        amount: Self::Balance,
+    ) -> DispatchResult;
+
+    fn batch_transfer_from(
+        who: Self::AccountId,
+        from: Self::AccountId,
+        to: Self::AccountId,
+        class_id: Self::ClassId,
+        asset_ids: Vec<Self::AssetId>,
+        amounts: Vec<Self::Balance>,
+    ) -> DispatchResult;
+
+    fn burn(
+        who: Self::AccountId,
+        from: Self::AccountId,
+        class_id: Self::ClassId,
+        asset_id: Self::AssetId,
+        amount: Self::Balance,
+    ) -> DispatchResult;
+
+    fn transfer_from(
+        who: Self::AccountId,
+        from: Self::AccountId,
+        to: Self::AccountId,
+        class_id: Self::ClassId,
+        asset_id: Self::AssetId,
+        amount: Self::Balance,
+    ) -> DispatchResult;
+
+    fn balance_of(
+        owner: Self::AccountId,
+        class_id: Self::ClassId,
+        asset_id: Self::AssetId,
+    ) -> Self::Balance;
+
+    fn balances_of_owner(
+        owner: Self::AccountId,
+    ) -> Result<Vec<(Self::ClassId, Self::AssetId, Self::Balance)>, DispatchError>;
+}
 
 type BalanceOf<T> =
     <<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
@@ -95,9 +194,11 @@ pub mod pallet {
     pub struct Pallet<T>(_);
 
     #[pallet::storage]
+    #[pallet::getter(fn classes)]
     pub(super) type Classes<T: Config> = StorageMap<_, Blake2_128Concat, T::ClassId, ClassOf<T>>;
 
     #[pallet::storage]
+    #[pallet::getter(fn assets)]
     pub(super) type Assets<T: Config> =
         StorageDoubleMap<_, Blake2_128Concat, T::ClassId, Blake2_128, T::AssetId, AssetOf<T>>;
 
@@ -207,7 +308,7 @@ pub mod pallet {
     #[pallet::hooks]
     impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
 
-    #[pallet::call]
+    #[pallet::call(weight(<T as Config<I>>::WeightInfo))]
     impl<T: Config> Pallet<T> {
         #[pallet::call_index(0)]
         #[pallet::weight(Weight::from_parts(10_000 as u64, 0))]
@@ -373,400 +474,495 @@ pub mod pallet {
             Ok(().into())
         }
     }
-}
 
-impl<T: Config> Pallet<T> {
-    pub fn do_create_class(
-        who: &T::AccountId,
-        owner: &T::AccountId,
-        class_id: T::ClassId,
-        metadata: ClassMetadataOf<T>,
-    ) -> DispatchResult {
-        ensure!(
-            !Classes::<T>::contains_key(class_id),
-            Error::<T>::InvalidClassId
-        );
+    impl<T: Config> Pallet<T> {
+        pub fn do_create_class(
+            who: &T::AccountId,
+            owner: &T::AccountId,
+            class_id: T::ClassId,
+            metadata: ClassMetadataOf<T>,
+        ) -> DispatchResult {
+            ensure!(
+                !Classes::<T>::contains_key(class_id),
+                Error::<T>::InvalidClassId
+            );
 
-        let deposit = T::CreateAssetClassDeposit::get();
-        T::Currency::reserve(&who, deposit.clone())?;
+            let deposit = T::CreateAssetClassDeposit::get();
+            T::Currency::reserve(&who, deposit.clone())?;
 
-        let class = ClassOf::<T> {
-            owner: owner.clone(),
-            metadata,
-        };
-
-        Classes::<T>::insert(class_id, class);
-
-        Self::deposit_event(Event::ClassCreated {
-            class_id,
-            who: who.clone(),
-        });
-
-        Ok(())
-    }
-
-    pub fn do_create_asset(
-        who: &T::AccountId,
-        class_id: T::ClassId,
-        asset_id: T::AssetId,
-        metadata: AssetMetadataOf<T>,
-    ) -> DispatchResult {
-        Self::maybe_check_owner(who, class_id)?;
-
-        ensure!(
-            !Assets::<T>::contains_key(class_id, asset_id),
-            Error::<T>::InUse
-        );
-
-        Assets::<T>::insert(
-            class_id,
-            asset_id,
-            AssetOf::<T> {
-                class_id,
-                creator: who.clone(),
+            let class = ClassOf::<T> {
+                owner: owner.clone(),
                 metadata,
-            },
-        );
+            };
 
-        AssetCount::<T>::try_mutate(class_id, |count| -> DispatchResult {
-            *count = count
-                .checked_add(One::one())
-                .ok_or(Error::<T>::NumOverflow)?;
+            Classes::<T>::insert(class_id, class);
+
+            Self::deposit_event(Event::ClassCreated {
+                class_id,
+                who: who.clone(),
+            });
+
             Ok(())
-        })?;
+        }
 
-        Self::deposit_event(Event::AssetCreated {
-            class_id,
-            asset_id,
-            who: who.clone(),
-        });
+        pub fn do_create_asset(
+            who: &T::AccountId,
+            class_id: T::ClassId,
+            asset_id: T::AssetId,
+            metadata: AssetMetadataOf<T>,
+        ) -> DispatchResult {
+            Self::maybe_check_owner(who, class_id)?;
 
-        Ok(())
-    }
+            ensure!(
+                !Assets::<T>::contains_key(class_id, asset_id),
+                Error::<T>::InUse
+            );
 
-    pub fn do_update_class_metadata(
-        who: &T::AccountId,
-        class_id: T::ClassId,
-        metadata: ClassMetadataOf<T>,
-    ) -> DispatchResult {
-        Self::maybe_check_owner(who, class_id)?;
-        ensure!(
-            Classes::<T>::contains_key(class_id),
-            Error::<T>::InvalidClassId
-        );
-        Classes::<T>::try_mutate(class_id, |class| -> DispatchResult {
-            if let Some(class) = class {
-                class.metadata = metadata.clone();
+            Assets::<T>::insert(
+                class_id,
+                asset_id,
+                AssetOf::<T> {
+                    class_id,
+                    creator: who.clone(),
+                    metadata,
+                },
+            );
+
+            AssetCount::<T>::try_mutate(class_id, |count| -> DispatchResult {
+                *count = count
+                    .checked_add(One::one())
+                    .ok_or(Error::<T>::NumOverflow)?;
+                Ok(())
+            })?;
+
+            Self::deposit_event(Event::AssetCreated {
+                class_id,
+                asset_id,
+                who: who.clone(),
+            });
+
+            Ok(())
+        }
+
+        pub fn do_update_class_metadata(
+            who: &T::AccountId,
+            class_id: T::ClassId,
+            metadata: ClassMetadataOf<T>,
+        ) -> DispatchResult {
+            Self::maybe_check_owner(who, class_id)?;
+            ensure!(
+                Classes::<T>::contains_key(class_id),
+                Error::<T>::InvalidClassId
+            );
+            Classes::<T>::try_mutate(class_id, |class| -> DispatchResult {
+                if let Some(class) = class {
+                    class.metadata = metadata.clone();
+                }
+                Ok(())
+            })?;
+            Ok(())
+        }
+
+        pub fn do_update_asset_metadata(
+            who: &T::AccountId,
+            class_id: T::ClassId,
+            asset_id: T::AssetId,
+            metadata: AssetMetadataOf<T>,
+        ) -> DispatchResult {
+            Self::maybe_check_owner(who, class_id)?;
+            ensure!(
+                Assets::<T>::contains_key(class_id, asset_id),
+                Error::<T>::InvalidAssetId
+            );
+            Assets::<T>::try_mutate(class_id, asset_id, |asset| -> DispatchResult {
+                if let Some(asset) = asset {
+                    asset.metadata = metadata.clone();
+                }
+                Ok(())
+            })?;
+
+            Self::deposit_event(Event::AssetMetadataUpdated {
+                class_id,
+                asset_id,
+                who: who.clone(),
+                metadata: metadata.to_vec(),
+            });
+
+            Ok(())
+        }
+
+        pub fn class_exists(class_id: T::ClassId) -> bool {
+            Classes::<T>::contains_key(class_id)
+        }
+
+        pub fn asset_exists(class_id: T::ClassId, asset_id: T::AssetId) -> bool {
+            Assets::<T>::contains_key(class_id, asset_id)
+        }
+
+        pub fn account_is_owner(account: &T::AccountId, class_id: T::ClassId) -> bool {
+            let value = Self::classes(class_id);
+            if let Some(class) = value {
+                if class.owner == account.clone() {
+                    return true;
+                }
             }
-            Ok(())
-        })?;
-        Ok(())
-    }
+            return false;
+        }
 
-    pub fn do_update_asset_metadata(
-        who: &T::AccountId,
-        class_id: T::ClassId,
-        asset_id: T::AssetId,
-        metadata: AssetMetadataOf<T>,
-    ) -> DispatchResult {
-        Self::maybe_check_owner(who, class_id)?;
-        ensure!(
-            Assets::<T>::contains_key(class_id, asset_id),
-            Error::<T>::InvalidAssetId
-        );
-        Assets::<T>::try_mutate(class_id, asset_id, |asset| -> DispatchResult {
-            if let Some(asset) = asset {
-                asset.metadata = metadata.clone();
-            }
-            Ok(())
-        })?;
-
-        Self::deposit_event(Event::AssetMetadataUpdated {
-            class_id,
-            asset_id,
-            who: who.clone(),
-            metadata: metadata.to_vec(),
-        });
-
-        Ok(())
-    }
-
-    pub fn class_exists(class_id: T::ClassId) -> bool {
-        Classes::<T>::contains_key(class_id)
-    }
-
-    pub fn asset_exists(class_id: T::ClassId, asset_id: T::AssetId) -> bool {
-        Assets::<T>::contains_key(class_id, asset_id)
-    }
-
-    pub fn do_mint(
-        who: &T::AccountId,
-        to: &T::AccountId,
-        class_id: T::ClassId,
-        asset_id: T::AssetId,
-        amount: Balance,
-    ) -> DispatchResult {
-        Self::add_balance_to(to, class_id, asset_id, amount)?;
-
-        Self::deposit_event(Event::Mint {
-            who: who.clone(),
-            to: to.clone(),
-            class_id,
-            asset_id,
-            amount,
-        });
-
-        Ok(())
-    }
-
-    pub fn do_batch_mint(
-        who: &T::AccountId,
-        to: &T::AccountId,
-        class_id: T::ClassId,
-        asset_ids: Vec<T::AssetId>,
-        amounts: Vec<Balance>,
-    ) -> DispatchResult {
-        ensure!(
-            asset_ids.len() == amounts.len(),
-            Error::<T>::InvalidArrayLength
-        );
-
-        let n = asset_ids.len();
-        for i in 0..n {
-            let asset_id = asset_ids[i];
-            let amount = amounts[i];
+        pub fn do_mint(
+            who: &T::AccountId,
+            to: &T::AccountId,
+            class_id: T::ClassId,
+            asset_id: T::AssetId,
+            amount: Balance,
+        ) -> DispatchResult {
             Self::add_balance_to(to, class_id, asset_id, amount)?;
+
+            Self::deposit_event(Event::Mint {
+                who: who.clone(),
+                to: to.clone(),
+                class_id,
+                asset_id,
+                amount,
+            });
+
+            Ok(())
         }
 
-        Self::deposit_event(Event::BatchMint {
-            who: who.clone(),
-            to: to.clone(),
-            class_id,
-            asset_ids,
-            amounts,
-        });
+        pub fn do_batch_mint(
+            who: &T::AccountId,
+            to: &T::AccountId,
+            class_id: T::ClassId,
+            asset_ids: Vec<T::AssetId>,
+            amounts: Vec<Balance>,
+        ) -> DispatchResult {
+            ensure!(
+                asset_ids.len() == amounts.len(),
+                Error::<T>::InvalidArrayLength
+            );
 
-        Ok(())
-    }
+            let n = asset_ids.len();
+            for i in 0..n {
+                let asset_id = asset_ids[i];
+                let amount = amounts[i];
+                Self::add_balance_to(to, class_id, asset_id, amount)?;
+            }
 
-    pub fn do_burn(
-        who: &T::AccountId,
-        from: &T::AccountId,
-        class_id: T::ClassId,
-        asset_id: T::AssetId,
-        amount: Balance,
-    ) -> DispatchResult {
-        Self::remove_balance_from(from, class_id, asset_id, amount)?;
+            Self::deposit_event(Event::BatchMint {
+                who: who.clone(),
+                to: to.clone(),
+                class_id,
+                asset_ids,
+                amounts,
+            });
 
-        Self::deposit_event(Event::Burn {
-            who: who.clone(),
-            from: from.clone(),
-            class_id,
-            asset_id,
-            amount,
-        });
-
-        Ok(())
-    }
-
-    pub fn do_batch_burn(
-        who: &T::AccountId,
-        from: &T::AccountId,
-        class_id: T::ClassId,
-        asset_ids: Vec<T::AssetId>,
-        amounts: Vec<Balance>,
-    ) -> DispatchResult {
-        ensure!(
-            asset_ids.len() == amounts.len(),
-            Error::<T>::InvalidArrayLength
-        );
-
-        let n = asset_ids.len();
-        for i in 0..n {
-            let asset_id = asset_ids[i];
-            let amount = amounts[i];
-
-            Self::remove_balance_from(from, class_id, asset_id, amount)?;
+            Ok(())
         }
 
-        Self::deposit_event(Event::BatchBurn {
-            who: who.clone(),
-            from: from.clone(),
-            class_id,
-            asset_ids,
-            amounts,
-        });
-
-        Ok(())
-    }
-
-    pub fn do_transfer_from(
-        who: &T::AccountId,
-        from: &T::AccountId,
-        to: &T::AccountId,
-        class_id: T::ClassId,
-        asset_id: T::AssetId,
-        amount: Balance,
-    ) -> DispatchResult {
-        if from == to || amount == Zero::zero() {
-            return Ok(());
-        }
-
-        Self::remove_balance_from(from, class_id, asset_id, amount)?;
-
-        Self::add_balance_to(to, class_id, asset_id, amount)?;
-
-        Self::deposit_event(Event::Transferred {
-            who: who.clone(),
-            from: from.clone(),
-            to: to.clone(),
-            class_id,
-            asset_id,
-            amount,
-        });
-
-        Ok(())
-    }
-
-    pub fn do_batch_transfer_from(
-        who: &T::AccountId,
-        from: &T::AccountId,
-        to: &T::AccountId,
-        class_id: T::ClassId,
-        asset_ids: Vec<T::AssetId>,
-        amounts: Vec<Balance>,
-    ) -> DispatchResult {
-        if from == to {
-            return Ok(());
-        }
-
-        ensure!(
-            asset_ids.len() == amounts.len(),
-            Error::<T>::InvalidArrayLength
-        );
-
-        let n = asset_ids.len();
-        for i in 0..n {
-            let asset_id = asset_ids[i];
-            let amount = amounts[i];
-
+        pub fn do_burn(
+            who: &T::AccountId,
+            from: &T::AccountId,
+            class_id: T::ClassId,
+            asset_id: T::AssetId,
+            amount: Balance,
+        ) -> DispatchResult {
             Self::remove_balance_from(from, class_id, asset_id, amount)?;
 
+            Self::deposit_event(Event::Burn {
+                who: who.clone(),
+                from: from.clone(),
+                class_id,
+                asset_id,
+                amount,
+            });
+
+            Ok(())
+        }
+
+        pub fn do_batch_burn(
+            who: &T::AccountId,
+            from: &T::AccountId,
+            class_id: T::ClassId,
+            asset_ids: Vec<T::AssetId>,
+            amounts: Vec<Balance>,
+        ) -> DispatchResult {
+            ensure!(
+                asset_ids.len() == amounts.len(),
+                Error::<T>::InvalidArrayLength
+            );
+
+            let n = asset_ids.len();
+            for i in 0..n {
+                let asset_id = asset_ids[i];
+                let amount = amounts[i];
+
+                Self::remove_balance_from(from, class_id, asset_id, amount)?;
+            }
+
+            Self::deposit_event(Event::BatchBurn {
+                who: who.clone(),
+                from: from.clone(),
+                class_id,
+                asset_ids,
+                amounts,
+            });
+
+            Ok(())
+        }
+
+        pub fn do_transfer_from(
+            who: &T::AccountId,
+            from: &T::AccountId,
+            to: &T::AccountId,
+            class_id: T::ClassId,
+            asset_id: T::AssetId,
+            amount: Balance,
+        ) -> DispatchResult {
+            if from == to || amount == Zero::zero() {
+                return Ok(());
+            }
+
+            Self::remove_balance_from(from, class_id, asset_id, amount)?;
+
             Self::add_balance_to(to, class_id, asset_id, amount)?;
-        }
 
-        Self::deposit_event(Event::BatchTransferred {
-            who: who.clone(),
-            from: from.clone(),
-            to: to.clone(),
-            class_id,
-            asset_ids,
-            amounts,
-        });
+            Self::deposit_event(Event::Transferred {
+                who: who.clone(),
+                from: from.clone(),
+                to: to.clone(),
+                class_id,
+                asset_id,
+                amount,
+            });
 
-        Ok(())
-    }
-
-    pub fn balance_of(owner: &T::AccountId, class_id: T::ClassId, asset_id: T::AssetId) -> Balance {
-        Self::balances((owner, class_id, asset_id))
-    }
-
-    pub fn balance_of_batch(
-        owners: &Vec<T::AccountId>,
-        class_id: T::ClassId,
-        asset_ids: Vec<T::AssetId>,
-    ) -> Result<Vec<Balance>, DispatchError> {
-        ensure!(
-            owners.len() == asset_ids.len(),
-            Error::<T>::InvalidArrayLength
-        );
-
-        let mut batch_balances = vec![Balance::from(0u32); owners.len()];
-
-        let n = owners.len();
-        for i in 0..n {
-            let owner = &owners[i];
-            let asset_id = asset_ids[i];
-            batch_balances[i] = Self::balances((owner, class_id, asset_id));
-        }
-
-        Ok(batch_balances)
-    }
-
-    pub fn balance_of_single_owner_batch(
-        owner: &T::AccountId,
-        class_id: T::ClassId,
-        asset_ids: Vec<T::AssetId>,
-    ) -> Result<Vec<Balance>, DispatchError> {
-        let mut batch_balances = vec![Balance::from(0u32); asset_ids.len()];
-
-        let n = asset_ids.len();
-        for i in 0..n {
-            let owner = owner.clone();
-            let asset_id = asset_ids[i];
-
-            batch_balances[i] = Self::balances((owner, class_id, asset_id));
-        }
-
-        Ok(batch_balances)
-    }
-
-    pub fn balances_of_owner(
-        owner: &T::AccountId,
-    ) -> Result<Vec<(T::ClassId, T::AssetId, Balance)>, DispatchError> {
-        let mut balances = vec![];
-        let assets = Balances::<T>::iter_key_prefix((owner,));
-        for (class_id, asset_id) in assets {
-            let balance = Balances::<T>::get((owner, class_id, asset_id));
-            balances.push((class_id, asset_id, balance));
-        }
-        Ok(balances)
-    }
-
-    pub fn class_balances_of_owner(
-        owner: &T::AccountId,
-        class_id: T::ClassId,
-    ) -> Result<Vec<(T::AssetId, Balance)>, DispatchError> {
-        let mut balances = vec![];
-        let assets = Balances::<T>::iter_key_prefix((owner, class_id));
-        for asset_id in assets {
-            let balance = Balances::<T>::get((owner, class_id, asset_id));
-            balances.push((asset_id, balance));
-        }
-        Ok(balances)
-    }
-
-    fn add_balance_to(
-        to: &T::AccountId,
-        class_id: T::ClassId,
-        asset_id: T::AssetId,
-        amount: Balance,
-    ) -> DispatchResult {
-        Balances::<T>::try_mutate((to, class_id, asset_id), |balance| -> DispatchResult {
-            *balance = balance.checked_add(amount).ok_or(Error::<T>::NumOverflow)?;
             Ok(())
-        })?;
+        }
 
-        Ok(())
-    }
+        pub fn do_batch_transfer_from(
+            who: &T::AccountId,
+            from: &T::AccountId,
+            to: &T::AccountId,
+            class_id: T::ClassId,
+            asset_ids: Vec<T::AssetId>,
+            amounts: Vec<Balance>,
+        ) -> DispatchResult {
+            if from == to {
+                return Ok(());
+            }
 
-    fn remove_balance_from(
-        from: &T::AccountId,
-        class_id: T::ClassId,
-        asset_id: T::AssetId,
-        amount: Balance,
-    ) -> DispatchResult {
-        Balances::<T>::try_mutate((from, class_id, asset_id), |balance| -> DispatchResult {
-            *balance = balance.checked_sub(amount).ok_or(Error::<T>::NumOverflow)?;
+            ensure!(
+                asset_ids.len() == amounts.len(),
+                Error::<T>::InvalidArrayLength
+            );
+
+            let n = asset_ids.len();
+            for i in 0..n {
+                let asset_id = asset_ids[i];
+                let amount = amounts[i];
+
+                Self::remove_balance_from(from, class_id, asset_id, amount)?;
+
+                Self::add_balance_to(to, class_id, asset_id, amount)?;
+            }
+
+            Self::deposit_event(Event::BatchTransferred {
+                who: who.clone(),
+                from: from.clone(),
+                to: to.clone(),
+                class_id,
+                asset_ids,
+                amounts,
+            });
+
             Ok(())
-        })?;
+        }
 
-        Ok(())
+        pub fn balance_of(
+            owner: &T::AccountId,
+            class_id: T::ClassId,
+            asset_id: T::AssetId,
+        ) -> Balance {
+            Self::balances((owner, class_id, asset_id))
+        }
+
+        pub fn balance_of_batch(
+            owners: &Vec<T::AccountId>,
+            class_id: T::ClassId,
+            asset_ids: Vec<T::AssetId>,
+        ) -> Result<Vec<Balance>, DispatchError> {
+            ensure!(
+                owners.len() == asset_ids.len(),
+                Error::<T>::InvalidArrayLength
+            );
+
+            let mut batch_balances = Vec::new();
+
+            for _i in 0..owners.len() {
+                batch_balances.push(Balance::from(0u32));
+            }
+
+            let n = owners.len();
+            for i in 0..n {
+                let owner = &owners[i];
+                let asset_id = asset_ids[i];
+                batch_balances[i] = Self::balances((owner, class_id, asset_id));
+            }
+
+            Ok(batch_balances)
+        }
+
+        pub fn balance_of_single_owner_batch(
+            owner: &T::AccountId,
+            class_id: T::ClassId,
+            asset_ids: Vec<T::AssetId>,
+        ) -> Result<Vec<Balance>, DispatchError> {
+            let mut batch_balances = Vec::new();
+
+            for _i in 0..asset_ids.len() {
+                batch_balances.push(Balance::from(0u32));
+            }
+
+            let n = asset_ids.len();
+            for i in 0..n {
+                let owner = owner.clone();
+                let asset_id = asset_ids[i];
+
+                batch_balances[i] = Self::balances((owner, class_id, asset_id));
+            }
+
+            Ok(batch_balances)
+        }
+
+        pub fn balances_of_owner(
+            owner: &T::AccountId,
+        ) -> Result<Vec<(T::ClassId, T::AssetId, Balance)>, DispatchError> {
+            let mut balances = Vec::new();
+            let assets = Balances::<T>::iter_key_prefix((owner,));
+            for (class_id, asset_id) in assets {
+                let balance = Balances::<T>::get((owner, class_id, asset_id));
+                balances.push((class_id, asset_id, balance));
+            }
+            Ok(balances)
+        }
+
+        pub fn class_balances_of_owner(
+            owner: &T::AccountId,
+            class_id: T::ClassId,
+        ) -> Result<Vec<(T::AssetId, Balance)>, DispatchError> {
+            let mut balances = Vec::new();
+            let assets = Balances::<T>::iter_key_prefix((owner, class_id));
+            for asset_id in assets {
+                let balance = Balances::<T>::get((owner, class_id, asset_id));
+                balances.push((asset_id, balance));
+            }
+            Ok(balances)
+        }
+
+        fn add_balance_to(
+            to: &T::AccountId,
+            class_id: T::ClassId,
+            asset_id: T::AssetId,
+            amount: Balance,
+        ) -> DispatchResult {
+            Balances::<T>::try_mutate((to, class_id, asset_id), |balance| -> DispatchResult {
+                *balance = balance.checked_add(amount).ok_or(Error::<T>::NumOverflow)?;
+                Ok(())
+            })?;
+
+            Ok(())
+        }
+
+        fn remove_balance_from(
+            from: &T::AccountId,
+            class_id: T::ClassId,
+            asset_id: T::AssetId,
+            amount: Balance,
+        ) -> DispatchResult {
+            Balances::<T>::try_mutate((from, class_id, asset_id), |balance| -> DispatchResult {
+                *balance = balance.checked_sub(amount).ok_or(Error::<T>::NumOverflow)?;
+                Ok(())
+            })?;
+
+            Ok(())
+        }
+
+        fn maybe_check_owner(who: &T::AccountId, class_id: T::ClassId) -> DispatchResult {
+            let class = Classes::<T>::get(class_id).ok_or(Error::<T>::InvalidClassId)?;
+            ensure!(*who == class.owner, Error::<T>::NoPermission);
+            Ok(())
+        }
     }
 
-    fn maybe_check_owner(who: &T::AccountId, class_id: T::ClassId) -> DispatchResult {
-        let class = Classes::<T>::get(class_id).ok_or(Error::<T>::InvalidClassId)?;
-        ensure!(*who == class.owner, Error::<T>::NoPermission);
-        Ok(())
+    impl<T: Config> AssetInterface for Pallet<T> {
+        type AccountId = T::AccountId;
+        type AssetId = T::AssetId;
+        type ClassId = T::ClassId;
+        type Metadata = BoundedVec<u8, <T as Config>::MaxClassMetadata>;
+        type Balance = Balance;
+
+        fn create_class(
+            who: Self::AccountId,
+            owner: Self::AccountId,
+            class_id: Self::ClassId,
+            metadata: Self::Metadata,
+        ) -> DispatchResult {
+            Self::do_create_class(&who, &owner, class_id, metadata)
+        }
+
+        fn mint(
+            who: Self::AccountId,
+            to: Self::AccountId,
+            class_id: Self::ClassId,
+            asset_id: Self::AssetId,
+            amount: Self::Balance,
+        ) -> DispatchResult {
+            Self::do_mint(&who, &to, class_id, asset_id, amount)
+        }
+
+        fn batch_transfer_from(
+            who: Self::AccountId,
+            from: Self::AccountId,
+            to: Self::AccountId,
+            class_id: Self::ClassId,
+            asset_ids: Vec<Self::AssetId>,
+            amounts: Vec<Self::Balance>,
+        ) -> DispatchResult {
+            Self::do_batch_transfer_from(&who, &from, &to, class_id, asset_ids, amounts)
+        }
+
+        fn burn(
+            who: Self::AccountId,
+            from: Self::AccountId,
+            class_id: Self::ClassId,
+            asset_id: Self::AssetId,
+            amount: Self::Balance,
+        ) -> DispatchResult {
+            Self::do_burn(&who, &from, class_id, asset_id, amount)
+        }
+
+        fn transfer_from(
+            who: Self::AccountId,
+            from: Self::AccountId,
+            to: Self::AccountId,
+            class_id: Self::ClassId,
+            asset_id: Self::AssetId,
+            amount: Self::Balance,
+        ) -> DispatchResult {
+            Self::do_transfer_from(&who, &from, &to, class_id, asset_id, amount)
+        }
+
+        fn balance_of(
+            owner: Self::AccountId,
+            class_id: Self::ClassId,
+            asset_id: Self::AssetId,
+        ) -> Self::Balance {
+            Self::balance_of(&owner, class_id, asset_id)
+        }
+
+        fn balances_of_owner(
+            owner: Self::AccountId,
+        ) -> Result<Vec<(Self::ClassId, Self::AssetId, Self::Balance)>, DispatchError> {
+            Self::balances_of_owner(&owner)
+        }
     }
 }

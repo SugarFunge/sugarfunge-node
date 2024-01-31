@@ -17,6 +17,7 @@ use sp_runtime::{
 };
 use sp_std::prelude::*;
 
+use frame_system::pallet_prelude::BlockNumberFor;
 pub use pallet::*;
 
 #[cfg(test)]
@@ -72,15 +73,13 @@ pub mod pallet {
         /// RuntimeOrigin used to administer the pallet
         type AdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
         /// Proposed dispatchable call
-        type Proposal: Parameter
-            + Dispatchable<RuntimeOrigin = Self::RuntimeOrigin>
-            + EncodeLike;
+        type Proposal: Parameter + Dispatchable<RuntimeOrigin = Self::RuntimeOrigin> + EncodeLike;
 
         /// The identifier for this chain.
         /// This must be unique and must not collide with existing IDs within a set of bridged chains.
         type ChainId: Get<ChainId>;
 
-        type ProposalLifetime: Get<Self::BlockNumber>;
+        type ProposalLifetime: Get<BlockNumberFor<Self>>;
 
         #[pallet::constant]
         type DefaultRelayerThreshold: Get<u32>;
@@ -95,8 +94,7 @@ pub mod pallet {
     pub type ResourceMetadataOf<T> = BoundedVec<u8, <T as Config>::MaxResourceMetadata>;
     pub type MaxVotesOf<T> =
         BoundedVec<<T as frame_system::Config>::AccountId, <T as Config>::MaxVotes>;
-    pub type ProposalVotesOf<T> =
-        ProposalVotes<<T as frame_system::Config>::BlockNumber, MaxVotesOf<T>>;
+    pub type ProposalVotesOf<T> = ProposalVotes<BlockNumberFor<T>, MaxVotesOf<T>>;
 
     #[pallet::pallet]
     pub struct Pallet<T>(_);
@@ -486,7 +484,7 @@ impl<T: Config> Pallet<T> {
                     votes_for: BoundedVec::default(),
                     votes_against: BoundedVec::default(),
                     status: ProposalStatus::Initiated,
-                    expiry: T::BlockNumber::default(),
+                    expiry: BlockNumberFor::<T>::default(),
                 };
                 v.expiry = now + T::ProposalLifetime::get();
                 v
@@ -526,7 +524,7 @@ impl<T: Config> Pallet<T> {
     /// Attempts to mark the proposal as approve or rejected.
     /// Returns true if the status changes from active.
     fn try_to_complete(
-        votes: &mut ProposalVotes<T::BlockNumber, MaxVotesOf<T>>,
+        votes: &mut ProposalVotes<BlockNumberFor<T>, MaxVotesOf<T>>,
         threshold: u32,
         total: u32,
     ) -> ProposalStatus {
@@ -542,20 +540,23 @@ impl<T: Config> Pallet<T> {
     }
 
     /// Returns true if the proposal has been rejected or approved, otherwise false.
-    fn is_complete(votes: &ProposalVotes<T::BlockNumber, MaxVotesOf<T>>) -> bool {
+    fn is_complete(votes: &ProposalVotes<BlockNumberFor<T>, MaxVotesOf<T>>) -> bool {
         votes.status != ProposalStatus::Initiated
     }
 
     /// Return true if the expiry time has been reached
     fn is_expired(
-        votes: &ProposalVotes<T::BlockNumber, MaxVotesOf<T>>,
-        now: T::BlockNumber,
+        votes: &ProposalVotes<BlockNumberFor<T>, MaxVotesOf<T>>,
+        now: BlockNumberFor<T>,
     ) -> bool {
         votes.expiry <= now
     }
 
     /// Returns true if `who` has voted for or against the proposal
-    fn has_voted(votes: &ProposalVotes<T::BlockNumber, MaxVotesOf<T>>, who: &T::AccountId) -> bool {
+    fn has_voted(
+        votes: &ProposalVotes<BlockNumberFor<T>, MaxVotesOf<T>>,
+        who: &T::AccountId,
+    ) -> bool {
         votes.votes_for.contains(&who) || votes.votes_against.contains(&who)
     }
 
