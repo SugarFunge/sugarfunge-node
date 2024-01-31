@@ -51,6 +51,6 @@ pub mod time {
 
     // These time units are defined in number of blocks.
     pub const MINUTES: BlockNumber = 60 / (SECS_PER_BLOCK as BlockNumber);
-    pub const HOURS: BlockNumber = MINUTES * 60;
-    pub const DAYS: BlockNumber = HOURS * 24;
+    // pub const HOURS: BlockNumber = MINUTES * 60;
+    // pub const DAYS: BlockNumber = HOURS * 24;
 }
