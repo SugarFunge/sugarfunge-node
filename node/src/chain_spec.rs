@@ -6,7 +6,7 @@ use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
 use sugarfunge_runtime::{
     opaque::SessionKeys, AccountId, AuraConfig, Balance, BalancesConfig, CouncilConfig,
-    GenesisConfig, GrandpaConfig, SessionConfig, Signature, SudoConfig, SystemConfig,
+    GrandpaConfig, RuntimeGenesisConfig, SessionConfig, Signature, SudoConfig, SystemConfig,
     ValidatorSetConfig, DOLLARS, WASM_BINARY,
 };
 
@@ -14,7 +14,7 @@ use sugarfunge_runtime::{
 // const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
-pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig>;
+pub type ChainSpec = sc_service::GenericChainSpec<RuntimeGenesisConfig>;
 
 /// Generate a crypto pair from seed.
 pub fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {
@@ -160,13 +160,14 @@ fn testnet_genesis(
     root_key: AccountId,
     endowed_accounts: Vec<AccountId>,
     _enable_println: bool,
-) -> GenesisConfig {
+) -> RuntimeGenesisConfig {
     const ENDOWMENT: Balance = 100_000_000 * DOLLARS;
 
-    GenesisConfig {
+    RuntimeGenesisConfig {
         system: SystemConfig {
             // Add Wasm runtime to storage.
             code: wasm_binary.to_vec(),
+            ..Default::default()
         },
         balances: BalancesConfig {
             // Configure endowed accounts with initial balance of 1 << 60.
@@ -208,10 +209,12 @@ fn testnet_genesis(
         },
         grandpa: GrandpaConfig {
             authorities: vec![],
+            ..Default::default()
         },
         sudo: SudoConfig {
             // Assign network admin rights.
             key: Some(root_key),
         },
+        transaction_payment: Default::default(),
     }
 }
