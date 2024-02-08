@@ -2,11 +2,11 @@
 
 use super::*;
 use crate as validator_set;
+use frame_support::__private::BasicExternalities;
 use frame_support::{
     parameter_types,
     traits::{ConstU16, ConstU32, ConstU64, Everything},
     weights::Weight,
-    BasicExternalities,
 };
 use frame_system::EnsureRoot;
 use pallet_session::*;
@@ -92,6 +92,7 @@ impl frame_system::Config for Test {
     type SS58Prefix = ConstU16<42>;
     type OnSetCode = ();
     type MaxConsumers = ConstU32<16>;
+    type RuntimeTask = ();
 }
 
 impl validator_set::Config for Test {

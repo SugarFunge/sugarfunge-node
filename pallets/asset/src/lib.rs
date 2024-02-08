@@ -2,8 +2,9 @@
 use codec::EncodeLike;
 use codec::{Decode, Encode, HasCompact, MaxEncodedLen};
 use core::iter::Sum;
+use frame_support::pallet_prelude::DispatchError;
 use frame_support::{
-    dispatch::{DispatchError, DispatchResult},
+    dispatch::DispatchResult,
     ensure,
     traits::{Currency, Get, ReservableCurrency},
     BoundedVec,

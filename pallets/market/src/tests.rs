@@ -1,7 +1,8 @@
 use crate::{
     mock::*, AmountOp, AssetRate, Error, RateAccount, RateAction, RateBalance, Rates, AMM,
 };
-use frame_support::{assert_noop, assert_ok, bounded_vec};
+use frame_support::{assert_noop, assert_ok};
+use sp_core::bounded_vec;
 use sp_std::prelude::*;
 
 fn last_event() -> RuntimeEvent {

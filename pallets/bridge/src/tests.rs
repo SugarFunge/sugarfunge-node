@@ -1,12 +1,14 @@
 #![cfg(test)]
 
 use super::mock::{
-    assert_events, new_test_ext, Balances, Bridge, RuntimeCall, RuntimeEvent, RuntimeOrigin, ProposalLifetime, System,
-    Test, TestChainId, ENDOWED_BALANCE, RELAYER_A, RELAYER_B, RELAYER_C, TEST_THRESHOLD,
+    assert_events, new_test_ext, Balances, Bridge, ProposalLifetime, RuntimeCall, RuntimeEvent,
+    RuntimeOrigin, System, Test, TestChainId, ENDOWED_BALANCE, RELAYER_A, RELAYER_B, RELAYER_C,
+    TEST_THRESHOLD,
 };
 use super::*;
 use crate::mock::new_test_ext_initialized;
-use frame_support::{assert_noop, assert_ok, bounded_vec, BoundedVec};
+use frame_support::{assert_noop, assert_ok, BoundedVec};
+use sp_core::bounded_vec;
 
 #[test]
 fn derive_ids() {
@@ -88,10 +90,18 @@ fn setup_resources() {
                 .try_into()
                 .unwrap();
 
-        assert_ok!(Bridge::set_resource(RuntimeOrigin::root(), id, method.clone()));
+        assert_ok!(Bridge::set_resource(
+            RuntimeOrigin::root(),
+            id,
+            method.clone()
+        ));
         assert_eq!(Bridge::resources(id), Some(method));
 
-        assert_ok!(Bridge::set_resource(RuntimeOrigin::root(), id, method2.clone()));
+        assert_ok!(Bridge::set_resource(
+            RuntimeOrigin::root(),
+            id,
+            method2.clone()
+        ));
         assert_eq!(Bridge::resources(id), Some(method2));
 
         assert_ok!(Bridge::remove_resource(RuntimeOrigin::root(), id));
@@ -110,7 +120,9 @@ fn whitelist_chain() {
             Error::<Test>::InvalidChainId
         );
 
-        assert_events(vec![RuntimeEvent::Bridge(crate::Event::ChainWhitelisted(0))]);
+        assert_events(vec![RuntimeEvent::Bridge(crate::Event::ChainWhitelisted(
+            0,
+        ))]);
     })
 }
 
@@ -144,7 +156,10 @@ fn asset_transfer_success() {
 
         assert_ok!(Bridge::set_threshold(RuntimeOrigin::root(), TEST_THRESHOLD,));
 
-        assert_ok!(Bridge::whitelist_chain(RuntimeOrigin::root(), dest_id.clone()));
+        assert_ok!(Bridge::whitelist_chain(
+            RuntimeOrigin::root(),
+            dest_id.clone()
+        ));
         assert_ok!(Bridge::transfer_fungible(
             dest_id.clone(),
             resource_id.clone(),
@@ -169,14 +184,16 @@ fn asset_transfer_success() {
             to.clone(),
             metadata.clone()
         ));
-        assert_events(vec![RuntimeEvent::Bridge(crate::Event::NonFungibleTransfer(
-            dest_id.clone(),
-            2,
-            resource_id.clone(),
-            token_id,
-            to.clone(),
-            metadata.clone(),
-        ))]);
+        assert_events(vec![RuntimeEvent::Bridge(
+            crate::Event::NonFungibleTransfer(
+                dest_id.clone(),
+                2,
+                resource_id.clone(),
+                token_id,
+                to.clone(),
+                metadata.clone(),
+            ),
+        )]);
 
         assert_ok!(Bridge::transfer_generic(
             dest_id.clone(),
@@ -199,7 +216,10 @@ fn asset_transfer_invalid_chain() {
         let bad_dest_id = 3;
         let resource_id = [4; 32];
 
-        assert_ok!(Bridge::whitelist_chain(RuntimeOrigin::root(), chain_id.clone()));
+        assert_ok!(Bridge::whitelist_chain(
+            RuntimeOrigin::root(),
+            chain_id.clone()
+        ));
         assert_events(vec![RuntimeEvent::Bridge(crate::Event::ChainWhitelisted(
             chain_id.clone(),
         ))]);
