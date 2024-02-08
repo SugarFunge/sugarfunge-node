@@ -1,8 +1,9 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use codec::{Decode, Encode, MaxEncodedLen};
+use frame_support::pallet_prelude::DispatchError;
 use frame_support::{
-    dispatch::{DispatchError, DispatchResult},
+    dispatch::DispatchResult,
     ensure,
     traits::{Currency, ExistenceRequirement::AllowDeath, Get, ReservableCurrency},
     PalletId,
