@@ -1,6 +1,7 @@
 use crate::mock::Asset;
 use crate::mock::*;
-use frame_support::{assert_ok, bounded_vec};
+use frame_support::assert_ok;
+use sp_core::bounded_vec;
 
 fn test_create_class() {
     assert_ok!(Asset::do_create_class(&1, &1, 2000, bounded_vec![0]));
