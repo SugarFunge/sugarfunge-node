@@ -44,6 +44,8 @@ pallet-scheduler = { git = "https://github.com/paritytech/polkadot-sdk.git", bra
 pallet-session = { git = "https://github.com/paritytech/polkadot-sdk.git", branch = "release-polkadot-v1.6.0", default-features = false, features = [
 	"historical",
 ] }
+pallet-contracts = { version = "4.0.0-dev", git = "https://github.com/paritytech/polkadot-sdk.git", branch = "release-polkadot-v1.6.0", default-features = false}
+pallet-insecure-randomness-collective-flip = { version = "4.0.0-dev", git = "https://github.com/paritytech/polkadot-sdk.git", branch = "release-polkadot-v1.6.0", default-features = false}
 
 # Used for the node template's RPCs
 frame-system-rpc-runtime-api = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/polkadot-sdk.git", branch = "release-polkadot-v1.6.0" }
@@ -90,6 +92,8 @@ std = [
 	"pallet-scheduler/std",
 	"pallet-session/std",
 	"pallet-collective/std",
+	"pallet-contracts/std",
+	"pallet-insecure-randomness-collective-flip/std",
 	"sp-api/std",
 	"sp-block-builder/std",
 	"sp-consensus-aura/std",
@@ -119,6 +123,7 @@ runtime-benchmarks = [
 	"pallet-grandpa/runtime-benchmarks",
 	"pallet-sudo/runtime-benchmarks",
 	"pallet-timestamp/runtime-benchmarks",
+	"pallet-contracts/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
 	"sugarfunge-asset/runtime-benchmarks",
 ]
