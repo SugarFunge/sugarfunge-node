@@ -310,13 +310,13 @@ impl<T: Config> EstimateNextSessionRotation<BlockNumberFor<T>> for Pallet<T> {
 
     fn estimate_current_session_progress(
         _now: BlockNumberFor<T>,
-    ) -> (Option<sp_runtime::Permill>, frame_support::dispatch::Weight) {
+    ) -> (Option<sp_runtime::Permill>, frame_support::pallet_prelude::Weight) {
         (None, Zero::zero())
     }
 
     fn estimate_next_session_rotation(
         _now: BlockNumberFor<T>,
-    ) -> (Option<BlockNumberFor<T>>, frame_support::dispatch::Weight) {
+    ) -> (Option<BlockNumberFor<T>>, frame_support::pallet_prelude::Weight) {
         (None, Zero::zero())
     }
 }

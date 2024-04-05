@@ -2,16 +2,16 @@
 
 ## Setup
 
-* Before following the steps below, make sure you have completed all the steps in the [readme.md](../readme.md).
+- Before following the steps below, make sure you have completed all the steps in the [readme.md](../readme.md).
 
 ### Dependencies - runtime/cargo.toml
 
-* Add the `im-online` pallet in your runtime's `cargo.toml`.
+- Add the `im-online` pallet in your runtime's `cargo.toml`.
 
 ```toml
 [dependencies.pallet-im-online]
 default-features = false
-git = 'https://github.com/paritytech/substrate.git'
+git = 'https://github.com/paritytech/polkadot-sdk.git'
 tag = 'monthly-2021-12'
 version = '4.0.0-dev'
 ```
@@ -25,7 +25,7 @@ std = [
 
 ### Pallet Initialization - runtime/src/lib.rs
 
-* Import `ImOnlineId` and `Verify` `runtime/src/lib.rs`.
+- Import `ImOnlineId` and `Verify` `runtime/src/lib.rs`.
 
 ```rust
 use sp_runtime::traits::{
@@ -34,7 +34,7 @@ use sp_runtime::traits::{
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 ```
 
-* Add the `ImOnline` key to the session keys for your runtime in `runtime/src/lib.rs`:
+- Add the `ImOnline` key to the session keys for your runtime in `runtime/src/lib.rs`:
 
 ```rust
 impl_opaque_keys! {
@@ -46,7 +46,7 @@ impl_opaque_keys! {
 	}
 ```
 
-* Add the `im-online` pallet and it's configuration. This will require more types to be imported.
+- Add the `im-online` pallet and it's configuration. This will require more types to be imported.
 
 ```rust
 parameter_types! {
@@ -119,13 +119,13 @@ impl pallet_im_online::Config for Runtime {
 }
 ```
 
-* Declare the `SignedPayload` type in `runtime/src/lib.rs`.
+- Declare the `SignedPayload` type in `runtime/src/lib.rs`.
 
 ```rust
 pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
 ```
 
-* Add `im-online` pallet in `construct_runtime` macro.
+- Add `im-online` pallet in `construct_runtime` macro.
 
 ```rust
 construct_runtime!(
@@ -149,23 +149,23 @@ construct_runtime!(
 
 ### Genesis config - chain_spec.rs
 
-* Add the `im-online` pallet in your node `cargo.toml`. This is needed because we need to import some types in the `chain_spec.rs`.
+- Add the `im-online` pallet in your node `cargo.toml`. This is needed because we need to import some types in the `chain_spec.rs`.
 
 ```toml
 [dependencies.pallet-im-online]
 default-features = false
-git = 'https://github.com/paritytech/substrate.git'
+git = 'https://github.com/paritytech/polkadot-sdk.git'
 tag = 'monthly-2021-12'
 version = '4.0.0-dev'
 ```
 
-* Import `ImOnlineId` in the `chain_spec.rs`.
+- Import `ImOnlineId` in the `chain_spec.rs`.
 
 ```rust
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 ```
 
-* Also import `ImOnlineConfig` in  `chain_spec.rs`.
+- Also import `ImOnlineConfig` in `chain_spec.rs`.
 
 ```rust
 use node_template_runtime::{
@@ -175,7 +175,7 @@ use node_template_runtime::{
 };
 ```
 
-* Add `ImOnlineId` to the key generation functions in `chain_spec.rs`.
+- Add `ImOnlineId` to the key generation functions in `chain_spec.rs`.
 
 ```rust
 fn session_keys(aura: AuraId, grandpa: GrandpaId, im_online: ImOnlineId) -> SessionKeys {
@@ -192,7 +192,7 @@ pub fn authority_keys_from_seed(s: &str) -> (AccountId, AuraId, GrandpaId, ImOnl
 }
 ```
 
-* Add genesis config in the `chain_spec.rs` file for the `im_online` pallet. Notice that the `ImOnlineId` has also been added to the tuple of keys, and it is also being used in the `keys` config for `session` pallet.
+- Add genesis config in the `chain_spec.rs` file for the `im_online` pallet. Notice that the `ImOnlineId` has also been added to the tuple of keys, and it is also being used in the `keys` config for `session` pallet.
 
 ```rust
 fn testnet_genesis(
