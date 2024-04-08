@@ -1,12 +1,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use codec::{Decode, Encode, HasCompact, MaxEncodedLen};
-use frame_support::{
-    dispatch::{DispatchError, DispatchResult},
-    ensure,
-    traits::Get,
-    BoundedVec, PalletId,
-};
+use frame_support::pallet_prelude::DispatchError;
+use frame_support::{dispatch::DispatchResult, ensure, traits::Get, BoundedVec, PalletId};
 use scale_info::TypeInfo;
 use sp_core::U256;
 use sp_runtime::{

@@ -2,9 +2,9 @@
 
 Fork of [substrate-validator-set](https://github.com/gautamdhameja/substrate-validator-set)
 
-A [Substrate](https://github.com/paritytech/substrate/) pallet to add/remove authorities/validators using extrinsics, in Substrate-based PoA networks.
+A [Substrate](https://github.com/paritytech/polkadot-sdk.git/) pallet to add/remove authorities/validators using extrinsics, in Substrate-based PoA networks.
 
-**Note: Current master is compatible with Substrate [monthly-2021-12](https://github.com/paritytech/substrate/releases/tag/monthly-2021-12) tag. For older versions, please see releases/tags.**
+**Note: Current master is compatible with Substrate [monthly-2021-12](https://github.com/paritytech/polkadot-sdk.git/releases/tag/monthly-2021-12) tag. For older versions, please see releases/tags.**
 
 ## Demo
 
@@ -14,9 +14,9 @@ To see this pallet in action in a Substrate runtime, watch this video - https://
 
 ### Dependencies - runtime/cargo.toml
 
-* Add the module's dependency in the `Cargo.toml` of your runtime directory. Make sure to enter the correct path or git url of the pallet as per your setup.
+- Add the module's dependency in the `Cargo.toml` of your runtime directory. Make sure to enter the correct path or git url of the pallet as per your setup.
 
-* Make sure that you also have the Substrate [session pallet](https://github.com/paritytech/substrate/tree/master/frame/session) as part of your runtime. This is because the validator-set pallet is dependent on the session pallet.
+- Make sure that you also have the Substrate [session pallet](https://github.com/paritytech/polkadot-sdk.git/tree/master/frame/session) as part of your runtime. This is because the validator-set pallet is dependent on the session pallet.
 
 ```toml
 [dependencies.validator-set]
@@ -27,7 +27,7 @@ version = '4.0.0-dev'
 
 [dependencies.pallet-session]
 default-features = false
-git = 'https://github.com/paritytech/substrate.git'
+git = 'https://github.com/paritytech/polkadot-sdk.git'
 tag = 'monthly-2021-12'
 version = '4.0.0-dev'
 ```
@@ -42,7 +42,7 @@ std = [
 
 ### Pallet Initialization - runtime/src/lib.rs
 
-* Import `OpaqueKeys` in your `runtime/src/lib.rs`.
+- Import `OpaqueKeys` in your `runtime/src/lib.rs`.
 
 ```rust
 use sp_runtime::traits::{
@@ -50,13 +50,13 @@ use sp_runtime::traits::{
 };
 ```
 
-* Also in `runtime/src/lib.rs` import the `EnsureRoot` trait. This would change if you want to configure a custom origin (see below).
+- Also in `runtime/src/lib.rs` import the `EnsureRoot` trait. This would change if you want to configure a custom origin (see below).
 
 ```rust
 	use frame_system::EnsureRoot;
 ```
 
-* Declare the pallet in your `runtime/src/lib.rs`. The pallet supports configurable origin and you can either set it to use one of the governance pallets (Collective, Democracy, etc.), or just use root as shown below. But **do not use a normal origin here** because the addition and removal of validators should be done using elevated privileges.
+- Declare the pallet in your `runtime/src/lib.rs`. The pallet supports configurable origin and you can either set it to use one of the governance pallets (Collective, Democracy, etc.), or just use root as shown below. But **do not use a normal origin here** because the addition and removal of validators should be done using elevated privileges.
 
 ```rust
 parameter_types! {
@@ -70,7 +70,7 @@ impl validator_set::Config for Runtime {
 }
 ```
 
-* Also, declare the session pallet in  your `runtime/src/lib.rs`. Some of the type configuration of session pallet would depend on the ValidatorSet pallet as shown below.
+- Also, declare the session pallet in your `runtime/src/lib.rs`. Some of the type configuration of session pallet would depend on the ValidatorSet pallet as shown below.
 
 ```rust
 parameter_types! {
@@ -91,7 +91,7 @@ impl pallet_session::Config for Runtime {
 }
 ```
 
-* Add `validator_set`, and `session` pallets in `construct_runtime` macro. **Make sure to add them before `Aura` and `Grandpa` pallets and after `Balances`. Also make sure that the `validator_set` pallet is added _before_ the `session` pallet, because it provides the initial validators at genesis, and must initialize first.**
+- Add `validator_set`, and `session` pallets in `construct_runtime` macro. **Make sure to add them before `Aura` and `Grandpa` pallets and after `Balances`. Also make sure that the `validator_set` pallet is added _before_ the `session` pallet, because it provides the initial validators at genesis, and must initialize first.**
 
 ```rust
 construct_runtime!(
@@ -114,17 +114,17 @@ construct_runtime!(
 
 ### Genesis config - chain_spec.rs
 
-* Import `opaque::SessionKeys, ValidatorSetConfig, SessionConfig` from the runtime in `node/src/chain_spec.rs`.
-  
+- Import `opaque::SessionKeys, ValidatorSetConfig, SessionConfig` from the runtime in `node/src/chain_spec.rs`.
+
 ```rust
 use node_template_runtime::{
 	AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig,
-	SudoConfig, SystemConfig, WASM_BINARY, Signature, 
+	SudoConfig, SystemConfig, WASM_BINARY, Signature,
 	opaque::SessionKeys, ValidatorSetConfig, SessionConfig
 };
 ```
 
-* And then in `node/src/chain_spec.rs` update the key generation functions.
+- And then in `node/src/chain_spec.rs` update the key generation functions.
 
 ```rust
 fn session_keys(aura: AuraId, grandpa: GrandpaId) -> SessionKeys {
@@ -140,7 +140,7 @@ pub fn authority_keys_from_seed(s: &str) -> (AccountId, AuraId, GrandpaId) {
 }
 ```
 
-* Add genesis config in the `chain_spec.rs` file for `session` and `validatorset` pallets, and update it for `Aura` and `Grandpa` pallets. Because the validators are provided by the `session` pallet, we do not initialize them explicitly for `Aura` and `Grandpa` pallets. Order is important, notice that `pallet_session` is declared after `pallet_balances` since it depends on it (session accounts should have some balance).
+- Add genesis config in the `chain_spec.rs` file for `session` and `validatorset` pallets, and update it for `Aura` and `Grandpa` pallets. Because the validators are provided by the `session` pallet, we do not initialize them explicitly for `Aura` and `Grandpa` pallets. Order is important, notice that `pallet_session` is declared after `pallet_balances` since it depends on it (session accounts should have some balance).
 
 ```rust
 fn testnet_genesis(initial_authorities: Vec<(AccountId, AuraId, GrandpaId)>,

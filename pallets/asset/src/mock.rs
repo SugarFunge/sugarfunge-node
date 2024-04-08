@@ -44,6 +44,7 @@ impl frame_system::Config for Test {
     type SS58Prefix = ConstU16<42>;
     type OnSetCode = ();
     type MaxConsumers = ConstU32<16>;
+    type RuntimeTask = ();
 }
 
 impl pallet_balances::Config for Test {
@@ -60,6 +61,7 @@ impl pallet_balances::Config for Test {
     type MaxHolds = ();
     type MaxFreezes = ();
     type RuntimeHoldReason = ();
+    type RuntimeFreezeReason = ();
 }
 
 impl sugarfunge_asset::Config for Test {

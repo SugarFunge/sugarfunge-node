@@ -31,6 +31,7 @@ impl frame_system::Config for Test {
     type SS58Prefix = ConstU16<42>;
     type OnSetCode = ();
     type MaxConsumers = ConstU32<16>;
+    type RuntimeTask = ();
 }
 impl sugarfunge_dao::Config for Test {
     type RuntimeEvent = RuntimeEvent;

@@ -1,5 +1,6 @@
 use crate::{mock::*, BundleSchema, Error};
-use frame_support::{assert_err, assert_ok, bounded_vec, BoundedVec};
+use frame_support::{assert_err, assert_ok, BoundedVec};
+use sp_core::bounded_vec;
 use sp_runtime::traits::{BlakeTwo256, Hash};
 
 fn last_event() -> RuntimeEvent {
